@@ -69,14 +69,66 @@ export default function App() {
 
   // Modo Trabalho em Grupo
   const [isGroupMode, setIsGroupMode] = useState(false);
+  const [groupDocType, setGroupDocType] = useState<string>("trabalho_academico");
   const [groupMembers, setGroupMembers] = useState<string[]>([""]);
-  const [sectionSlots, setSectionSlots] = useState<Record<string, File | null>>({
-    introducao: null,
-    fundamentacao: null,
-    resultados: null,
-    conclusao: null,
-    referencias: null,
-  });
+  const [sectionSlots, setSectionSlots] = useState<Record<string, File | null>>({});
+
+  // Estrutura dinâmica de seções baseada no Tipo de Trabalho
+  const getGroupSectionsByDocType = (docType: string) => {
+    switch (docType) {
+      case "artigo":
+      case "artigo_cientifico":
+        return [
+          { key: "resumo", label: "RESUMO E PALAVRAS-CHAVE", desc: "Resumo estruturado (150-250 palavras) e Abstract", icon: "📑" },
+          { key: "introducao", label: "1 INTRODUÇÃO", desc: "Contextualização, objetivos e justificativa", icon: "📖" },
+          { key: "fundamentacao", label: "2 MATERIAIS E MÉTODOS", desc: "Procedimentos metodológicos e referencial", icon: "🔬" },
+          { key: "resultados", label: "3 RESULTADOS E DISCUSSÃO", desc: "Apresentação dos dados, tabelas e debate", icon: "📊" },
+          { key: "conclusao", label: "4 CONSIDERAÇÕES FINAIS", desc: "Conclusões do estudo e implicações", icon: "✅" },
+          { key: "referencias", label: "REFERÊNCIAS", desc: "Fontes citadas conforme ABNT NBR 6023", icon: "🔗" },
+        ];
+      case "projeto":
+        return [
+          { key: "introducao", label: "1 INTRODUÇÃO E JUSTIFICATIVA", desc: "Delimitação do tema, relevância e problema", icon: "📖" },
+          { key: "objetivos", label: "2 OBJETIVOS (GERAL E ESPECÍFICOS)", desc: "Metas e propósitos da pesquisa", icon: "🎯" },
+          { key: "fundamentacao", label: "3 FUNDAMENTAÇÃO TEÓRICA", desc: "Base conceitual e autores de referência", icon: "📚" },
+          { key: "metodologia", label: "4 METODOLOGIA E CRONOGRAMA", desc: "Etapas de execução, instrumentos e prazos", icon: "🗓️" },
+          { key: "referencias", label: "REFERÊNCIAS", desc: "Bibliografia preliminar NBR 6023", icon: "🔗" },
+        ];
+      case "relatorio":
+        return [
+          { key: "introducao", label: "1 INTRODUÇÃO E OBJETIVO DO RELATÓRIO", desc: "Contexto técnico e propósitos da atividade", icon: "📖" },
+          { key: "procedimentos", label: "2 PROCEDIMENTOS REALIZADOS", desc: "Descrição técnica detalhada das etapas", icon: "⚙️" },
+          { key: "analise", label: "3 ANÁLISE DE DADOS E DISCUSSÃO", desc: "Resultados obtidos, gráficos e constatações", icon: "📊" },
+          { key: "recomendacoes", label: "4 CONCLUSÃO E RECOMENDAÇÕES", desc: "Parecer final e proposições técnicas", icon: "📋" },
+          { key: "referencias", label: "REFERÊNCIAS", desc: "Normas técnicas e referências consultadas", icon: "🔗" },
+        ];
+      case "estudo_caso":
+        return [
+          { key: "introducao", label: "1 INTRODUÇÃO E APRESENTAÇÃO DO CASO", desc: "Contexto da organização ou situação estudada", icon: "📖" },
+          { key: "diagnostico", label: "2 DIAGNÓSTICO E FUNDAMENTAÇÃO", desc: "Análise da problemática e teoria aplicável", icon: "🔍" },
+          { key: "proposicoes", label: "3 PROPOSIÇÕES E SOLUÇÕES", desc: "Plano de ação e alternativas propostas", icon: "💡" },
+          { key: "conclusao", label: "4 LIÇÕES APRENDIDAS E CONCLUSÃO", desc: "Impactos esperados e desfecho do estudo", icon: "✅" },
+          { key: "referencias", label: "REFERÊNCIAS", desc: "Bibliografia e fontes documentais", icon: "🔗" },
+        ];
+      case "resenha":
+        return [
+          { key: "cabecalho", label: "REFERÊNCIA DA OBRA RESENHADA", desc: "Dados bibliográficos completos do livro/artigo", icon: "📖" },
+          { key: "sintese", label: "1 SÍNTESE DA OBRA", desc: "Resumo das principais teses do autor", icon: "📝" },
+          { key: "critica", label: "2 APRECIAÇÃO CRÍTICA E ANÁLISE", desc: "Avaliação fundamentada dos pontos fortes e fracos", icon: "🧐" },
+          { key: "conclusao", label: "3 CONCLUSÃO E INDICAÇÃO", desc: "Público-alvo e relevância da obra", icon: "✅" },
+        ];
+      default: // trabalho_academico (TCC) e monografia
+        return [
+          { key: "resumo", label: "RESUMO E ABSTRACT", desc: "Resumo em português e abstract em inglês", icon: "📑" },
+          { key: "introducao", label: "1 INTRODUÇÃO", desc: "Problematização, objetivos geral/específicos e justificativa", icon: "📖" },
+          { key: "fundamentacao", label: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", desc: "Revisão de literatura e procedimentos metodológicos", icon: "📚" },
+          { key: "resultados", label: "3 RESULTADOS E DISCUSSÃO", desc: "Dados empíricos, tabelas IBGE e análise científica", icon: "📊" },
+          { key: "conclusao", label: "4 CONSIDERAÇÕES FINAIS", desc: "Conclusões, respostas aos objetivos e perspectivas futuras", icon: "✅" },
+          { key: "referencias", label: "REFERÊNCIAS", desc: "Bibliografia padronizada ABNT NBR 6023", icon: "🔗" },
+        ];
+    }
+  };
+
 
   // Profile and Audit State
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -813,17 +865,12 @@ export default function App() {
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const sectionLabels: Record<string, string> = {
-        introducao: "1 INTRODUÇÃO",
-        fundamentacao: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA",
-        resultados: "3 RESULTADOS E DISCUSSÃO",
-        conclusao: "4 CONSIDERAÇÕES FINAIS",
-        referencias: "REFERÊNCIAS",
-      };
+      const activeSections = getGroupSectionsByDocType(groupDocType);
 
       // Extrai texto de cada slot via backend ou client-side
       const sectionTexts: Record<string, string> = {};
-      for (const [key, file] of Object.entries(sectionSlots)) {
+      for (const { key } of activeSections) {
+        const file = sectionSlots[key];
         if (!file) continue;
         let text = "";
         try {
@@ -868,27 +915,24 @@ export default function App() {
       const docCity = (city || "CIDADE - UF").toUpperCase();
       const docYear = year || currentYear;
       const advText = advisor ? `Orientador(a): ${advisor}` : "";
+      const typeLabel = groupDocType === "projeto" ? "Projeto de Pesquisa" : groupDocType === "relatorio" ? "Relatório Técnico" : groupDocType === "estudo_caso" ? "Estudo de Caso" : groupDocType === "resenha" ? "Resenha Crítica" : groupDocType === "artigo" || groupDocType === "artigo_cientifico" ? "Artigo Científico" : "Trabalho de Conclusão de Curso (TCC)";
 
       // Capa ABNT com todos os membros
       const coverPage = `${instName}${courseName ? `\n${courseName}` : ""}\n\n\n\n${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
 
       // Folha de Rosto
-      const titlePage = `${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n                                          Trabalho Acadêmico apresentado à ${instName}${courseName ? ` como requisito parcial de avaliação para o curso de ${courseName}` : ""}.\n${advText ? `\n                                          ${advText}` : ""}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+      const titlePage = `${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n                                          ${typeLabel} apresentado à ${instName}${courseName ? ` como requisito parcial de avaliação para o curso de ${courseName}` : ""}.\n${advText ? `\n                                          ${advText}` : ""}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
 
-      // Monta seções na ordem correta
-      const orderedSections = ["introducao", "fundamentacao", "resultados", "conclusao", "referencias"];
+      // Monta seções dinamicamente conforme o tipo escolhido
       const bodyPages: string[] = [];
-      for (const key of orderedSections) {
+      for (const { key, label } of activeSections) {
         if (sectionTexts[key]) {
-          const label = sectionLabels[key];
           const rawText = sectionTexts[key];
-          // Remove cabeçalhos duplicados do próprio arquivo se já tiver
           const cleanText = rawText.replace(/^---\s*(?:Início|Conteúdo)\s*d[eo]\s*(?:Arquivo|PDF):.*?---\s*/gi, '').trim();
           bodyPages.push(`${label}\n\n${cleanText}`);
         }
       }
 
-      // Monta documento final com quebras de página
       const fullDoc = [coverPage, titlePage, ...bodyPages].join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
 
       setGeneratedText(fullDoc);
@@ -2265,14 +2309,14 @@ ${latexChapters}
             <span>Google Gemini</span>
           </div>
 
-          {/* Botão Trabalho em Grupo posicionado ao lado do Gemini */}
+          {/* Botão Trabalho em Grupo posicionado ao lado do Gemini (Verde Claro Suave e Elegante) */}
           <button 
             onClick={() => setIsGroupMode(true)} 
-            className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-300/80 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs hover:shadow-sm transition-all active:scale-95 group"
             title="Montar trabalho acadêmico feito em grupo com múltiplos alunos"
           >
-            <span className="text-sm">👥</span>
-            <span>Trabalho em Grupo</span>
+            <span className="text-sm group-hover:scale-110 transition-transform">👥</span>
+            <span className="tracking-tight">Trabalho em Grupo</span>
           </button>
 
           {/* Indicador de Cota Própria / Créditos */}
@@ -4164,6 +4208,34 @@ ${latexChapters}
 
             {/* Conteúdo do Modal */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              
+              {/* Tipo de Documento / Divisão Estrutural */}
+              <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80">
+                <label className="block text-sm font-bold text-gray-800 mb-1.5">
+                  📚 Tipo de Trabalho (Define a Divisão de Seções)
+                </label>
+                <select
+                  value={groupDocType}
+                  onChange={(e) => setGroupDocType(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-800 shadow-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                >
+                  <option value="trabalho_academico">🎓 Trabalho Acadêmico / TCC / Monografia (NBR 14724)</option>
+                  <option value="artigo">📄 Artigo Acadêmico / Artigo Científico (NBR 6022)</option>
+                  <option value="projeto">📑 Projeto de Pesquisa (NBR 15287)</option>
+                  <option value="relatorio">📋 Relatório Técnico-Científico (NBR 10719)</option>
+                  <option value="estudo_caso">📊 Estudo de Caso Prático</option>
+                  <option value="resenha">✍️ Resenha Crítica de Obra</option>
+                </select>
+                <div className="mt-2 text-[11px] text-emerald-800 font-medium">
+                  {groupDocType === "trabalho_academico" && "✨ Estrutura: Resumo/Abstract + 1 Introdução + 2 Fundamentação e Métodos + 3 Resultados + 4 Considerações Finais + Referências"}
+                  {groupDocType === "artigo" && "✨ Estrutura: Resumo/Abstract + 1 Introdução + 2 Materiais e Métodos + 3 Resultados e Discussão + 4 Considerações Finais + Referências"}
+                  {groupDocType === "projeto" && "✨ Estrutura: 1 Introdução/Justificativa + 2 Objetivos Geral/Específicos + 3 Fundamentação + 4 Metodologia/Cronograma + Referências"}
+                  {groupDocType === "relatorio" && "✨ Estrutura: 1 Introdução e Objetivo + 2 Procedimentos Realizados + 3 Análise de Dados + 4 Recomendações + Referências"}
+                  {groupDocType === "estudo_caso" && "✨ Estrutura: 1 Introdução do Caso + 2 Diagnóstico e Teoria + 3 Proposições/Soluções + 4 Lições Aprendidas + Referências"}
+                  {groupDocType === "resenha" && "✨ Estrutura: Cabeçalho Bibliográfico + 1 Síntese da Obra + 2 Apreciação Crítica + 3 Conclusão/Indicação"}
+                </div>
+              </div>
+
               {/* Membros do Grupo */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -4205,20 +4277,14 @@ ${latexChapters}
                 </button>
               </div>
 
-              {/* Slots de Seções */}
+              {/* Slots de Seções Dinâmicos baseados no Tipo Escolhido */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-bold text-gray-800">Arquivos por Seção ABNT</label>
+                  <label className="text-sm font-bold text-gray-800">Arquivos por Seção ({getGroupSectionsByDocType(groupDocType).length} Seções)</label>
                   <span className="text-xs text-gray-500">PDF, Word (.docx), TXT ou MD</span>
                 </div>
                 <div className="space-y-2.5">
-                  {([
-                    { key: "introducao", label: "1 INTRODUÇÃO", desc: "Problematização, objetivos e justificativa", icon: "📖" },
-                    { key: "fundamentacao", label: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", desc: "Revisão bibliográfica e métodos", icon: "📚" },
-                    { key: "resultados", label: "3 RESULTADOS E DISCUSSÃO", desc: "Dados empíricos e análise", icon: "📊" },
-                    { key: "conclusao", label: "4 CONSIDERAÇÕES FINAIS", desc: "Conclusões e perspectivas futuras", icon: "✅" },
-                    { key: "referencias", label: "REFERÊNCIAS", desc: "Bibliografia no padrão NBR 6023", icon: "🔗" },
-                  ] as const).map(({ key, label, desc, icon }) => (
+                  {getGroupSectionsByDocType(groupDocType).map(({ key, label, desc, icon }) => (
                     <div 
                       key={key} 
                       className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
