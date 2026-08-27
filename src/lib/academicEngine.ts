@@ -35,7 +35,7 @@ export function getActiveGeminiKey(customKey?: string): string {
 
   // 4. Chave Mestre Criptografada e Ofuscada em Memória (Decodificação Dinâmica Segura)
   try {
-    const _c1 = "QVEuQWI4Uk42SkhxLXp0ck92UFNGMUZ1UEwyOU1JamxsWFd1Yld0YTB6aWp3UDItRWczOWc=";
+    const _c1 = "QVEuQWI4Uk42S0oxQVRSYUR4X3pCMnc4cFY1TEVfbzJwYVp2Qk0tbVY2MnkwYWhValxmOFE=";
     const _k = typeof atob === "function" ? atob(_c1) : Buffer.from(_c1, 'base64').toString('binary');
     if (_k && _k.length > 10) return _k;
   } catch (e) {
@@ -314,26 +314,11 @@ NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
       return prefixHeader + normalized;
     }
   } catch (err) {
-    console.warn("Chamada direta Gemini falhou, usando gerador determinístico:", err);
+    console.warn("Chamada direta Gemini falhou:", err);
+    throw err;
   }
 
-  // CONTINGÊNCIA DETERMINÍSTICA
-  if (documentType === "resumo") {
-    return `RESUMO
-O presente estudo analisa as configurações conceituais e empíricas concernentes a ${cleanTopic}. Por meio de uma abordagem qualitativa de caráter exploratório, o trabalho articula referências contemporâneas para identificar os desafios e as potencialidades da área. Os resultados atestam a relevância da parametrização metodológica e do rigor científico na resolução dos problemas investigados. Conclui-se que o fortalecimento das práticas reflexivas constitui elemento essencial para a consolidação do saber acadêmico.
-
-Palavras-chave: ${cleanTopic}. Normalização ABNT. Metodologia Científica. Produção Acadêmica.`;
-  }
-
-  if (documentType === "redacao") {
-    return `Historicamente, a filósofa Hannah Arendt, em sua teoria sobre a banalização do mal, elucida como determinadas problemáticas sociais tornam-se naturalizadas pela coletividade. Paralelamente, no cenário contemporâneo brasileiro, a discussão concernente a ${cleanTopic} reflete essa inércia estrutural. Com efeito, torna-se imperativo desarticular os entraves que perpetuam esse panorama, destacando-se a inoperância de mecanismos institucionais e a carência de conscientização civil.
-
-Em primeira análise, cabe pontuar a omissão governamental como catalisadora dessa realidade. Consoante o filósofo Thomas Hobbes, o Estado deve assegurar o bem-estar coletivo; todavia, a escassez de investimentos e a lentidão na implementação de políticas públicas voltadas a ${cleanTopic} rompem esse pacto implícito. Em decorrência disso, parcelas expressivas da população permanecem desprovidas de amparo estruturado, aprofundando disparidades históricas.
-
-Ademais, a negligência educacional atua como força mantenedora do problema. Segundo o educador Paulo Freire, quando a educação não é libertadora, o sonho do oprimido é ser o opressor. Sob essa ótica, a ausência de debates transversais e reflexivos sobre ${cleanTopic} nas matrizes curriculares impede a formação de uma postura cidadã crítica, perpetuando concepções estigmatizadas e superficiais.
-
-Infere-se, portanto, a urgência de intervenções coordenadas para transformar esse cenário. Compete ao Governo Federal, em cooperação com os Ministérios competentes e veículos de comunicação, instituir um Programa Nacional de Fortalecimento e Conscientização sobre ${cleanTopic}, por meio da alocação de recursos orçamentários específicos e da realização de oficinas formativas em escolas e comunidades. Essa medida visa qualificar os cidadãos e fomentar soluções sustentáveis. Somente assim, consolidar-se-á uma sociedade plenamente equânime e consciente.`;
-  }
+  return "";
 
   const preTextualBody = `RESUMO
 

@@ -6,7 +6,7 @@ import {
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
-  Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight
+  Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight, Volume2, VolumeX
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -211,6 +211,65 @@ export default function App() {
   const [imageStyle, setImageStyle] = useState<"none" | "simple_border" | "soft_shadow" | "rounded_frame" | "academic_box">("academic_box");
   const [isImageSelected, setIsImageSelected] = useState<boolean>(false); // O menu só aparece quando a foto é selecionada (Padrão Word)
   const [hiddenPageNumbers, setHiddenPageNumbers] = useState<Set<number>>(new Set()); // Páginas com numeração oculta pelo usuário
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+
+  // Leitura em Áudio do Texto Acadêmico (Web Speech API)
+  const handleToggleSpeech = () => {
+    if (!('speechSynthesis' in window)) {
+      setErrorMessage("Leitura em áudio não suportada neste navegador.");
+      return;
+    }
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      setErrorMessage("⏹️ Leitura em áudio interrompida.");
+      setTimeout(() => setErrorMessage(""), 2500);
+      return;
+    }
+
+    if (!generatedText || !generatedText.trim()) {
+      setErrorMessage("Nenhum texto para ler em áudio.");
+      return;
+    }
+
+    // Limpa marcações estruturais para leitura limpa e fluida
+    const cleanSpeechText = generatedText
+      .replace(/--- \[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\] ---/g, ' ')
+      .replace(/!\[.*?\]\(.*?\)/g, ' ')
+      .replace(/#+/g, ' ')
+      .replace(/[\*\_\`]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(cleanSpeechText);
+    utterance.lang = "pt-BR";
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    // Tenta selecionar voz nativa em português brasileiro
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoice = voices.find(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.includes("pt"));
+    if (ptVoice) utterance.voice = ptVoice;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setErrorMessage("🔊 Reproduzindo leitura do documento em áudio...");
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setErrorMessage("✅ Leitura em áudio concluída!");
+      setTimeout(() => setErrorMessage(""), 3000);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -3055,6 +3114,30 @@ ${latexChapters}
                   <Hash className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                   Paginar
                 </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleToggleSpeech} 
+                  disabled={!generatedText || !generatedText.trim()} 
+                  variant="ghost" 
+                  className={`text-xs h-7 px-2 font-semibold rounded-lg whitespace-nowrap transition-all ${
+                    isSpeaking 
+                      ? "bg-amber-100 text-amber-900 border border-amber-300 animate-pulse" 
+                      : "text-amber-800 hover:bg-amber-50 hover:text-amber-900"
+                  }`}
+                  title={isSpeaking ? "Pausar / Interromper Leitura em Áudio" : "Ouvir Leitura do Documento em Áudio"}
+                >
+                  {isSpeaking ? (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5 mr-1 text-amber-700" />
+                      <span>Parar</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5 mr-1 text-amber-700" />
+                      <span>Ouvir</span>
+                    </>
+                  )}
+                </Button>
               </div>
 
               {/* Grupo de Exportação e Cópia (PDF, Word, Copiar) */}
@@ -3174,7 +3257,12 @@ ${latexChapters}
                       bodyPages.push(referencesContent);
                     }
 
-                    pages = bodyPages.length > 0 ? bodyPages : [generatedText];
+                    const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
+                    if (requiresFormalCover) {
+                      pages = ["CAPA_AUTO", "FOLHA_ROSTO_AUTO", ...(bodyPages.length > 0 ? bodyPages : [generatedText])];
+                    } else {
+                      pages = bodyPages.length > 0 ? bodyPages : [generatedText];
+                    }
                   } else {
                     pages = [""];
                   }
