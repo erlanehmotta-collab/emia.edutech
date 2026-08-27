@@ -2876,19 +2876,8 @@ ${latexChapters}
                 </Button>
               </div>
 
-              {/* Ações de Cópia e Apresentação */}
+              {/* Ação de Apresentação */}
               <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5">
-                <Button 
-                  onClick={handleCopy} 
-                  disabled={!generatedText} 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-xs h-7 px-2 text-gray-700 hover:bg-gray-200/60 rounded-lg font-medium"
-                  title="Copiar Texto Completo"
-                >
-                  <Copy className="w-3.5 h-3.5 mr-1 text-gray-500" />
-                  Copiar
-                </Button>
                 <Button 
                   onClick={() => {
                     if (!generatedText) {
@@ -2907,7 +2896,7 @@ ${latexChapters}
                 </Button>
               </div>
 
-              {/* Grupo de Exportação (PDF, Word, LaTeX) */}
+              {/* Grupo de Exportação e Cópia (PDF, Word, Copiar) */}
               <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5">
                 <Button 
                   onClick={exportPDF} 
@@ -2932,15 +2921,15 @@ ${latexChapters}
                   Word
                 </Button>
                 <Button 
-                  onClick={exportLaTeX} 
+                  onClick={handleCopy} 
                   disabled={!generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs h-7 px-2 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 rounded-lg font-semibold"
-                  title="Exportar Código LaTeX"
+                  className="text-xs h-7 px-2 text-gray-700 hover:bg-gray-200/60 rounded-lg font-medium"
+                  title="Copiar Texto Completo"
                 >
-                  <FileCode className="w-3.5 h-3.5 mr-1 text-emerald-700" />
-                  LaTeX
+                  <Copy className="w-3.5 h-3.5 mr-1 text-gray-500" />
+                  Copiar
                 </Button>
               </div>
 
