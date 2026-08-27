@@ -1355,7 +1355,7 @@ ${generatedText}`;
     setIsLoading(true);
     try {
       const inst = (institution || "INSTITUIÇÃO DE ENSINO SUPERIOR").toUpperCase();
-      const crs = course ? course.toUpperCase() : "";
+      const crs = course ? course.toUpperCase() : "CURSO DE GRADUAÇÃO / PÓS-GRADUAÇÃO";
       const subMat = subject ? `DISCIPLINA: ${subject.toUpperCase()}` : "";
       const shiftClassInfo = [shift ? `Turno: ${shift}` : "", classroom ? `Sala/Turma: ${classroom}` : ""].filter(Boolean).join(" • ");
       const aut = (studentName || "NOME DO(A) AUTOR(A)").toUpperCase();
@@ -1367,27 +1367,29 @@ ${generatedText}`;
 
       const docTypeLabel = documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType === "artigo" || documentType === "artigo_cientifico" ? "Artigo Científico" : documentType === "projeto" ? "Projeto de Pesquisa" : documentType === "relatorio" ? "Relatório Técnico" : "Trabalho de Conclusão de Curso (TCC)";
 
-      const presentationNote = `${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para a disciplina de ${subject || course}` : ""}.${shiftClassInfo ? `\n${shiftClassInfo}` : ""}${adv ? `\n${adv}` : ""}`;
+      const presentationNote = `${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para o curso de ${course}` : ""}.${shiftClassInfo ? `\n${shiftClassInfo}` : ""}${adv ? `\n${adv}` : ""}`;
 
       // 1. CAPA OFICIAL ABNT (NBR 14724)
       const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
       const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
 
-      const coverBlock = `CAPA\n${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
+      // 2. FOLHA DE ROSTO OFICIAL ABNT (NBR 14724)
+      const titlePage = `${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
 
-      // Remove capa anterior se já existir no início do documento
+      const coverBlock = `CAPA\n${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\nFOLHA DE ROSTO\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
+
+      // Remove capa e folha de rosto anteriores se já existirem no início do documento
       let cleanBody = generatedText || "";
       if (cleanBody.includes("--- [QUEBRA DE PÁGINA] ---")) {
         const parts = cleanBody.split("--- [QUEBRA DE PÁGINA] ---");
-        // Filtra e descarta apenas páginas de capa antiga
         const filteredParts = parts.filter(p => {
           const t = p.trim();
-          return !t.startsWith("CAPA") && t !== "CAPA_AUTO";
+          return !t.startsWith("CAPA") && !t.startsWith("FOLHA DE ROSTO") && t !== "CAPA_AUTO" && t !== "FOLHA_ROSTO_AUTO";
         });
         cleanBody = filteredParts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n").trim();
       } else {
         const t = cleanBody.trim();
-        if (t.startsWith("CAPA") || t === "CAPA_AUTO") {
+        if (t.startsWith("CAPA") || t.startsWith("FOLHA DE ROSTO") || t === "CAPA_AUTO" || t === "FOLHA_ROSTO_AUTO") {
           cleanBody = "";
         }
       }
@@ -1403,12 +1405,12 @@ ${generatedText}`;
 
       updateGeneratedTextWithHistory(updatedFullText);
       setActiveTab("editor");
-      setErrorMessage("✅ Capa Oficial ABNT inserida com sucesso!");
+      setErrorMessage("✅ Capa e Folha de Rosto Oficiais ABNT NBR 14724 inseridas com sucesso!");
       setTimeout(() => setErrorMessage(""), 3500);
-      logAction("Inserção de Capa ABNT", updatedFullText.substring(0, 500));
+      logAction("Inserção de Capa e Folha de Rosto ABNT", updatedFullText.substring(0, 500));
     } catch (error) {
       console.error(error);
-      setErrorMessage(error instanceof Error ? error.message : "Erro ao inserir capa e contracapa.");
+      setErrorMessage(error instanceof Error ? error.message : "Erro ao inserir capa e folha de rosto.");
     } finally {
       setIsLoading(false);
     }
@@ -2325,11 +2327,8 @@ ${latexChapters}
   };
 
   const handleOpenSlidesStudio = () => {
-    if (!generatedText || !generatedText.trim()) {
-      setErrorMessage("Gere ou insira um documento no editor primeiro para abrir o Estúdio de Slides.");
-      return;
-    }
-    const parsed = parseDocumentIntoSlides(generatedText);
+    const textToParse = generatedText && generatedText.trim() ? generatedText : "1 INTRODUÇÃO\n\nApresentação acadêmica estruturada.";
+    const parsed = parseDocumentIntoSlides(textToParse);
     const enriched = parsed.map((s, idx) => ({
       ...s,
       layout: (idx === 0 ? "card" : idx % 3 === 0 ? "split" : idx % 2 === 0 ? "metrics" : "bullets") as "card" | "split" | "bullets" | "quote" | "metrics",
