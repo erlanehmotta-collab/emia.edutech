@@ -315,7 +315,7 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
-  const onDrop = (acceptedFiles: File[]) => {
+  const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       // Separa imagens para inserção instantânea direta no documento
       const imageFiles = acceptedFiles.filter(f => f.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(f.name));
@@ -327,7 +327,7 @@ export default function App() {
           reader.onload = (event) => {
             const base64 = event.target?.result as string;
             const figureBlock = `\n\n![Figura inserida](${base64})\nFigura 1 – Representação Ilustrativa do Objeto de Estudo\nFonte: Elaborado pelos autores (${new Date().getFullYear()}).\n\n`;
-            setGeneratedText(prev => prev ? prev + figureBlock : figureBlock);
+            updateGeneratedTextWithHistory(generatedText ? generatedText + figureBlock : figureBlock);
             setActiveTab("editor");
             setErrorMessage("✅ Imagem inserida diretamente no documento ABNT!");
             setTimeout(() => setErrorMessage(""), 3500);
@@ -338,6 +338,70 @@ export default function App() {
 
       if (documentFiles.length > 0) {
         setFiles(prev => [...prev, ...documentFiles]);
+        setIsLoading(true);
+        setErrorMessage("⏳ Processando e normalizando documento com a Skill Acadêmica ABNT...");
+
+        try {
+          let extracted = "";
+          // 1. Tenta extração via backend
+          try {
+            const formData = new FormData();
+            documentFiles.forEach(f => formData.append("files", f));
+            const res = await fetch("/api/extract", { method: "POST", body: formData });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && data.text) extracted = data.text;
+            }
+          } catch (e) {
+            console.warn("Backend extract falhou, executando extração local:", e);
+          }
+
+          // 2. Extração client-side caso necessário
+          if (!extracted) {
+            const parts: string[] = [];
+            for (const docFile of documentFiles) {
+              if (docFile.type.includes("text") || docFile.name.endsWith(".txt") || docFile.name.endsWith(".md") || docFile.name.endsWith(".csv")) {
+                parts.push(await docFile.text());
+              } else if (docFile.name.toLowerCase().endsWith(".pdf") || docFile.type === "application/pdf") {
+                const ab = await docFile.arrayBuffer();
+                const latinText = new TextDecoder("latin1").decode(new Uint8Array(ab));
+                const matches = latinText.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
+                let pdfTxt = "";
+                if (matches.length > 0) {
+                  pdfTxt = matches.map(m => m.replace(/^\(/, '').replace(/\)\s*(?:Tj|'|")$/, '')).join(' ').replace(/\\([()\\])/g, '$1').replace(/\s+/g, ' ');
+                } else {
+                  pdfTxt = latinText.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 15).join('\n\n');
+                }
+                if (pdfTxt.trim()) parts.push(pdfTxt.trim());
+              }
+            }
+            extracted = parts.join("\n\n");
+          }
+
+          if (extracted && extracted.trim()) {
+            // Aciona a Skill Acadêmica de Normalização ABNT:
+            // 1. Normaliza Citações NBR 10520:2023 (Sobrenome, 2023)
+            let formatted = normalizeCitationsToABNT2023(extracted);
+            // 2. Organiza a ordem oficial das seções (ABNT NBR 14724 / 6022)
+            formatted = organizeTextInABNTOrder(formatted);
+            // 3. Limpa espaçamentos excessivos
+            formatted = formatted
+              .replace(/\r\n/g, '\n')
+              .replace(/\n{4,}/g, '\n\n\n')
+              .replace(/[ \t]+$/gm, '');
+
+            updateGeneratedTextWithHistory(formatted);
+            setActiveTab("editor");
+            setErrorMessage("✅ Documento carregado e 100% formatado na ABNT pela Skill Acadêmica!");
+            setTimeout(() => setErrorMessage(""), 4000);
+            logAction("Upload e Normalização ABNT de Documento", formatted);
+          }
+        } catch (uploadErr) {
+          console.error(uploadErr);
+          setErrorMessage("Erro ao formatar o documento carregado.");
+        } finally {
+          setIsLoading(false);
+        }
       }
     }
   };
