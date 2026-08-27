@@ -2296,18 +2296,22 @@ ${latexChapters}
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="bg-blue-600 text-white w-8 h-8 rounded-md flex items-center justify-center">
-            <FileText className="w-5 h-5" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 text-white w-8 h-8 rounded-md flex items-center justify-center shadow-xs">
+              <FileText className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-gray-900 text-lg tracking-tight">EMIA.EDUTECH</span>
           </div>
-          <span className="font-semibold text-gray-900 text-lg">EMIA.EDUTECH</span>
+
+          {/* Marca d'água discreta do Google Gemini ao lado da logo */}
+          <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-gray-200/80 text-gray-400 select-none">
+            <Sparkles className="w-3.5 h-3.5 text-blue-500/70" />
+            <span className="text-[11px] font-medium tracking-wide">powered by Google Gemini</span>
+          </div>
         </div>
+
         <div className="flex items-center gap-2.5">
-          {/* Indicador de IA Ativa: Google Gemini */}
-          <div className="h-8 flex items-center gap-1.5 bg-blue-50/90 border border-blue-200 text-blue-900 px-3 rounded-xl text-xs font-bold shadow-2xs">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-            <span>Google Gemini</span>
-          </div>
 
           {/* Botão Trabalho em Grupo (Verde Claro Suave e Harmonioso) */}
           <button 
