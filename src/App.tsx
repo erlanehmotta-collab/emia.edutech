@@ -1568,25 +1568,50 @@ ${generatedText}`;
     setTimeout(() => setErrorMessage(""), 3500);
   };
 
+  const handleCloseReferenceModal = () => {
+    setIsLoading(false);
+    setReferenceSource("");
+    setGeneratedReference("");
+    setShowReferenceModal(false);
+  };
+
   const handleGenerateReference = async () => {
-    if (!referenceSource) {
+    if (!referenceSource || !referenceSource.trim()) {
       setErrorMessage("Por favor, insira um link ou DOI.");
       return;
     }
     setIsLoading(true);
     setGeneratedReference("");
     try {
-      const res = await fetch("/api/generate-reference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: referenceSource, style: referenceStyle }),
-      });
-      const textData = await res.text(); let data; try { data = JSON.parse(textData); } catch (e) { throw new Error(`Erro no servidor (${res.status}). Aguarde e tente novamente.`); }
-      if (data.success) {
-        setGeneratedReference(data.text);
-        logAction("Referência gerada", data.text);
+      // Geração ultrarrápida direta pelo Gemini com normalização ABNT NBR 6023:2025
+      const promptRef = `Você é um normalizador bibliográfico sênior especialista nas normas ABNT NBR 6023:2025 e APA 7th.
+Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
+- Fonte / DOI / Link / Dados: "${referenceSource.trim()}"
+- Estilo: ${referenceStyle}
+- Regras: Caixa alta para sobrenomes do autor na ABNT (ex: SILVA, João), título do livro em negrito ou artigo com revista em itálico, ano, cidade e link/DOI se houver.
+- Retorne APENAS a referência bibliográfica final pronta para uso, sem aspas e sem comentários adicionais.`;
+
+      let refText = "";
+      try {
+        refText = await callGeminiDirectly(promptRef, customGeminiKey, "gemini-3.6-flash");
+      } catch (geminiErr) {
+        console.warn("Chamada direta falhou, tentando rota /api/generate-reference:", geminiErr);
+        const res = await fetch("/api/generate-reference", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: referenceSource, style: referenceStyle }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.text) refText = data.text;
+        }
+      }
+
+      if (refText && refText.trim()) {
+        setGeneratedReference(refText.trim());
+        logAction("Referência Bibliográfica Gerada", refText.trim());
       } else {
-        setErrorMessage(data.error);
+        setErrorMessage("Não foi possível formatar a referência. Verifique os dados e tente novamente.");
       }
     } catch (error) {
       console.error(error);
@@ -1674,39 +1699,39 @@ ${generatedText}`;
     try {
       let assistantResponse = "";
 
-      // 1. Tenta via endpoint do servidor
+      // Chamada ultrarrápida direta ao Gemini com fallback transparente
       try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: getApiHeaders(),
-          body: JSON.stringify({ 
-            message: userMessage, 
-            history: chatHistory,
-            context: generatedText
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.text) {
-            assistantResponse = data.text;
-          }
-        }
-      } catch (serverErr) {
-        console.warn("Falha no endpoint /api/chat, tentando chamada direta ao Gemini:", serverErr);
-      }
-
-      // 2. Se o servidor não respondeu, chama diretamente o Gemini com fallback
-      if (!assistantResponse) {
         const chatPrompt = `Você é o tutor acadêmico especialista e assistente inteligente do EMIA.EDUTECH.
-Responda com rigor científico, clareza didática e foco nas normas da ABNT.
+Responda de forma ágil, precisa, científica e com rigor nas normas da ABNT.
 
-${generatedText ? `[DOCUMENTO ATUAL DO USUÁRIO]\n${generatedText.substring(0, 7000)}\n[/DOCUMENTO ATUAL]\n` : ""}
-[HISTÓRICO DA CONVERSA]
-${chatHistory.map(h => `${h.role === 'user' ? 'Aluno' : 'Assistente'}: ${h.text}`).join('\n')}
+${generatedText ? `[DOCUMENTO ATUAL DO USUÁRIO]\n${generatedText.substring(0, 4000)}\n[/DOCUMENTO ATUAL]\n` : ""}
+[HISTÓRICO RECENTE]
+${chatHistory.slice(-4).map(h => `${h.role === 'user' ? 'Aluno' : 'Assistente'}: ${h.text}`).join('\n')}
 Aluno: ${userMessage}
 Assistente:`;
 
-        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey);
+        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.6-flash");
+      } catch (directErr) {
+        console.warn("Tentativa direta falhou, tentando rota /api/chat:", directErr);
+        try {
+          const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: getApiHeaders(),
+            body: JSON.stringify({ 
+              message: userMessage, 
+              history: chatHistory.slice(-4),
+              context: generatedText ? generatedText.substring(0, 4000) : ""
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.text) {
+              assistantResponse = data.text;
+            }
+          }
+        } catch (serverErr) {
+          console.error("Falha em todas as vias do chat:", serverErr);
+        }
       }
 
       if (assistantResponse) {
@@ -4125,7 +4150,11 @@ ${latexChapters}
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">Gerar Referência</h2>
-              <button onClick={() => setShowReferenceModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button 
+                onClick={handleCloseReferenceModal} 
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Fechar e cancelar"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
