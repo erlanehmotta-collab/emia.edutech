@@ -1857,6 +1857,8 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
     try {
       let assistantResponse = "";
 
+      // Chamada direta rápida ao Gemini
+      try {
         const chatPrompt = `Você é o Tutor Acadêmico Oficial e Guia do Aplicativo EMIA.EDUTECH.
 Sua missão é ajudar o usuário com redação científica, normas da ABNT (NBR 14724, 6022, 6028, 6023, 10520:2023, 6027) E TAMBÉM explicar detalhadamente como usar todas as funções e campos do aplicativo.
 
