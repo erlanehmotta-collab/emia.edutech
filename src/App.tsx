@@ -2304,39 +2304,28 @@ ${latexChapters}
             <span className="font-semibold text-gray-900 text-lg tracking-tight">EMIA.EDUTECH</span>
           </div>
 
-          {/* Botão PIX Maior e em Destaque ao lado da Marca */}
-          {!isMaster && !customGeminiKey && !customOpenaiKey && (
-            <button 
-              onClick={() => setShowPixModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95 group"
-              title="Recarregar créditos via PIX"
-            >
-              <Coins className="w-4 h-4 text-white animate-bounce" />
-              <span>{credits} {credits === 1 ? 'Trabalho Restante' : 'Trabalhos Restantes'}</span>
-              <span className="bg-white text-orange-600 text-[10px] px-2 py-0.5 rounded-lg font-extrabold shadow-2xs ml-1">
-                + Recarregar (PIX)
-              </span>
-            </button>
-          )}
-
           {/* Marca d'água discreta do Google Gemini ao lado da logo */}
-          <div className="hidden lg:flex items-center gap-1.5 pl-3 border-l border-gray-200/80 text-gray-400 select-none">
+          <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-gray-200/80 text-gray-400 select-none">
             <Sparkles className="w-3.5 h-3.5 text-blue-500/70" />
             <span className="text-[11px] font-medium tracking-wide">powered by Google Gemini</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
-
-          {/* Botão Trabalho em Grupo (Verde Claro Suave e Harmonioso) */}
-          <button 
-            onClick={() => setIsGroupMode(true)} 
-            className="h-8 flex items-center gap-1.5 bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-300 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
-            title="Montar trabalho acadêmico feito em grupo com múltiplos alunos"
-          >
-            <Users className="w-3.5 h-3.5 text-emerald-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
-            <span className="tracking-tight">Trabalho em Grupo</span>
-          </button>
+          {/* Botão PIX / Créditos: Primeiro Botão ao lado de Trabalho em Grupo */}
+          {!isMaster && !customGeminiKey && !customOpenaiKey && (
+            <button 
+              onClick={() => setShowPixModal(true)}
+              className="h-8 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+              title="Recarregar créditos via PIX"
+            >
+              <Coins className="w-3.5 h-3.5 text-white animate-bounce" />
+              <span>{credits} {credits === 1 ? 'Trabalho' : 'Trabalhos'}</span>
+              <span className="bg-white/25 text-white text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ml-0.5">
+                + PIX
+              </span>
+            </button>
+          )}
 
           {/* Indicador de Cota Própria / Créditos para Master ou Chave Própria */}
           {isMaster ? (
@@ -2350,6 +2339,16 @@ ${latexChapters}
               <span>Cota Própria Conectada</span>
             </div>
           ) : null}
+
+          {/* Botão Trabalho em Grupo (Verde Claro Suave e Harmonioso) */}
+          <button 
+            onClick={() => setIsGroupMode(true)} 
+            className="h-8 flex items-center gap-1.5 bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-300 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+            title="Montar trabalho acadêmico feito em grupo com múltiplos alunos"
+          >
+            <Users className="w-3.5 h-3.5 text-emerald-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
+            <span className="tracking-tight">Trabalho em Grupo</span>
+          </button>
 
           {/* Botão Perfil e Histórico (Índigo/Lavanda Elegante) */}
           <button 
