@@ -2597,7 +2597,7 @@ ${latexChapters}
             <span className="tracking-tight">Chat Acadêmico</span>
           </button>
 
-          {/* Botão Slides (EMIA.SLIDES - Amarelo Pastel com Texto Branco - Entre Chat e Trabalho em Grupo) */}
+          {/* Botão Slides (EMIA.SLIDES - Amarelo Pastel com Texto Branco) */}
           <button 
             onClick={handleOpenSlidesStudio} 
             className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
