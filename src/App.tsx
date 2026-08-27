@@ -2746,6 +2746,19 @@ ${latexChapters}
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Botão de Créditos / PIX (Visível para todos os usuários) */}
+          <button 
+            onClick={() => setShowPixModal(true)}
+            className="h-7.5 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white px-3 rounded-lg text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+            title="Recarregar créditos via PIX"
+          >
+            <Coins className="w-3.5 h-3.5 text-white animate-bounce" />
+            <span>{credits} {credits === 1 ? 'Trabalho' : 'Trabalhos'}</span>
+            <span className="bg-white/25 text-white text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-0.5">
+              + PIX
+            </span>
+          </button>
+
           {/* Indicador de Cota Própria para Chave Própria */}
           {(customGeminiKey || customOpenaiKey) && !isMaster ? (
             <div className="h-7.5 flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 font-semibold text-[11px] px-2.5 rounded-lg shadow-2xs">
