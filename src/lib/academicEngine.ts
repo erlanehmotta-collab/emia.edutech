@@ -268,54 +268,99 @@ ${studentName ? `Resenhista: ${studentName}
 `;
   }
 
-  // DIRETRIZES DO CORPO TEXTUAL COM ESPAÇAMENTO E ALINHAMENTO RIGOROSOS
+  // ESTRUTURA RIGOROSA DE CADA TIPO DE DOCUMENTO CONFORME AS NORMAS ABNT
   let genreInstructions = "";
+  
   if (documentType === "resumo") {
-    genreInstructions = `ESTRUTURA DE RESUMO / FICHAMENTO (ABNT NBR 6028):
-- REGRA: NÃO use Capa nem Folha de Rosto.
-- Título centralizado: "RESUMO"
-- EXATAMENTE 1 linha em branco entre o título "RESUMO" e o início do texto.
-- Texto em PARÁGRAFO ÚNICO contínuo e justificado (150 a 500 palavras) sem recuo de primeira linha, contendo objetivo, metodologia, resultados e conclusões.
-- 1 linha em branco e então: "Palavras-chave: [3 a 5 palavras separadas por ponto final]."`;
+    // ABNT NBR 6028: RESUMOS E FICHAMENTOS
+    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE RESUMO / FICHAMENTO (ABNT NBR 6028):
+- REGRA SUPREMA: PROIBIDO gerar Capa, Folha de Rosto, Sumário ou divisões de capítulos! O resumo é um texto em fluxo contínuo.
+- Título do Trabalho centralizado em negrito no topo.
+- Título da seção centralizado: "RESUMO"
+- EXATAMENTE 1 linha em branco entre a palavra "RESUMO" e o início do parágrafo.
+- Texto em PARÁGRAFO ÚNICO contínuo e justificado (150 a 500 palavras) sem recuo na primeira linha, contendo: objetivo do estudo, metodologia utilizada, principais resultados e conclusão sintética.
+- 1 linha em branco após o parágrafo.
+- "Palavras-chave: [3 a 5 termos representativos separados por ponto e finalizados por ponto]."
+- PROIBIDO incluir citações diretas longas, tabelas ou sumário.`;
   } else if (documentType === "redacao") {
-    genreInstructions = `ESTRUTURA DE REDAÇÃO (PADRÃO ENEM NOTA 1000):
-- REGRA: NÃO use Capa nem Folha de Rosto.
-- 4 parágrafos contínuos: Introdução com tese, Desenvolvimento 1, Desenvolvimento 2 e Proposta de Intervenção completa com os 5 elementos (Agente, Ação, Meio/Modo, Efeito e Detalhamento).`;
+    // REDAÇÃO ENEM NOTA 1000
+    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE REDAÇÃO (PADRÃO ENEM NOTA 1000):
+- REGRA SUPREMA: PROIBIDO gerar Capa, Folha de Rosto, Sumário ou títulos de seções.
+- Título opcional centralizado.
+- 4 parágrafos contínuos e articulados:
+  1. Introdução: Apresentação do tema e tese explícita com 2 argumentos centrais.
+  2. Desenvolvimento 1: Aprofundamento do argumento 1 com repertório sociocultural legítimo.
+  3. Desenvolvimento 2: Aprofundamento do argumento 2 com dados e fundamentação crítica.
+  4. Conclusão: Proposta de intervenção social detalhada contendo os 5 elementos obrigatórios (Agente, Ação, Meio/Modo, Efeito e Detalhamento).`;
+  } else if (documentType === "artigo" || documentType === "artigo_cientifico" || documentType === "artigo_academico") {
+    // ABNT NBR 6022: ARTIGOS CIENTÍFICOS EM PUBLICAÇÃO PERIÓDICA
+    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE ARTIGO CIENTÍFICO (ABNT NBR 6022):
+- REGRA: Artigos científicos NÃO levam Sumário formal (a estrutura é contínua).
+- Título e subtítulo centralizados.
+- Autor(es) e vinculação institucional.
+- RESUMO em português (100 a 250 palavras) em parágrafo único + Palavras-chave.
+- ABSTRACT em inglês correspondente + Keywords.
+- 1 INTRODUÇÃO (Contextualização, problema, hipótese, objetivos e justificativa).
+- 2 DESENVOLVIMENTO / FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA
+- 2.1 Análise das Dimensões Teóricas
+- 3 RESULTADOS E DISCUSSÃO (com 1 Tabela padrão IBGE e 1 Quadro com Fonte).
+- 4 CONSIDERAÇÕES FINAIS
+- REFERÊNCIAS (ABNT NBR 6023:2025 alinhadas à esquerda com entrelinha simples).`;
+  } else if (documentType === "projeto" || documentType === "projeto_pesquisa") {
+    // ABNT NBR 15287: PROJETO DE PESQUISA
+    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE PROJETO DE PESQUISA (ABNT NBR 15287):
+- SUMÁRIO com pontilhados líderes (NBR 6027).
+- 1 TEMA E PROBLEMATIZAÇÃO
+- 2 HIPÓTESES
+- 3 OBJETIVOS (Geral e Específicos)
+- 4 JUSTIFICATIVA E RELEVÂNCIA CIENTÍFICA
+- 5 REVISÃO DE LITERATURA / FUNDAMENTAÇÃO TEÓRICA
+- 6 METODOLOGIA DE PESQUISA (Tipo, instrumentos de coleta e procedimentos)
+- 7 CRONOGRAMA DE EXECUÇÃO (Tabela em formato IBGE)
+- 8 ORÇAMENTO (Se aplicável)
+- REFERÊNCIAS (NBR 6023).`;
+  } else if (documentType === "relatorio") {
+    // ABNT NBR 10719: RELATÓRIO TÉCNICO-CIENTÍFICO
+    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE RELATÓRIO TÉCNICO-CIENTÍFICO (ABNT NBR 10719):
+- RESUMO em português + Palavras-chave.
+- SUMÁRIO (NBR 6027).
+- 1 INTRODUÇÃO (Objetivo do relatório, escopo e instituições envolvidas).
+- 2 DESENVOLVIMENTO DAS ATIVIDADES / METODOLOGIA APLICADA
+- 3 RESULTADOS OBTIDOS E ANÁLISE DE DADOS (com Tabela IBGE e Ilustrações).
+- 4 CONCLUSÕES E RECOMENDAÇÕES TÉCNICAS
+- REFERÊNCIAS (NBR 6023).`;
   } else {
-    genreInstructions = `ESTRUTURA ACADÊMICA ABNT COMPLETA (NBR 14724 & NBR 6022):
-- RESUMO em português (Título "RESUMO", 1 linha em branco, parágrafo de 150 a 250 palavras, 1 linha em branco e "Palavras-chave: ...").
-- ABSTRACT em inglês correspondente (Título "ABSTRACT", 1 linha em branco, parágrafo, 1 linha em branco e "Keywords: ...").
-- SUMÁRIO com pontilhados líderes alinhando o número de cada página à direita (NBR 6027).
-- 1 INTRODUÇÃO (Problematização, hipótese, objetivos e relevância).
+    // ABNT NBR 14724: TRABALHOS ACADÊMICOS (TCC, MONOGRAFIA, DISSERTAÇÃO)
+    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE TRABALHO ACADÊMICO / TCC / MONOGRAFIA (ABNT NBR 14724):
+- RESUMO em português (150 a 250 palavras) + Palavras-chave (NBR 6028).
+- ABSTRACT em inglês + Keywords.
+- SUMÁRIO completo com pontilhados líderes regulares (NBR 6027).
+- 1 INTRODUÇÃO (Problematização, hipótese, objetivos e estrutura).
 - 2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA
-- 2.1 Análise das Dimensões Estruturais
-- 3 RESULTADOS E DISCUSSÃO (DEVE OBRIGATORIAMENTE CONTER 1 TABELA PADRÃO IBGE/ABNT com laterais abertas e 1 QUADRO/ILUSTRAÇÃO COM FONTE).
-- 4 CONSIDERAÇÕES FINAIS (Conclusão e perspectivas)
-- REFERÊNCIAS (NBR 6023 em ordem alfabética).`;
+- 2.1 Análise Sistemática da Literatura
+- 3 RESULTADOS E DISCUSSÃO (Obrigatório: 1 Tabela padrão IBGE e 1 Quadro com Fonte).
+- 4 CONSIDERAÇÕES FINAIS (Síntese dos achados e sugestões para estudos futuros).
+- REFERÊNCIAS (NBR 6023:2025 em ordem alfabética).`;
   }
 
-  const systemPrompt = `Você é um dos maiores Professores e Gramáticos de Língua Portuguesa Brasileira do país, associado a normalizadores acadêmicos seniores das bibliotecas da UNESP e USP.
-Elabore um(a) ${selectedTypeName} magistral, profundo(a), com rigor gramatical absoluto, vocabulário culto impecável e perfeita aderência às normas da ABNT sobre o tema "${cleanTitle}" ${subtitle ? `com subtítulo "${subtitle}"` : ""}.
+  const systemPrompt = `Você é uma autoridade máxima em Redação e Normalização Acadêmica Brasileira (UNESP, USP e ABNT).
+Elabore um(a) ${selectedTypeName} magistral sobre "${cleanTitle}" ${subtitle ? `com subtítulo "${subtitle}"` : ""}.
 
 ================================================================================
-🚨 INSTRUÇÕES MANDATÓRIAS E PRIORITÁRIAS DO USUÁRIO (OBEDIÊNCIA ESTRITA E TOTAL):
-${prompt ? `O usuário determinou expressamente as seguintes instruções que DEVEM ser integralmente cumpridas no conteúdo, estrutura e estilo:\n"${prompt}"` : "Desenvolva o tema com profundidade científica máxima e dados atualizados."}
+🚨 INSTRUÇÕES MANDATÓRIAS E PRIORITÁRIAS DO USUÁRIO:
+${prompt ? `O usuário determinou expressamente as seguintes instruções que DEVEM ser integralmente cumpridas no conteúdo:\n"${prompt}"` : "Desenvolva o tema com profundidade científica máxima e dados atualizados."}
 ================================================================================
 
 ${genreInstructions}
 
 NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
 1. 🛡️ REGRA MESTRE INVIOLÁVEL DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
-   - A IA está TERMINANTEMENTE PROIBIDA de inventar, supor ou criar dados, autores, citações ou conclusões fictícias.
-   - Toda e qualquer afirmação, dado, citação e referência DEVE ser embasada ESTRITAMENTE em literatura científica consolidada, artigos de periódicos indexados (SciELO, Scopus, Web of Science, Capes, Google Scholar), livros clássicos e fontes oficiais respeitadas pela comunidade acadêmica (IBGE, OMS, IPEA, Ministérios).
-   - Proibido responder por conta própria ou opinar sem fundamentação científica sólida.
-2. EXCELÊNCIA GRAMATICAL: Proibido qualquer desvio de regência, concordância, crase ou pontuação. Redação no mais alto padrão culto do Português Brasileiro.
-3. ESPAÇAMENTO DO RESUMO (NBR 6028): Deixe EXATAMENTE 1 linha em branco entre o título "RESUMO" e o início do texto. Deixe EXATAMENTE 1 linha em branco antes de "Palavras-chave:".
-4. SUMÁRIO PERFEITO (NBR 6027): Todas as seções devem ser seguidas de pontilhados líderes regulares (ex: "1 INTRODUÇÃO ............................................................................ 4").
-5. TABELAS E ILUSTRAÇÕES (IBGE / ABNT): Na seção de Resultados e Discussão, inclua 1 Tabela padrão IBGE (laterais abertas) e 1 Quadro ilustrativo, ambos com indicação explícita de "Fonte:".
-6. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15).
-7. REFERÊNCIAS (NBR 6023): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
-8. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
+   - Busque e utilize SOMENTE informações oriundas de artigos científicos consolidados, periódicos indexados (SciELO, Scopus, Web of Science, Capes, Google Scholar) e fontes oficiais respeitadas (IBGE, OMS, IPEA, Ministérios e Universidades).
+   - Proibido inventar dados, autores ou citações falsas.
+2. EXCELÊNCIA GRAMATICAL: Redação culta formal impecável, sem desvios de regência, crase ou pontuação.
+3. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15).
+4. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
+5. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
   try {
     const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-3.6-flash");
