@@ -3200,11 +3200,14 @@ ${latexChapters}
 
                   const renderSingleA4Sheet = (text: string, pIdx: number) => {
                     const cleanT = text.trim();
-                    const isExplicitCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA") || (pIdx === 0 && cleanT.startsWith(institution || "UNIVERSIDADE") && !cleanT.includes("INTRODUÇÃO"));
-                    const isExplicitTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA DE ROSTO") || cleanT.includes("requisito parcial");
+                    const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
                     
-                    const isCover = cleanT === "CAPA_AUTO" || isExplicitCover;
-                    const isTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || isExplicitTitlePage;
+                    // Detecção Inteligente e Infalível de Capa (Página 1) e Folha de Rosto (Página 2)
+                    const isExplicitCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA") || (pIdx === 0 && requiresFormalCover && !cleanT.startsWith("1 ") && !cleanT.includes("INTRODUÇÃO") && !cleanT.includes("RESUMO"));
+                    const isExplicitTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA DE ROSTO") || (pIdx === 1 && requiresFormalCover && (cleanT.includes("requisito") || cleanT.includes("apresentado") || cleanT.includes("Orientador") || (!cleanT.startsWith("1 ") && !cleanT.includes("INTRODUÇÃO") && !cleanT.includes("RESUMO"))));
+                    
+                    const isCover = isExplicitCover;
+                    const isTitlePage = !isCover && isExplicitTitlePage;
                     const isBodyPage = !isCover && !isTitlePage;
                     const pageNum = pIdx + 1;
                     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
