@@ -1272,28 +1272,25 @@ ${generatedText}`;
 
       const presentationNote = `${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para a disciplina de ${subject || course}` : ""}.${shiftClassInfo ? `\n${shiftClassInfo}` : ""}${adv ? `\n${adv}` : ""}`;
 
-      // 1. CAPA OFICIAL (NBR 14724)
+      // 1. CAPA OFICIAL ABNT (NBR 14724)
       const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
       const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
 
-      // 2. FOLHA DE ROSTO / CONTRACAPA OFICIAL (NBR 14724)
-      const titlePage = `${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
+      const coverBlock = `CAPA\n${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
 
-      const coverBlock = `CAPA\n${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\nFOLHA DE ROSTO\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
-
-      // Remove capas anteriores se já existirem no documento
+      // Remove capa anterior se já existir no início do documento
       let cleanBody = generatedText || "";
       if (cleanBody.includes("--- [QUEBRA DE PÁGINA] ---")) {
         const parts = cleanBody.split("--- [QUEBRA DE PÁGINA] ---");
-        // Filtra e descarta páginas que sejam capas ou folhas de rosto antigas
+        // Filtra e descarta apenas páginas de capa antiga
         const filteredParts = parts.filter(p => {
           const t = p.trim();
-          return !t.startsWith("CAPA") && !t.startsWith("FOLHA DE ROSTO") && t !== "CAPA_AUTO" && t !== "FOLHA_ROSTO_AUTO" && !t.includes("requisito parcial");
+          return !t.startsWith("CAPA") && t !== "CAPA_AUTO";
         });
         cleanBody = filteredParts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n").trim();
       } else {
         const t = cleanBody.trim();
-        if (t.startsWith("CAPA") || t.includes("requisito parcial")) {
+        if (t.startsWith("CAPA") || t === "CAPA_AUTO") {
           cleanBody = "";
         }
       }
@@ -1307,11 +1304,11 @@ ${generatedText}`;
         .replace(/\n{4,}/g, '\n\n\n')
         .replace(/[ \t]+$/gm, '');
 
-      setGeneratedText(updatedFullText);
+      updateGeneratedTextWithHistory(updatedFullText);
       setActiveTab("editor");
-      setErrorMessage("✅ Capa e Contracapa ABNT inseridas e texto normalizado com a Skill Acadêmica!");
+      setErrorMessage("✅ Capa Oficial ABNT inserida com sucesso!");
       setTimeout(() => setErrorMessage(""), 3500);
-      logAction("Inserção de Capa e Normalização ABNT", updatedFullText.substring(0, 500));
+      logAction("Inserção de Capa ABNT", updatedFullText.substring(0, 500));
     } catch (error) {
       console.error(error);
       setErrorMessage(error instanceof Error ? error.message : "Erro ao inserir capa e contracapa.");
@@ -2866,22 +2863,20 @@ ${latexChapters}
                   disabled={historyStack.length === 0}
                   variant="ghost"
                   size="sm"
-                  className="text-[11px] h-7 px-1.5 font-semibold text-slate-700 hover:bg-slate-200/70 rounded-lg whitespace-nowrap disabled:opacity-35"
-                  title="Desfazer última alteração (Ctrl+Z)"
+                  className="text-slate-700 hover:bg-slate-200/70 rounded-lg p-1.5 h-7 w-7 flex items-center justify-center disabled:opacity-35"
+                  title="Desfazer (Ctrl+Z)"
                 >
-                  <Undo2 className="w-3.5 h-3.5 mr-0.5 text-slate-600" />
-                  Desfazer
+                  <Undo2 className="w-3.5 h-3.5 text-slate-700" />
                 </Button>
                 <Button 
                   onClick={handleRedo}
                   disabled={redoStack.length === 0}
                   variant="ghost"
                   size="sm"
-                  className="text-[11px] h-7 px-1.5 font-semibold text-slate-700 hover:bg-slate-200/70 rounded-lg whitespace-nowrap disabled:opacity-35"
-                  title="Refazer alteração (Ctrl+Y)"
+                  className="text-slate-700 hover:bg-slate-200/70 rounded-lg p-1.5 h-7 w-7 flex items-center justify-center disabled:opacity-35"
+                  title="Refazer (Ctrl+Y)"
                 >
-                  <Redo2 className="w-3.5 h-3.5 mr-0.5 text-slate-600" />
-                  Refazer
+                  <Redo2 className="w-3.5 h-3.5 text-slate-700" />
                 </Button>
                 <Button 
                   onClick={handleCorrectSpelling} 
