@@ -4139,10 +4139,77 @@ ${latexChapters}
               <div className="flex flex-col h-full bg-gray-50/30">
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {chatHistory.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center">
-                      <UserCheck className="w-12 h-12 mb-4 text-blue-200" />
-                      <p>Olá! Sou o Assistente de Estudos do EMIA.EDUTECH.</p>
-                      <p className="text-sm mt-2">Dúvidas sobre o texto gerado? Me faça uma pergunta! Eu lerei o seu documento e te ajudarei a compreender os conceitos de forma dinâmica. Você também pode me pedir para ajudar a modificar, editar, criar um podcast ou música chiclete sobre o seu tema.</p>
+                    <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-8">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 shadow-xs">
+                        <UserCheck className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-base font-bold text-gray-800">E aí! Como posso te ajudar agora?</h3>
+                      <p className="text-xs text-gray-500 mt-1 mb-6">
+                        Tô aqui pra trocar uma ideia sobre o seu trabalho. Escolhe uma opção ou digita o que você precisa:
+                      </p>
+
+                      {/* Botões informais de ação rápida */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full text-left">
+                        <button
+                          onClick={() => {
+                            setChatMessage("Explica de forma simples os pontos principais deste trabalho.");
+                          }}
+                          className="p-3 bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-blue-700 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>💬</span>
+                          <span>Conversar sobre o texto</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setChatMessage("Cria um quiz com 4 perguntas de múltipla escolha para testar meu conhecimento sobre o tema.");
+                          }}
+                          className="p-3 bg-white hover:bg-amber-50 border border-gray-200 hover:border-amber-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-amber-800 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>🎯</span>
+                          <span>Fazer um Quiz do conteúdo</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setChatMessage("Como uso os campos do app e o botão de Trabalho em Grupo?");
+                          }}
+                          className="p-3 bg-white hover:bg-emerald-50 border border-gray-200 hover:border-emerald-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-emerald-800 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>📱</span>
+                          <span>Como usar o app?</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setChatMessage("Tenho uma dúvida sobre normas ABNT neste trabalho. O que preciso ajustar?");
+                          }}
+                          className="p-3 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-indigo-800 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>📑</span>
+                          <span>Dúvidas sobre ABNT</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setChatMessage("Quero melhorar e editar uma parte do texto. Pode me ajudar?");
+                          }}
+                          className="p-3 bg-white hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-purple-800 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>✏️</span>
+                          <span>Editar algo no texto</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setChatMessage("Cria um roteiro de podcast dinâmico com 2 apresentadores sobre este trabalho.");
+                          }}
+                          className="p-3 bg-white hover:bg-rose-50 border border-gray-200 hover:border-rose-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-rose-800 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>🎙️</span>
+                          <span>Criar Podcast / Música</span>
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     chatHistory.map((msg, idx) => (
