@@ -793,24 +793,9 @@ ${formatted}`;
       }
 
       let finalText = "";
+      
+      // Geração de Alta Performance conectada diretamente ao Google Gemini
       try {
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: customHeaders,
-          body: formData,
-        });
-        
-        const textData = await res.text();
-        const data = JSON.parse(textData);
-        if (data.success && data.text) {
-          finalText = data.text;
-        }
-      } catch (apiErr) {
-        console.warn("[EMIA API Fallback] Usando Motor Acadêmico Autônomo:", apiErr);
-      }
-
-      // Se a rota da API não respondeu (ex: modo estático/local), executa pelo Motor Acadêmico Resiliente
-      if (!finalText) {
         finalText = await generateAcademicText({
           title: cleanTitle,
           subtitle,
@@ -824,6 +809,22 @@ ${formatted}`;
           advisor,
           customGeminiKey,
         });
+      } catch (directErr) {
+        console.warn("[EMIA Direct Engine fallback para API:", directErr);
+        try {
+          const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: customHeaders,
+            body: formData,
+          });
+          const textData = await res.text();
+          const data = JSON.parse(textData);
+          if (data.success && data.text) {
+            finalText = data.text;
+          }
+        } catch (apiErr) {
+          console.error("Erro em ambas as vias de geração:", apiErr);
+        }
       }
 
       if (finalText) {

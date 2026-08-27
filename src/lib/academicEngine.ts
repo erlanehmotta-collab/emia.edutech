@@ -28,33 +28,40 @@ export function getActiveGeminiKey(customKey?: string): string {
   return localKey || envKey || "";
 }
 
-export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-3.6-flash"): Promise<string> {
+export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-2.5-flash"): Promise<string> {
   const apiKey = getActiveGeminiKey(customKey);
   if (!apiKey) {
     throw new Error("Chave de API Gemini não configurada.");
   }
 
+  // Modelos oficiais do Google Gemini ordenados por velocidade e disponibilidade em tempo real
   const fallbackModels = [
     model,
-    "gemini-3.6-flash",
-    "gemini-3.7-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
     "gemini-flash-latest"
-  ];
+  ].filter((v, i, a) => a.indexOf(v) === i);
 
   for (const m of fallbackModels) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 18000); // 18s timeout máximo por tentativa para evitar travamentos
+
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.82,
+            temperature: 0.78,
             topP: 0.95
           }
         })
       });
+      clearTimeout(timeoutId);
 
       if (res.ok) {
         const json = await res.json();
@@ -62,13 +69,16 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
         if (text && text.trim().length > 0) {
           return text.trim();
         }
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        console.warn(`[Gemini ${m} Status ${res.status}]`, errJson);
       }
     } catch (e) {
       console.warn(`Tentativa com modelo ${m} falhou:`, e);
     }
   }
 
-  throw new Error("Nenhum modelo Gemini respondeu.");
+  throw new Error("Não foi possível obter resposta imediata do Gemini. Verifique sua conexão e chave de API.");
 }
 
 export function normalizeCitationsToABNT2023(text: string): string {
