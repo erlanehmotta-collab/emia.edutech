@@ -2304,8 +2304,23 @@ ${latexChapters}
             <span className="font-semibold text-gray-900 text-lg tracking-tight">EMIA.EDUTECH</span>
           </div>
 
+          {/* Botão PIX Maior e em Destaque ao lado da Marca */}
+          {!isMaster && !customGeminiKey && !customOpenaiKey && (
+            <button 
+              onClick={() => setShowPixModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95 group"
+              title="Recarregar créditos via PIX"
+            >
+              <Coins className="w-4 h-4 text-white animate-bounce" />
+              <span>{credits} {credits === 1 ? 'Trabalho Restante' : 'Trabalhos Restantes'}</span>
+              <span className="bg-white text-orange-600 text-[10px] px-2 py-0.5 rounded-lg font-extrabold shadow-2xs ml-1">
+                + Recarregar (PIX)
+              </span>
+            </button>
+          )}
+
           {/* Marca d'água discreta do Google Gemini ao lado da logo */}
-          <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-gray-200/80 text-gray-400 select-none">
+          <div className="hidden lg:flex items-center gap-1.5 pl-3 border-l border-gray-200/80 text-gray-400 select-none">
             <Sparkles className="w-3.5 h-3.5 text-blue-500/70" />
             <span className="text-[11px] font-medium tracking-wide">powered by Google Gemini</span>
           </div>
@@ -2323,7 +2338,7 @@ ${latexChapters}
             <span className="tracking-tight">Trabalho em Grupo</span>
           </button>
 
-          {/* Indicador de Cota Própria / Créditos */}
+          {/* Indicador de Cota Própria / Créditos para Master ou Chave Própria */}
           {isMaster ? (
             <div className="h-8 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-xs px-3 rounded-xl shadow-xs">
               <Sparkles className="w-3.5 h-3.5" />
@@ -2334,16 +2349,7 @@ ${latexChapters}
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Cota Própria Conectada</span>
             </div>
-          ) : (
-            <button 
-              onClick={() => setShowPixModal(true)}
-              className="h-8 flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 rounded-xl text-xs font-semibold transition-all shadow-2xs"
-            >
-              <Coins className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-              <span>{credits} {credits === 1 ? 'Trabalho' : 'Trabalhos'}</span>
-              <span className="bg-amber-600 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold ml-0.5">+ PIX</span>
-            </button>
-          )}
+          ) : null}
 
           {/* Botão Perfil e Histórico (Índigo/Lavanda Elegante) */}
           <button 
