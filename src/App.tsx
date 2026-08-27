@@ -215,7 +215,81 @@ export default function App() {
   const [speechVolume, setSpeechVolume] = useState<number>(1.0); // Volume padrão: 1.0 (100%), 0.75, 0.5
   const [speechGender, setSpeechGender] = useState<"female" | "male">("female"); // Seleção de voz: Feminina (padrão) ou Masculina
 
-  // Leitura em Áudio do Texto Acadêmico (Web Speech API)
+  // Estado de controle de índice de leitura contínua (para troca de velocidade fluida sem recomeçar)
+  const currentSentenceIdxRef = useRef<number>(0);
+  const speechSentencesRef = useRef<string[]>([]);
+  const isSpeakingRef = useRef<boolean>(false);
+
+  // Função interna para disparar a fala da frase atual
+  const speakSentenceAtIndex = (index: number, rate?: number, vol?: number, gender?: "female" | "male") => {
+    if (!('speechSynthesis' in window)) return;
+    const sentences = speechSentencesRef.current;
+    if (index >= sentences.length) {
+      setIsSpeaking(false);
+      isSpeakingRef.current = false;
+      setErrorMessage("✅ Leitura em áudio concluída!");
+      setTimeout(() => setErrorMessage(""), 3000);
+      return;
+    }
+
+    currentSentenceIdxRef.current = index;
+    const sentence = sentences[index];
+    if (!sentence || !sentence.trim()) {
+      speakSentenceAtIndex(index + 1, rate, vol, gender);
+      return;
+    }
+
+    const currentRate = rate !== undefined ? rate : speechRate;
+    const currentVol = vol !== undefined ? vol : speechVolume;
+    const currentGender = gender !== undefined ? gender : speechGender;
+
+    const utterance = new SpeechSynthesisUtterance(sentence.trim());
+    utterance.lang = "pt-BR";
+    utterance.rate = currentRate || 1.0;
+    utterance.volume = currentVol || 1.0;
+    utterance.pitch = currentGender === "female" ? 1.08 : 0.95;
+
+    // Priorização das vozes neurais brasileiras mais humanas e naturais
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoices = voices.filter(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.startsWith("pt"));
+
+    let selectedVoice = null;
+    if (currentGender === "female") {
+      selectedVoice = ptVoices.find(v => {
+        const n = v.name.toLowerCase();
+        return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("francisca") || n.includes("thalita") || n.includes("luciana") || n.includes("leticia") || n.includes("maria") || (n.includes("google") && !n.includes("male"));
+      }) || ptVoices.find(v => !v.name.toLowerCase().includes("male") && !v.name.toLowerCase().includes("antonio"));
+    } else {
+      selectedVoice = ptVoices.find(v => {
+        const n = v.name.toLowerCase();
+        return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("antonio") || n.includes("felipe") || n.includes("ricardo") || n.includes("daniel") || n.includes("male");
+      }) || ptVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("antonio"));
+    }
+
+    if (!selectedVoice && ptVoices.length > 0) {
+      selectedVoice = ptVoices[0];
+    }
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+
+    utterance.onend = () => {
+      if (isSpeakingRef.current) {
+        speakSentenceAtIndex(index + 1);
+      }
+    };
+
+    utterance.onerror = (e) => {
+      console.warn("Speech error:", e);
+      if (isSpeakingRef.current) {
+        speakSentenceAtIndex(index + 1);
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Leitura em Áudio do Texto Acadêmico com Fraseamento Natural
   const handleToggleSpeech = () => {
     if (!('speechSynthesis' in window)) {
       setErrorMessage("Leitura em áudio não suportada neste navegador.");
@@ -223,6 +297,7 @@ export default function App() {
     }
 
     if (isSpeaking) {
+      isSpeakingRef.current = false;
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       setErrorMessage("⏹️ Leitura em áudio interrompida.");
@@ -251,12 +326,13 @@ export default function App() {
       bodyTextOnly = contentParts.join("\n\n");
     }
 
-    // Limpa marcações estruturais e markdown para leitura fluida do corpo do texto
+    // Limpa marcações estruturais e formata para ritmo de fala humano
     const cleanSpeechText = bodyTextOnly
       .replace(/--- \[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\] ---/g, ' ')
       .replace(/!\[.*?\]\(.*?\)/g, ' ')
       .replace(/#+/g, ' ')
       .replace(/[\*\_\`]/g, ' ')
+      .replace(/([0-9]+)\.([0-9]+)/g, '$1 vírgula $2')
       .replace(/\s+/g, ' ')
       .trim();
 
@@ -265,54 +341,18 @@ export default function App() {
       return;
     }
 
+    // Divide em frases (pontos, exclamações, interrogações e quebras de parágrafo) para cadência natural
+    const rawSentences = cleanSpeechText.match(/[^.!?]+[.!?]+|\s*[^.!?]+$/g) || [cleanSpeechText];
+    const sentences = rawSentences.map(s => s.trim()).filter(s => s.length > 0);
+
+    speechSentencesRef.current = sentences;
+    currentSentenceIdxRef.current = 0;
+    isSpeakingRef.current = true;
+    setIsSpeaking(true);
+
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(cleanSpeechText);
-    utterance.lang = "pt-BR";
-    utterance.rate = speechRate || 1.0;
-    utterance.volume = speechVolume || 1.0;
-    utterance.pitch = speechGender === "female" ? 1.05 : 0.92;
-
-    // Seleção de vozes neurais brasileiras conforme o gênero escolhido
-    const voices = window.speechSynthesis.getVoices();
-    const ptVoices = voices.filter(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.startsWith("pt"));
-
-    let selectedVoice = null;
-    if (speechGender === "female") {
-      selectedVoice = ptVoices.find(v => {
-        const n = v.name.toLowerCase();
-        return n.includes("francisca") || n.includes("thalita") || n.includes("luciana") || n.includes("leticia") || n.includes("maria") || n.includes("female") || (n.includes("google") && !n.includes("male"));
-      });
-    } else {
-      selectedVoice = ptVoices.find(v => {
-        const n = v.name.toLowerCase();
-        return n.includes("antonio") || n.includes("felipe") || n.includes("ricardo") || n.includes("daniel") || n.includes("male") || n.includes("homem");
-      });
-    }
-
-    if (!selectedVoice && ptVoices.length > 0) {
-      selectedVoice = ptVoices[0];
-    }
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setErrorMessage(`🔊 Reproduzindo leitura do documento em áudio (${speechRate}x)...`);
-    };
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setErrorMessage("✅ Leitura em áudio concluída!");
-      setTimeout(() => setErrorMessage(""), 3000);
-    };
-
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
+    setErrorMessage(`🔊 Reproduzindo leitura humana do documento (${speechRate}x)...`);
+    speakSentenceAtIndex(0);
   };
 
   useEffect(() => {
@@ -2692,14 +2732,14 @@ ${latexChapters}
               )}
             </button>
 
-            {/* Alternador de Voz: Feminina (👩) / Masculina (👨) */}
+            {/* Alternador de Gênero da Voz (Feminina / Masculina) */}
             <button
               onClick={() => {
                 const nextGender = speechGender === "female" ? "male" : "female";
                 setSpeechGender(nextGender);
                 if (isSpeaking) {
                   window.speechSynthesis.cancel();
-                  setTimeout(() => handleToggleSpeech(), 100);
+                  speakSentenceAtIndex(currentSentenceIdxRef.current, speechRate, speechVolume, nextGender);
                 } else {
                   setErrorMessage(`Voz alterada para ${nextGender === "female" ? "Feminina 👩" : "Masculina 👨"}.`);
                   setTimeout(() => setErrorMessage(""), 2000);
@@ -2711,7 +2751,7 @@ ${latexChapters}
               <span>{speechGender === "female" ? "👩" : "👨"}</span>
             </button>
 
-            {/* Velocidade: 1x, 1.25x, 1.5x, 2x */}
+            {/* Velocidade: 1x, 1.25x, 1.5x, 2x (Continua falando sem parar ou recomeçar) */}
             <button
               onClick={() => {
                 const rates = [1.0, 1.25, 1.5, 2.0];
@@ -2719,7 +2759,7 @@ ${latexChapters}
                 setSpeechRate(nextRate);
                 if (isSpeaking) {
                   window.speechSynthesis.cancel();
-                  setTimeout(() => handleToggleSpeech(), 100);
+                  speakSentenceAtIndex(currentSentenceIdxRef.current, nextRate, speechVolume, speechGender);
                 }
               }}
               className="h-6.5 px-1.5 flex items-center justify-center text-[10.5px] font-bold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 rounded transition-all active:scale-90 select-none"
