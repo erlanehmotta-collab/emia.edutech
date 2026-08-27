@@ -2851,7 +2851,7 @@ ${latexChapters}
                       className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 text-sm mt-2"
                     >
                       {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                      Apenas Juntar Textos (Sem IA)
+                      Apenas Editar Textos Sem IA
                     </Button>
                   </div>
                 )}
