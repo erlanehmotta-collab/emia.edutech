@@ -50,7 +50,7 @@ export default {
           });
         }
 
-        const model = body.model || "gemini-3.5-flash";
+        const model = body.model || "gemini-3.5-flash-lite";
         const prompt = body.prompt || "";
 
         const geminiRes = await fetch(
