@@ -1,7 +1,7 @@
-﻿{
-  name: EMIA.EDUTECH - Assistente Academico & ABNT,
-  short_name: EMIA.EDU,
-  description: Gerador e formatador academico com IA humanizada nas normas ABNT,
+{
+  "name": "EDUTECH.EMIA - Assistente Acadêmico & ABNT",
+  "short_name": "EDUTECH.EMIA",
+  "description": "Gerador e formatador acadêmico com IA humanizada nas normas ABNT",
   start_url: /,
   display: standalone,
   background_color: #ffffff,

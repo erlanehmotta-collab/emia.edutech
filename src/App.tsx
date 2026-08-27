@@ -2325,7 +2325,7 @@ ${latexChapters}
     const pptx = new pptxgen();
     pptx.layout = "LAYOUT_16x9";
     pptx.title = title || "Apresentação Acadêmica";
-    pptx.author = studentName || "EMIA.EDUTECH";
+    pptx.author = studentName || "EDUTECH.EMIA";
 
     const slidesData = parseDocumentIntoSlides(generatedText);
 
@@ -2521,7 +2521,7 @@ ${latexChapters}
             <div className="bg-blue-600 text-white w-8 h-8 rounded-md flex items-center justify-center shadow-xs">
               <FileText className="w-5 h-5" />
             </div>
-            <span className="font-semibold text-gray-900 text-lg tracking-tight">EMIA.EDUTECH</span>
+            <span className="font-semibold text-gray-900 text-lg tracking-tight">EDUTECH.EMIA</span>
           </div>
 
           {/* Marca d'água discreta do Google Gemini ao lado da logo */}
@@ -4392,7 +4392,7 @@ ${latexChapters}
                                 {editableSlides[activeSlideIndex].notes || "Dica de fala para o slide..."}
                               </div>
                             </div>
-                            <span>EMIA.EDUTECH</span>
+                            <span>EDUTECH.EMIA</span>
                           </div>
                         </div>
 
