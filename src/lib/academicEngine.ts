@@ -305,13 +305,17 @@ ${prompt ? `O usuário determinou expressamente as seguintes instruções que DE
 ${genreInstructions}
 
 NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
-1. EXCELÊNCIA GRAMATICAL: Proibido qualquer desvio de regência, concordância, crase ou pontuação. Redação no mais alto padrão culto do Português Brasileiro.
-2. ESPAÇAMENTO DO RESUMO (NBR 6028): Deixe EXATAMENTE 1 linha em branco entre o título "RESUMO" e o início do texto. Deixe EXATAMENTE 1 linha em branco antes de "Palavras-chave:".
-3. SUMÁRIO PERFEITO (NBR 6027): Todas as seções devem ser seguidas de pontilhados líderes regulares (ex: "1 INTRODUÇÃO ............................................................................ 4").
-4. TABELAS E ILUSTRAÇÕES (IBGE / ABNT): Na seção de Resultados e Discussão, inclua 1 Tabela padrão IBGE (laterais abertas) e 1 Quadro ilustrativo, ambos com "Fonte:".
-5. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15).
-6. REFERÊNCIAS (NBR 6023): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
-7. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
+1. 🛡️ REGRA MESTRE INVIOLÁVEL DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
+   - A IA está TERMINANTEMENTE PROIBIDA de inventar, supor ou criar dados, autores, citações ou conclusões fictícias.
+   - Toda e qualquer afirmação, dado, citação e referência DEVE ser embasada ESTRITAMENTE em literatura científica consolidada, artigos de periódicos indexados (SciELO, Scopus, Web of Science, Capes, Google Scholar), livros clássicos e fontes oficiais respeitadas pela comunidade acadêmica (IBGE, OMS, IPEA, Ministérios).
+   - Proibido responder por conta própria ou opinar sem fundamentação científica sólida.
+2. EXCELÊNCIA GRAMATICAL: Proibido qualquer desvio de regência, concordância, crase ou pontuação. Redação no mais alto padrão culto do Português Brasileiro.
+3. ESPAÇAMENTO DO RESUMO (NBR 6028): Deixe EXATAMENTE 1 linha em branco entre o título "RESUMO" e o início do texto. Deixe EXATAMENTE 1 linha em branco antes de "Palavras-chave:".
+4. SUMÁRIO PERFEITO (NBR 6027): Todas as seções devem ser seguidas de pontilhados líderes regulares (ex: "1 INTRODUÇÃO ............................................................................ 4").
+5. TABELAS E ILUSTRAÇÕES (IBGE / ABNT): Na seção de Resultados e Discussão, inclua 1 Tabela padrão IBGE (laterais abertas) e 1 Quadro ilustrativo, ambos com indicação explícita de "Fonte:".
+6. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15).
+7. REFERÊNCIAS (NBR 6023): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
+8. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
   try {
     const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-3.6-flash");
