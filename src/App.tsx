@@ -18,6 +18,10 @@ import { generateAcademicText, normalizeCitationsToABNT2023, callGeminiDirectly 
 type UserProfile = {
   name: string;
   institution: string;
+  course?: string;
+  subject?: string;
+  shift?: string;
+  classroom?: string;
   city: string;
   year: string;
   advisor: string;
@@ -62,6 +66,9 @@ export default function App() {
   const [showWorkData, setShowWorkData] = useState(false);
   const [studentName, setStudentName] = useState("");
   const [course, setCourse] = useState("");
+  const [subject, setSubject] = useState(""); // Disciplina / Matéria
+  const [shift, setShift] = useState(""); // Turno (Matutino, Vespertino, Noturno, Integral)
+  const [classroom, setClassroom] = useState(""); // Sala / Turma
   const [institution, setInstitution] = useState("");
   const [city, setCity] = useState("");
   const [year, setYear] = useState("");
@@ -70,8 +77,14 @@ export default function App() {
   // Modo Trabalho em Grupo
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [groupDocType, setGroupDocType] = useState<string>("trabalho_academico");
+  const [customGroupDocName, setCustomGroupDocName] = useState<string>("Trabalho Personalizado");
   const [groupMembers, setGroupMembers] = useState<string[]>([""]);
   const [sectionSlots, setSectionSlots] = useState<Record<string, File | null>>({});
+  const [customSections, setCustomSections] = useState<{ id: string; label: string; desc: string; icon: string }[]>([
+    { id: "sec_1", label: "1 PARTE INICIAL / INTRODUÇÃO", desc: "Parte inicial do trabalho", icon: "📖" },
+    { id: "sec_2", label: "2 DESENVOLVIMENTO / PARTE CENTRAL", desc: "Corpo do trabalho", icon: "📚" },
+    { id: "sec_3", label: "3 CONCLUSÃO / PARTE FINAL", desc: "Encerramento e considerações", icon: "✅" },
+  ]);
 
   // Estrutura dinâmica de seções baseada no Tipo de Trabalho
   const getGroupSectionsByDocType = (docType: string) => {
@@ -117,6 +130,9 @@ export default function App() {
           { key: "critica", label: "2 APRECIAÇÃO CRÍTICA E ANÁLISE", desc: "Avaliação fundamentada dos pontos fortes e fracos", icon: "🧐" },
           { key: "conclusao", label: "3 CONCLUSÃO E INDICAÇÃO", desc: "Público-alvo e relevância da obra", icon: "✅" },
         ];
+      case "custom":
+      case "outro":
+        return customSections.map(s => ({ key: s.id, label: s.label, desc: s.desc, icon: s.icon }));
       default: // trabalho_academico (TCC) e monografia
         return [
           { key: "resumo", label: "RESUMO E ABSTRACT", desc: "Resumo em português e abstract em inglês", icon: "📑" },
@@ -915,7 +931,9 @@ export default function App() {
       const docCity = (city || "CIDADE - UF").toUpperCase();
       const docYear = year || currentYear;
       const advText = advisor ? `Orientador(a): ${advisor}` : "";
-      const typeLabel = groupDocType === "projeto" ? "Projeto de Pesquisa" : groupDocType === "relatorio" ? "Relatório Técnico" : groupDocType === "estudo_caso" ? "Estudo de Caso" : groupDocType === "resenha" ? "Resenha Crítica" : groupDocType === "artigo" || groupDocType === "artigo_cientifico" ? "Artigo Científico" : "Trabalho de Conclusão de Curso (TCC)";
+      const typeLabel = groupDocType === "custom" || groupDocType === "outro"
+        ? (customGroupDocName || "Trabalho Acadêmico")
+        : groupDocType === "projeto" ? "Projeto de Pesquisa" : groupDocType === "relatorio" ? "Relatório Técnico" : groupDocType === "estudo_caso" ? "Estudo de Caso" : groupDocType === "resenha" ? "Resenha Crítica" : groupDocType === "artigo" || groupDocType === "artigo_cientifico" ? "Artigo Científico" : "Trabalho de Conclusão de Curso (TCC)";
 
       // Capa ABNT com todos os membros
       const coverPage = `${instName}${courseName ? `\n${courseName}` : ""}\n\n\n\n${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
@@ -2248,6 +2266,9 @@ ${latexChapters}
   const handleClearWorkData = () => {
     setStudentName("");
     setCourse("");
+    setSubject("");
+    setShift("");
+    setClassroom("");
     setInstitution("");
     setCity("");
     setYear("");
@@ -2258,6 +2279,8 @@ ${latexChapters}
   const generateCoverTextLocally = () => {
     const instName = (institution || "NOME DA INSTITUIÇÃO DE ENSINO").toUpperCase();
     const courseName = course ? course.toUpperCase() : "";
+    const subjectName = subject ? `DISCIPLINA: ${subject.toUpperCase()}` : "";
+    const shiftClassInfo = [shift ? `Turno: ${shift}` : "", classroom ? `Sala/Turma: ${classroom}` : ""].filter(Boolean).join(" • ");
     const authorName = (studentName || "NOME DO AUTOR DO TRABALHO").toUpperCase();
     const docTitle = (title || "TÍTULO DO TRABALHO ACADÊMICO").toUpperCase();
     const docSubtitle = subtitle ? ` - ${subtitle}` : "";
@@ -2266,15 +2289,17 @@ ${latexChapters}
     const docType = documentType === "outros" ? (customDocumentType || "TRABALHO ACADÊMICO").toUpperCase() : documentType.toUpperCase();
     const advText = advisor ? `Orientador(a): ${advisor}` : "";
 
-    const coverPage = `${instName}${courseName ? `\n${courseName}` : ""}\n\n\n\n${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+    const subHeader = [courseName, subjectName, shiftClassInfo].filter(Boolean).join("\n");
+    const coverPage = `${instName}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
 
-    const titlePage = `${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n                                          ${docType} apresentado à ${instName}${courseName ? ` como requisito parcial para o curso de ${courseName}` : ""}.\n${advText ? `\n                                          ${advText}` : ""}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+    const presentationNote = `                                          ${docType} apresentado à ${instName}${courseName ? ` como requisito parcial para a disciplina de ${subject || courseName}` : ""}.\n${shiftClassInfo ? `\n                                          ${shiftClassInfo}` : ""}\n${advText ? `\n                                          ${advText}` : ""}`;
+    const titlePage = `${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n${presentationNote}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
 
     return `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---`;
   };
 
   const handleSaveProfile = () => {
-    const profile = { name: studentName, institution, city, year, advisor, course };
+    const profile: UserProfile = { name: studentName, institution, city, year, advisor, course, subject, shift, classroom };
     localStorage.setItem('emia_user_profile', JSON.stringify(profile));
     logAction('Dados do Trabalho salvos localmente');
     
@@ -2514,9 +2539,46 @@ ${latexChapters}
                         type="text" 
                         value={course}
                         onChange={(e) => setCourse(e.target.value)}
-                        placeholder="Ex: Administração"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ex: Administração, Direito, Pedagogia..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
                       />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-gray-700 mb-1">Disciplina / Matéria</label>
+                      <input 
+                        type="text" 
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="Ex: Metodologia Científica, Didática, Gestão..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-medium text-gray-700 mb-1">Turno</label>
+                        <select
+                          value={shift}
+                          onChange={(e) => setShift(e.target.value)}
+                          className="w-full px-2.5 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs bg-white"
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="Matutino">Matutino</option>
+                          <option value="Vespertino">Vespertino</option>
+                          <option value="Noturno">Noturno</option>
+                          <option value="Integral">Integral</option>
+                          <option value="EAD / Online">EAD / Online</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-medium text-gray-700 mb-1">Sala / Turma</label>
+                        <input 
+                          type="text" 
+                          value={classroom}
+                          onChange={(e) => setClassroom(e.target.value)}
+                          placeholder="Ex: Sala 204, Turma B"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block font-medium text-gray-700 mb-1">Instituição de Ensino</label>
@@ -2525,7 +2587,7 @@ ${latexChapters}
                         value={institution}
                         onChange={(e) => setInstitution(e.target.value)}
                         placeholder="Ex: Universidade de São Paulo"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -3718,6 +3780,53 @@ ${latexChapters}
                       />
                     </div>
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Curso</label>
+                      <input 
+                        type="text" 
+                        value={course}
+                        onChange={(e) => setCourse(e.target.value)}
+                        placeholder="Ex: Administração, Direito, Pedagogia..."
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Disciplina / Matéria</label>
+                      <input 
+                        type="text" 
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="Ex: Metodologia Científica, Didática, Gestão..."
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Turno</label>
+                        <select
+                          value={shift}
+                          onChange={(e) => setShift(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="Matutino">Matutino</option>
+                          <option value="Vespertino">Vespertino</option>
+                          <option value="Noturno">Noturno</option>
+                          <option value="Integral">Integral</option>
+                          <option value="EAD / Online">EAD / Online</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sala / Turma</label>
+                        <input 
+                          type="text" 
+                          value={classroom}
+                          onChange={(e) => setClassroom(e.target.value)}
+                          placeholder="Ex: Sala 204, Turma B"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Instituição de Ensino</label>
                       <input 
                         type="text" 
@@ -4245,7 +4354,77 @@ ${latexChapters}
                   <option value="relatorio">📋 Relatório Técnico-Científico (NBR 10719)</option>
                   <option value="estudo_caso">📊 Estudo de Caso Prático</option>
                   <option value="resenha">✍️ Resenha Crítica de Obra</option>
+                  <option value="outro">🛠️ Outro (Personalizar Minhas Próprias Seções e Divisão)</option>
                 </select>
+
+                {groupDocType === "outro" && (
+                  <div className="mt-3.5 pt-3 border-t border-emerald-200/70 space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-800 mb-1">Nome do Tipo de Trabalho (para a Folha de Rosto):</label>
+                      <input
+                        type="text"
+                        value={customGroupDocName}
+                        onChange={(e) => setCustomGroupDocName(e.target.value)}
+                        placeholder="Ex: Estudo Temático, Portfólio em Grupo, Análise Setorial..."
+                        className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-gray-800">Defina suas Seções Personalizadas:</label>
+                        <span className="text-[10px] text-gray-500">Crie quantas seções seu trabalho precisar</span>
+                      </div>
+                      <div className="space-y-2">
+                        {customSections.map((sec, sIdx) => (
+                          <div key={sec.id} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-gray-200 shadow-2xs">
+                            <span className="text-xs font-bold text-emerald-800 w-5 text-center">{sIdx + 1}º</span>
+                            <input
+                              type="text"
+                              value={sec.label}
+                              onChange={(e) => {
+                                const updated = [...customSections];
+                                updated[sIdx].label = e.target.value;
+                                setCustomSections(updated);
+                              }}
+                              placeholder="Nome da Seção (ex: 1 INTRODUÇÃO E CONTEXTO)"
+                              className="flex-1 px-2.5 py-1 text-xs border border-gray-200 rounded-md focus:ring-1 focus:ring-emerald-500 focus:outline-none font-semibold text-gray-800"
+                            />
+                            {customSections.length > 1 && (
+                              <button
+                                onClick={() => {
+                                  setCustomSections(prev => prev.filter((_, i) => i !== sIdx));
+                                  setSectionSlots(prev => {
+                                    const next = { ...prev };
+                                    delete next[sec.id];
+                                    return next;
+                                  });
+                                }}
+                                className="w-6 h-6 rounded-md hover:bg-red-50 text-red-400 hover:text-red-600 flex items-center justify-center transition-all"
+                                title="Remover esta seção personalizada"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => {
+                          const newId = `sec_${Date.now()}`;
+                          setCustomSections(prev => [
+                            ...prev,
+                            { id: newId, label: `${prev.length + 1} NOVA SEÇÃO`, desc: "Seção personalizada", icon: "📑" }
+                          ]);
+                        }}
+                        className="mt-2 text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 transition-colors bg-white hover:bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-lg shadow-2xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Adicionar Outra Seção
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mt-2 text-[11px] text-emerald-800 font-medium">
                   {groupDocType === "trabalho_academico" && "✨ Estrutura: Resumo/Abstract + 1 Introdução + 2 Fundamentação e Métodos + 3 Resultados + 4 Considerações Finais + Referências"}
                   {groupDocType === "artigo" && "✨ Estrutura: Resumo/Abstract + 1 Introdução + 2 Materiais e Métodos + 3 Resultados e Discussão + 4 Considerações Finais + Referências"}
@@ -4253,6 +4432,7 @@ ${latexChapters}
                   {groupDocType === "relatorio" && "✨ Estrutura: 1 Introdução e Objetivo + 2 Procedimentos Realizados + 3 Análise de Dados + 4 Recomendações + Referências"}
                   {groupDocType === "estudo_caso" && "✨ Estrutura: 1 Introdução do Caso + 2 Diagnóstico e Teoria + 3 Proposições/Soluções + 4 Lições Aprendidas + Referências"}
                   {groupDocType === "resenha" && "✨ Estrutura: Cabeçalho Bibliográfico + 1 Síntese da Obra + 2 Apreciação Crítica + 3 Conclusão/Indicação"}
+                  {groupDocType === "outro" && "✨ Estrutura Totalmente Livre: Você define os títulos das seções, a quantidade de partes e a ordem exata."}
                 </div>
               </div>
 
