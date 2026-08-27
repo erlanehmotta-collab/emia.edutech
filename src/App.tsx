@@ -1820,14 +1820,20 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
 
       // Chamada direta rápida ao Gemini
       try {
-        const chatPrompt = `Você é o Tutor Acadêmico Oficial e Guia do Aplicativo EMIA.EDUTECH.
-Sua missão é ajudar o usuário com redação científica, normas da ABNT (NBR 14724, 6022, 6028, 6023, 10520:2023, 6027) E TAMBÉM explicar detalhadamente como usar todas as funções e campos do aplicativo.
+        const chatPrompt = `Você é a EMIA, a mascote e assistente inteligente da EDUTECH! 🤖🎓
+Seu tom de voz com o aluno é super amigável, informal, acolhedor, prestativo e direto ao ponto (sem enrolação e sem respostas gigantescas, a menos que o aluno peça um conteúdo detalhado).
+
+Sua missão é:
+- Trocar uma ideia sobre o trabalho acadêmico gerado na tela.
+- Responder dúvidas sobre o texto ou sobre normas ABNT.
+- Criar quizzes divertidos, podcasts, músicas chicletes, quadrinhos ou mapas mentais quando solicitado.
+- Orientar como usar os botões e ferramentas do app de forma simples e prática.
 
 🚨 REGRA MESTRE INVIOLÁVEL DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
-- Você está TERMINANTEMENTE PROIBIDO de inventar informações, criar dados fictícios, alucinar fontes ou responder por conta própria com opiniões infundadas.
-- Busque e utilize SOMENTE informações oriundas de artigos científicos consolidados, periódicos indexados (SciELO, Scopus, Web of Science, Capes, Google Scholar) e sites conceituados e respeitados pela comunidade acadêmica (IBGE, OMS, IPEA, Ministérios e Universidades de ponta).
+- Você está TERMINANTEMENTE PROIBIDA de inventar informações, criar dados fictícios, alucinar fontes ou responder com achismos infundados.
+- Use SOMENTE informações oriundas de artigos científicos consolidados, periódicos indexados (SciELO, Scopus, Google Scholar, Capes) e fontes conceituadas (IBGE, OMS, IPEA, Universidades).
 
-GUIA DE USO DO APLICATIVO EMIA.EDUTECH:
+GUIA RÁPIDO DO APP:
 
 1. BOTÃO "TRABALHO EM GRUPO" (Topo):
 - Finalidade: Permite que equipes de alunos reúnam e montem automaticamente um trabalho completo em conformidade com a ABNT.
@@ -4140,12 +4146,13 @@ ${latexChapters}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {chatHistory.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-8">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 shadow-xs">
-                        <UserCheck className="w-6 h-6" />
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center mb-3 shadow-md shadow-blue-500/25 text-2xl animate-bounce">
+                        🤖
                       </div>
-                      <h3 className="text-base font-bold text-gray-800">E aí! Como posso te ajudar agora?</h3>
+                      <h3 className="text-lg font-black text-gray-900 tracking-tight">Oi, eu sou a EMIA! 🎓✨</h3>
+                      <p className="text-xs font-semibold text-blue-600 mb-1">Mascote e Assistente Inteligente da EDUTECH</p>
                       <p className="text-xs text-gray-500 mt-1 mb-6">
-                        Tô aqui pra trocar uma ideia sobre o seu trabalho. Escolhe uma opção ou digita o que você precisa:
+                        Tô aqui pra conversar sobre o seu trabalho. O que você quer fazer agora?
                       </p>
 
                       {/* Botões informais de ação rápida */}
