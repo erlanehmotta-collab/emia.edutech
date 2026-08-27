@@ -2739,6 +2739,30 @@ ${latexChapters}
                           >
                             🗑️ Apagar Página
                           </button>
+                          <span className="h-3 w-px bg-slate-200" />
+                          {/* Adicionar Página em branco após esta */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newPages = [...pages];
+                              newPages.splice(pIdx + 1, 0, "");
+                              setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
+                              // Ajusta índices de numeração oculta após inserção
+                              setHiddenPageNumbers(prev => {
+                                const next = new Set<number>();
+                                prev.forEach(idx => {
+                                  if (idx <= pIdx) next.add(idx);
+                                  else next.add(idx + 1);
+                                });
+                                return next;
+                              });
+                            }}
+                            title="Adicionar uma nova página em branco após esta"
+                            className="px-2 py-0.5 text-[10px] font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1"
+                          >
+                            ➕ Adicionar Página
+                          </button>
                         </div>
 
                         {/* NUMERAÇÃO OFICIAL IMPRESSA NO CANTO SUPERIOR DIREITO — Clicável para apagar o número */}
