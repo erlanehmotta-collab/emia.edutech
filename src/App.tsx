@@ -2583,17 +2583,17 @@ ${latexChapters}
             </div>
           ) : null}
 
-          {/* Botão Slides (EMIA.SLIDES - Roxo/Violeta Elegante) */}
+          {/* Botão Slides (EMIA.SLIDES - Amarelo Ouro Elegante) */}
           <button 
             onClick={handleOpenSlidesStudio} 
             className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
               activeTab === "slides" 
-                ? "bg-violet-700 text-white shadow-xs ring-2 ring-violet-400/50" 
-                : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+                ? "bg-amber-400 text-slate-950 shadow-sm ring-2 ring-amber-500 font-extrabold" 
+                : "bg-amber-100/90 hover:bg-amber-200/90 text-amber-900 border border-amber-300/80 shadow-2xs"
             }`}
             title="Abrir Estúdio EMIA.SLIDES"
           >
-            <Presentation className="w-3.5 h-3.5 stroke-[2] group-hover:scale-110 transition-transform" />
+            <Presentation className="w-3.5 h-3.5 text-amber-800 stroke-[2] group-hover:scale-110 transition-transform" />
             <span className="tracking-tight">Slides</span>
           </button>
 
@@ -4094,40 +4094,9 @@ ${latexChapters}
                   {/* Palco Central: Cartão do Slide Ativo em Destaque Interativo */}
                   <div className="flex-1 p-6 md:p-10 overflow-y-auto flex flex-col items-center justify-start bg-gradient-to-b from-slate-900 to-slate-950">
                     {editableSlides[activeSlideIndex] && (
-                      <div className="w-full max-w-4xl space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="w-full max-w-4xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
                         
-                        {/* 1. BARRA SUPERIOR: NAVEGAÇÃO COM SETAS PARA PASSAR SLIDE */}
-                        <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 px-4 py-2.5 rounded-2xl backdrop-blur-md shadow-md">
-                          <button
-                            onClick={() => setActiveSlideIndex(prev => Math.max(0, prev - 1))}
-                            disabled={activeSlideIndex === 0}
-                            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 font-bold text-xs transition-all active:scale-95 shadow-sm"
-                            title="Slide Anterior (Seta Esquerda)"
-                          >
-                            <ChevronLeft className="w-4 h-4 text-amber-400" />
-                            <span>Anterior</span>
-                          </button>
-
-                          {/* Indicador de Slide */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono font-bold text-slate-200 bg-slate-950 px-3.5 py-1 rounded-xl border border-slate-800">
-                              Slide {activeSlideIndex + 1} de {editableSlides.length}
-                            </span>
-                            <span className="text-[10px] text-slate-500 hidden sm:inline">(Use ◀ ▶ do teclado)</span>
-                          </div>
-
-                          <button
-                            onClick={() => setActiveSlideIndex(prev => Math.min(editableSlides.length - 1, prev + 1))}
-                            disabled={activeSlideIndex >= editableSlides.length - 1}
-                            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-30 disabled:pointer-events-none text-white font-bold text-xs transition-all active:scale-95 shadow-md shadow-orange-500/20"
-                            title="Próximo Slide (Seta Direita / Espaço)"
-                          >
-                            <span>Próximo</span>
-                            <ChevronRight className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-
-                        {/* 2. BARRA DE TEMAS (EM CIMA DA PALAVRA LAYOUT) */}
+                        {/* 1. BARRA DE TEMAS (EM CIMA DA PALAVRA LAYOUT) */}
                         <div className="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2 rounded-2xl">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[11px] font-bold text-slate-400 px-2">Temas:</span>
@@ -4157,7 +4126,7 @@ ${latexChapters}
                           </div>
                         </div>
 
-                        {/* 3. SELETOR DE LAYOUT GAMMA DO CARTÃO */}
+                        {/* 2. SELETOR DE LAYOUT GAMMA DO CARTÃO */}
                         <div className="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2 rounded-2xl">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[11px] font-bold text-slate-400 px-2">Layout:</span>
@@ -4201,7 +4170,7 @@ ${latexChapters}
                           </button>
                         </div>
 
-                        {/* 4. CARTÃO DE VISUALIZAÇÃO / EDIÇÃO ESTILO GAMMA */}
+                        {/* 3. CARTÃO DE VISUALIZAÇÃO / EDIÇÃO ESTILO GAMMA */}
                         <div
                           className={`rounded-3xl p-8 md:p-12 shadow-2xl border transition-all duration-300 min-h-[460px] flex flex-col justify-between ${
                             slidesTheme === "academic"
@@ -4448,6 +4417,37 @@ ${latexChapters}
                             </div>
                             <span>EMIA.EDUTECH</span>
                           </div>
+                        </div>
+
+                        {/* Barra de Navegação com Setas para Passar Slide (Posicionada na Parte Inferior) */}
+                        <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-3 rounded-2xl backdrop-blur-md shadow-lg">
+                          <button
+                            onClick={() => setActiveSlideIndex(prev => Math.max(0, prev - 1))}
+                            disabled={activeSlideIndex === 0}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 font-bold text-xs transition-all active:scale-95 shadow-sm"
+                            title="Slide Anterior (Seta Esquerda)"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-amber-400" />
+                            <span>Anterior</span>
+                          </button>
+
+                          {/* Indicador e Atalhos de Teclado */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-slate-300 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800">
+                              Slide {activeSlideIndex + 1} de {editableSlides.length}
+                            </span>
+                            <span className="text-[10px] text-slate-500 hidden sm:inline">(Use as setas ◀ ▶ do teclado)</span>
+                          </div>
+
+                          <button
+                            onClick={() => setActiveSlideIndex(prev => Math.min(editableSlides.length - 1, prev + 1))}
+                            disabled={activeSlideIndex >= editableSlides.length - 1}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-30 disabled:pointer-events-none text-white font-bold text-xs transition-all active:scale-95 shadow-md shadow-orange-500/20"
+                            title="Próximo Slide (Seta Direita / Espaço)"
+                          >
+                            <span>Próximo</span>
+                            <ChevronRight className="w-4 h-4 text-white" />
+                          </button>
                         </div>
 
                       </div>
