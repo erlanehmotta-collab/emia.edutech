@@ -212,6 +212,7 @@ export default function App() {
   const [hiddenPageNumbers, setHiddenPageNumbers] = useState<Set<number>>(new Set()); // Páginas com numeração oculta pelo usuário
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [speechRate, setSpeechRate] = useState<number>(1.0); // Velocidade padrão: 1x, 1.25x, 1.5x, 2x
+  const [speechVolume, setSpeechVolume] = useState<number>(1.0); // Volume padrão: 1.0 (100%), 0.75, 0.5
 
   // Leitura em Áudio do Texto Acadêmico (Web Speech API)
   const handleToggleSpeech = () => {
@@ -233,8 +234,24 @@ export default function App() {
       return;
     }
 
-    // Limpa marcações estruturais para leitura limpa e fluida
-    const cleanSpeechText = generatedText
+    // Separa páginas para NÃO ler a Capa nem a Contra-Capa (Folha de Rosto)
+    let bodyTextOnly = generatedText;
+    if (generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
+      const parts = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
+      const contentParts = parts.filter(p => {
+        const t = p.trim();
+        return !t.startsWith("CAPA") && 
+               !t.startsWith("FOLHA DE ROSTO") && 
+               t !== "CAPA_AUTO" && 
+               t !== "FOLHA_ROSTO_AUTO" && 
+               !t.includes("requisito parcial") && 
+               !t.includes("apresentado à");
+      });
+      bodyTextOnly = contentParts.join("\n\n");
+    }
+
+    // Limpa marcações estruturais e markdown para leitura fluida do corpo do texto
+    const cleanSpeechText = bodyTextOnly
       .replace(/--- \[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\] ---/g, ' ')
       .replace(/!\[.*?\]\(.*?\)/g, ' ')
       .replace(/#+/g, ' ')
@@ -242,10 +259,16 @@ export default function App() {
       .replace(/\s+/g, ' ')
       .trim();
 
+    if (!cleanSpeechText) {
+      setErrorMessage("Nenhum conteúdo textual além da capa para leitura em áudio.");
+      return;
+    }
+
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(cleanSpeechText);
     utterance.lang = "pt-BR";
-    utterance.rate = speechRate || 1.0; // Velocidade configurada pelo usuário (1x, 1.5x, etc.)
+    utterance.rate = speechRate || 1.0;
+    utterance.volume = speechVolume || 1.0;
     utterance.pitch = 1.0;
 
     // Seleção de vozes neurais / naturais premium (Microsoft Francisca/Antonio Natural, Google português do Brasil, Apple Luciana/Felipe)
@@ -2697,6 +2720,25 @@ ${latexChapters}
               title="Alternar Velocidade de Áudio (1x, 1.25x, 1.5x, 2x)"
             >
               {speechRate}x
+            </button>
+
+            {/* Controle de Volume: 100% -> 75% -> 50% */}
+            <button
+              onClick={() => {
+                const vols = [1.0, 0.75, 0.5];
+                const nextVol = vols[(vols.indexOf(speechVolume) + 1) % vols.length];
+                setSpeechVolume(nextVol);
+                if (isSpeaking) {
+                  window.speechSynthesis.cancel();
+                  setIsSpeaking(false);
+                  setErrorMessage(`Volume ajustado para ${Math.round(nextVol * 100)}%.`);
+                  setTimeout(() => setErrorMessage(""), 2000);
+                }
+              }}
+              className="h-7 px-1.5 flex items-center justify-center text-[10px] font-bold text-amber-800 hover:bg-amber-100/90 rounded-md transition-all active:scale-90 select-none"
+              title="Alternar Volume (100%, 75%, 50%)"
+            >
+              {Math.round(speechVolume * 100)}%
             </button>
           </div>
 
