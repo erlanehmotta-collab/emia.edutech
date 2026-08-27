@@ -1386,37 +1386,52 @@ ${generatedText}`;
 
     setIsLoading(true);
     try {
-      const promptSpelling = `Você é um Professor Titular e Gramático de Língua Portuguesa Brasileira e Normalizador ABNT.
-Faça uma revisão ortográfica, gramatical, sintática e estilística impecável no texto abaixo:
-- Corrija acentuação, ortografia oficial (Novo Acordo), regências, crases, concordâncias nominais/verbais e pontuação.
-- Mantenha estritamente a integridade de todas as seções ABNT, capas, sumários e referências.
-- Retorne apenas o documento integral devidamente revisado, sem prefácios ou explicações.
+      const promptSpelling = `Você é um dos mais renomados Professores Titulares de Língua Portuguesa e Normalizadores Acadêmicos do Brasil (membro da Academia Brasileira de Letras e especialista em ABNT/UNESP/USP).
 
-TEXTO PARA REVISÃO:
+Sua missão é realizar uma REVISÃO LINGUÍSTICA E NORMATIVA COMPLETA E IMPECÁVEL no documento acadêmico fornecido, aplicando o mais alto padrão culto do Português Brasileiro e as normas técnicas da ABNT.
+
+DIRETRIZES OBRIGATÓRIAS DE REVISÃO:
+1. ORTOGRAFIA & ACENTUAÇÃO: Aplicação rigorosa do Vocabulário Ortográfico da Língua Portuguesa (VOLP) e do Novo Acordo Ortográfico.
+2. SINTAXE E GRAMÁTICA: Correção minuciosa de regência verbal/nominal, crase, concordância nominal/verbal e colocação pronominal (próclise, mesóclise e ênclise formal).
+3. PONTUAÇÃO & COESÃO: Ajuste culto da pontuação (vírgulas, ponto e vírgula, dois-pontos), eliminando períodos truncados ou redundâncias.
+4. NORMALIZAÇÃO ABNT:
+   - Citações no sistema autor-data em caixa mista conforme ABNT NBR 10520:2023: ex: (Silva, 2023, p. 15).
+   - Referências conforme ABNT NBR 6023:2025 alinhadas à esquerda com entrelinha simples.
+   - Preservação total de quebras de página "--- [QUEBRA DE PÁGINA] ---", títulos de seções, tabelas e dados reais.
+5. ZERO CLICHÊS DE IA: Substitua termos genéricos como "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir" por conectivos acadêmicos cultos (ex: "Dessarte", "Nesse prisma", "Com efeito", "Impende salientar").
+6. RETORNO: Retorne EXCLUSIVAMENTE o documento integral 100% revisado e corrigido, pronto para uso, sem notas introdutórias e sem comentários adicionais.
+
+DOCUMENTO A SER REVISADO:
 ${generatedText}`;
 
-      const res = await callGeminiDirectly(promptSpelling, customGeminiKey, "gemini-3.6-flash");
-      if (res && res.length > 50) {
-        const normalized = normalizeCitationsToABNT2023(res);
-        setGeneratedText(normalized);
-        setActiveTab("editor");
-        logAction("Revisão Gramatical e Ortográfica Impecável Aplicada", normalized);
-        setErrorMessage("✅ Revisão gramatical e linguística de excelência aplicada com sucesso!");
-        setTimeout(() => setErrorMessage(""), 3500);
-      } else {
-        // Fallback local via backend
-        const resLocal = await fetch("/api/correct-spelling", {
-          method: "POST",
-          headers: getApiHeaders(),
-          body: JSON.stringify({ text: generatedText }),
-        });
-        const data = await resLocal.json();
-        if (data.success) {
-          setGeneratedText(data.text);
-          setActiveTab("editor");
-          setErrorMessage("✅ Ortografia e gramática corrigidas!");
-          setTimeout(() => setErrorMessage(""), 3500);
+      let revisedText = "";
+      try {
+        revisedText = await callGeminiDirectly(promptSpelling, customGeminiKey, "gemini-3.6-flash");
+      } catch (geminiErr) {
+        console.warn("Chamada direta falhou, tentando fallback com gemini-3.5-flash-lite:", geminiErr);
+        try {
+          revisedText = await callGeminiDirectly(promptSpelling, customGeminiKey, "gemini-3.5-flash-lite");
+        } catch (liteErr) {
+          console.warn("Chamada direta lite falhou, tentando rota /api/correct-spelling:", liteErr);
+          const resLocal = await fetch("/api/correct-spelling", {
+            method: "POST",
+            headers: getApiHeaders(),
+            body: JSON.stringify({ text: generatedText }),
+          });
+          const data = await resLocal.json();
+          if (data.success && data.text) revisedText = data.text;
         }
+      }
+
+      if (revisedText && revisedText.length > 50) {
+        const normalized = normalizeCitationsToABNT2023(revisedText);
+        updateGeneratedTextWithHistory(normalized);
+        setActiveTab("editor");
+        logAction("Revisão Gramatical e Ortográfica ABNT Aplicada com Sucesso", normalized.substring(0, 300));
+        setErrorMessage("✨ Revisão ortográfica, gramatical e ABNT realizada com excelência por Professor de Português!");
+        setTimeout(() => setErrorMessage(""), 4000);
+      } else {
+        throw new Error("Não foi possível concluir a revisão ortográfica. Tente novamente.");
       }
     } catch (error) {
       console.error(error);
