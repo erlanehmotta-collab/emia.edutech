@@ -244,13 +244,28 @@ export default function App() {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(cleanSpeechText);
     utterance.lang = "pt-BR";
-    utterance.rate = 1.05;
+    utterance.rate = 0.98; // Velocidade natural e calma de locução acadêmica
     utterance.pitch = 1.0;
 
-    // Tenta selecionar voz nativa em português brasileiro
+    // Seleção de vozes neurais / naturais premium (Microsoft Francisca/Antonio Natural, Google português do Brasil, Apple Luciana/Felipe)
     const voices = window.speechSynthesis.getVoices();
-    const ptVoice = voices.find(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.includes("pt"));
-    if (ptVoice) utterance.voice = ptVoice;
+    const humanVoice = voices.find(v => 
+      (v.lang === "pt-BR" || v.lang === "pt_BR") && 
+      (v.name.toLowerCase().includes("natural") || 
+       v.name.toLowerCase().includes("neural") || 
+       v.name.toLowerCase().includes("google") || 
+       v.name.toLowerCase().includes("francisca") || 
+       v.name.toLowerCase().includes("antonio") ||
+       v.name.toLowerCase().includes("thalita") ||
+       v.name.toLowerCase().includes("luciana") || 
+       v.name.toLowerCase().includes("felipe") ||
+       v.name.toLowerCase().includes("leticia") ||
+       v.name.toLowerCase().includes("online"))
+    ) || voices.find(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR")) || voices.find(v => v.lang.startsWith("pt"));
+
+    if (humanVoice) {
+      utterance.voice = humanVoice;
+    }
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -1387,10 +1402,17 @@ ${generatedText}`;
   };
 
   const handleInsertCover = async () => {
+    // 1. Verificação de Regra ABNT NBR 6028: Resumos e Redações ENEM NÃO levam capa avulsa
+    if (documentType === "resumo" || documentType === "redacao") {
+      setErrorMessage("ℹ️ Conforme a ABNT NBR 6028, Resumos, Fichamentos e Redações possuem fluxo contínuo e NÃO utilizam Capa nem Folha de Rosto.");
+      setTimeout(() => setErrorMessage(""), 4500);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const inst = (institution || "INSTITUIÇÃO DE ENSINO SUPERIOR").toUpperCase();
-      const crs = course ? course.toUpperCase() : "CURSO DE GRADUAÇÃO / PÓS-GRADUAÇÃO";
+      const inst = (institution || "NOME DA INSTITUIÇÃO DE ENSINO").toUpperCase();
+      const crs = course ? course.toUpperCase() : "";
       const subMat = subject ? `DISCIPLINA: ${subject.toUpperCase()}` : "";
       const shiftClassInfo = [shift ? `Turno: ${shift}` : "", classroom ? `Sala/Turma: ${classroom}` : ""].filter(Boolean).join(" • ");
       const aut = (studentName || "NOME DO(A) AUTOR(A)").toUpperCase();
@@ -1404,14 +1426,14 @@ ${generatedText}`;
 
       const presentationNote = `${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para o curso de ${course}` : ""}.${shiftClassInfo ? `\n${shiftClassInfo}` : ""}${adv ? `\n${adv}` : ""}`;
 
-      // 1. CAPA OFICIAL ABNT (NBR 14724)
+      // 1. CAPA OFICIAL ABNT NBR 14724
       const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
-      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
+      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${aut}\n\n\n\n\n\n\n\n${tit}${sub}\n\n\n\n\n\n\n\n\n\n${cid}\n${an}`;
 
-      // 2. FOLHA DE ROSTO OFICIAL ABNT (NBR 14724)
-      const titlePage = `${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
+      // 2. FOLHA DE ROSTO OFICIAL ABNT NBR 14724 (Com Nota de Apresentação de 7,5cm)
+      const titlePage = `${aut}\n\n\n\n\n\n\n\n${tit}${sub}\n\n\n\n                                          ${presentationNote}\n\n\n\n\n\n\n\n${cid}\n${an}`;
 
-      const coverBlock = `CAPA\n${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\nFOLHA DE ROSTO\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
+      const coverBlock = `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
 
       // Remove capa e folha de rosto anteriores se já existirem no início do documento
       let cleanBody = generatedText || "";
@@ -1419,7 +1441,7 @@ ${generatedText}`;
         const parts = cleanBody.split("--- [QUEBRA DE PÁGINA] ---");
         const filteredParts = parts.filter(p => {
           const t = p.trim();
-          return !t.startsWith("CAPA") && !t.startsWith("FOLHA DE ROSTO") && t !== "CAPA_AUTO" && t !== "FOLHA_ROSTO_AUTO";
+          return !t.startsWith("CAPA") && !t.startsWith("FOLHA DE ROSTO") && t !== "CAPA_AUTO" && t !== "FOLHA_ROSTO_AUTO" && !t.includes("requisito parcial") && !t.includes("apresentado à");
         });
         cleanBody = filteredParts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n").trim();
       } else {
@@ -1431,7 +1453,7 @@ ${generatedText}`;
 
       let updatedFullText = coverBlock + (cleanBody.trim() ? cleanBody.trim() : "1 INTRODUÇÃO\n\nInsira ou continue seu trabalho acadêmico aqui...");
       
-      // Aplica a Skill Acadêmica ABNT NBR 10520:2023 no documento completo
+      // Aplica normalizações ABNT
       updatedFullText = normalizeCitationsToABNT2023(updatedFullText);
       updatedFullText = updatedFullText
         .replace(/\r\n/g, '\n')
@@ -2632,7 +2654,7 @@ ${latexChapters}
             <span className="tracking-tight">Chat Acadêmico</span>
           </button>
 
-          {/* Botão Ouvir (Leitura em Áudio do Texto Acadêmico) */}
+          {/* Botão Ouvir Texto (Leitura em Áudio do Texto Acadêmico com Voz Humana) */}
           <button 
             onClick={handleToggleSpeech}
             disabled={!generatedText || !generatedText.trim()}
@@ -2646,12 +2668,12 @@ ${latexChapters}
             {isSpeaking ? (
               <>
                 <VolumeX className="w-3.5 h-3.5 text-white stroke-[2] group-hover:scale-110 transition-transform" />
-                <span className="tracking-tight text-white">Parar Áudio</span>
+                <span className="tracking-tight text-white">Parar Texto</span>
               </>
             ) : (
               <>
                 <Volume2 className="w-3.5 h-3.5 text-amber-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
-                <span className="tracking-tight">Ouvir</span>
+                <span className="tracking-tight">Ouvir Texto</span>
               </>
             )}
           </button>
