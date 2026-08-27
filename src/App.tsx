@@ -6,7 +6,7 @@ import {
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
-  Undo2, Redo2, Maximize2, Minimize2
+  Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -4064,21 +4064,37 @@ ${latexChapters}
                   <div className="w-60 bg-slate-950/50 border-r border-slate-800/80 p-3 overflow-y-auto space-y-2.5 flex-shrink-0">
                     <div className="flex items-center justify-between mb-1 px-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Slides</span>
-                      <button
-                        onClick={() => {
-                          const newSlide = {
-                            title: `Novo Slide ${editableSlides.length + 1}`,
-                            bullets: ["Ponto chave 1", "Ponto chave 2", "Ponto chave 3"],
-                            layout: "bullets" as const,
-                            badge: `Módulo ${editableSlides.length + 1}`
-                          };
-                          setEditableSlides(prev => [...prev, newSlide]);
-                          setActiveSlideIndex(editableSlides.length);
-                        }}
-                        className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-0.5 font-bold"
-                      >
-                        <Plus className="w-3 h-3" /> Adicionar
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            if (editableSlides.length <= 1) return;
+                            const updated = editableSlides.filter((_, i) => i !== activeSlideIndex);
+                            setEditableSlides(updated);
+                            setActiveSlideIndex(prev => Math.max(0, prev - 1));
+                          }}
+                          disabled={editableSlides.length <= 1}
+                          className="text-xs text-rose-400 hover:text-rose-300 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-0.5 font-bold p-1 rounded hover:bg-rose-500/10 transition-colors"
+                          title="Apagar Slide Selecionado"
+                        >
+                          <X className="w-3.5 h-3.5" /> Apagar
+                        </button>
+                        <button
+                          onClick={() => {
+                            const newSlide = {
+                              title: `Novo Slide ${editableSlides.length + 1}`,
+                              bullets: ["Ponto chave 1", "Ponto chave 2", "Ponto chave 3"],
+                              layout: "bullets" as const,
+                              badge: `Módulo ${editableSlides.length + 1}`
+                            };
+                            setEditableSlides(prev => [...prev, newSlide]);
+                            setActiveSlideIndex(editableSlides.length);
+                          }}
+                          className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-0.5 font-bold p-1 rounded hover:bg-amber-500/10 transition-colors"
+                          title="Adicionar Novo Slide"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Adicionar
+                        </button>
+                      </div>
                     </div>
 
                     {editableSlides.map((slide, sIdx) => (
@@ -4399,6 +4415,38 @@ ${latexChapters}
                             <span>EMIA.EDUTECH</span>
                           </div>
                         </div>
+
+                        {/* Barra de Navegação com Setas para Passar Slide (Tanto no Pequeno quanto em Tela Cheia) */}
+                        <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-3 rounded-2xl backdrop-blur-md">
+                          <button
+                            onClick={() => setActiveSlideIndex(prev => Math.max(0, prev - 1))}
+                            disabled={activeSlideIndex === 0}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 font-bold text-xs transition-all active:scale-95 shadow-sm"
+                            title="Slide Anterior (Seta Esquerda)"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-amber-400" />
+                            <span>Anterior</span>
+                          </button>
+
+                          {/* Indicador e Atalhos de Teclado */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-slate-300 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800">
+                              Slide {activeSlideIndex + 1} de {editableSlides.length}
+                            </span>
+                            <span className="text-[10px] text-slate-500 hidden sm:inline">(Use as setas ◀ ▶ do teclado)</span>
+                          </div>
+
+                          <button
+                            onClick={() => setActiveSlideIndex(prev => Math.min(editableSlides.length - 1, prev + 1))}
+                            disabled={activeSlideIndex >= editableSlides.length - 1}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-30 disabled:pointer-events-none text-white font-bold text-xs transition-all active:scale-95 shadow-md shadow-orange-500/20"
+                            title="Próximo Slide (Seta Direita / Espaço)"
+                          >
+                            <span>Próximo</span>
+                            <ChevronRight className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+
                       </div>
                     )}
                   </div>
