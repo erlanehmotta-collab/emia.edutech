@@ -2407,6 +2407,20 @@ ${latexChapters}
             </div>
           ) : null}
 
+          {/* Botão Chat Acadêmico (Antes de Trabalho em Grupo) */}
+          <button 
+            onClick={() => setActiveTab("chat")}
+            className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
+              activeTab === "chat" 
+                ? "bg-indigo-600 text-white shadow-xs" 
+                : "bg-indigo-50/90 hover:bg-indigo-100/90 text-indigo-900 border border-indigo-200"
+            }`}
+            title="Abrir Chat Acadêmico com IA"
+          >
+            <UserCheck className={`w-3.5 h-3.5 stroke-[1.8] group-hover:scale-110 transition-transform ${activeTab === "chat" ? "text-white" : "text-indigo-600"}`} />
+            <span className="tracking-tight">Chat Acadêmico</span>
+          </button>
+
           {/* Botão Trabalho em Grupo (Verde Claro Suave e Harmonioso) */}
           <button 
             onClick={() => setIsGroupMode(true)} 
@@ -2787,39 +2801,28 @@ ${latexChapters}
           style={{ height: 'calc(100vh - 4.5rem + 150px)', minHeight: '830px' }}
         >
           
-          {/* Top Bar with Tabs and Quick Export Actions */}
-          <div className="flex flex-wrap items-center justify-between border-b border-gray-200/80 mb-3 pb-2 gap-2 bg-white/50 backdrop-blur-xs px-1">
-            {/* Abas de Navegação Estilizadas */}
-            <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200/60 shadow-2xs gap-1">
-              <button 
-                onClick={() => setActiveTab("editor")}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
-                  activeTab === "editor" || activeTab === "generator" 
-                    ? "bg-white text-blue-700 shadow-xs font-bold" 
-                    : "text-gray-600 hover:text-gray-900 hover:bg-white/60"
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5 text-blue-600" />
-                Documento
-              </button>
-              <button 
-                onClick={() => setActiveTab("chat")}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
-                  activeTab === "chat" 
-                    ? "bg-white text-blue-700 shadow-xs font-bold" 
-                    : "text-gray-600 hover:text-gray-900 hover:bg-white/60"
-                }`}
-              >
-                <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
-                Chat Acadêmico
-              </button>
-            </div>
-
-            {/* Grupo Harmônico de Ações Rápidas em Linha Única */}
+          {/* Top Bar with Clean, Elegant Single Toolbar */}
+          <div className="flex items-center justify-between border-b border-gray-200/80 mb-3 pb-2 gap-2 bg-white/50 backdrop-blur-xs px-1">
+            
+            {/* Grupo Harmônico e Elegante de Ações na Esquerda */}
             <div className="flex items-center gap-1.5 flex-wrap">
               
               {/* Ferramentas de Redação & Estrutura Acadêmica */}
               <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5">
+                <Button 
+                  onClick={() => setActiveTab("editor")} 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`text-xs h-7 px-2.5 font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                    activeTab === "editor" || activeTab === "generator" 
+                      ? "bg-white text-blue-700 shadow-xs" 
+                      : "text-gray-700 hover:bg-gray-200/60"
+                  }`}
+                  title="Exibir Documento Acadêmico"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  Documento
+                </Button>
                 <Button 
                   onClick={handleCorrectSpelling} 
                   disabled={isLoading || !generatedText} 
@@ -2932,33 +2935,33 @@ ${latexChapters}
                   Copiar
                 </Button>
               </div>
+            </div>
 
-              {/* Controle de Zoom Elegante */}
-              <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-xl p-0.5 gap-0.5 select-none shadow-2xs h-7">
-                <button
-                  onClick={() => setZoomScale(z => Math.max(30, z - 10))}
-                  title="Diminuir Zoom (-10%)"
-                  className="p-1 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
-                >
-                  <ZoomOut className="w-3 h-3 stroke-[2.2]" />
-                </button>
-                
-                <button
-                  onClick={() => setZoomScale(65)}
-                  title="Restaurar Zoom Padrão (65%)"
-                  className="px-1.5 py-0.5 text-[11px] font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-lg min-w-[34px] text-center"
-                >
-                  {zoomScale}%
-                </button>
-                
-                <button
-                  onClick={() => setZoomScale(z => Math.min(150, z + 10))}
-                  title="Aumentar Zoom (+10%)"
-                  className="p-1 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
-                >
-                  <ZoomIn className="w-3 h-3 stroke-[2.2]" />
-                </button>
-              </div>
+            {/* Controle de Zoom Elegante (À Direita) */}
+            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-xl p-0.5 gap-0.5 select-none shadow-2xs h-8 ml-auto">
+              <button
+                onClick={() => setZoomScale(z => Math.max(30, z - 10))}
+                title="Diminuir Zoom (-10%)"
+                className="p-1.5 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
+              >
+                <ZoomOut className="w-3.5 h-3.5 stroke-[2.2]" />
+              </button>
+              
+              <button
+                onClick={() => setZoomScale(65)}
+                title="Restaurar Zoom Padrão (65%)"
+                className="px-2 py-0.5 text-xs font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-lg min-w-[40px] text-center"
+              >
+                {zoomScale}%
+              </button>
+              
+              <button
+                onClick={() => setZoomScale(z => Math.min(150, z + 10))}
+                title="Aumentar Zoom (+10%)"
+                className="p-1.5 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
+              >
+                <ZoomIn className="w-3.5 h-3.5 stroke-[2.2]" />
+              </button>
             </div>
           </div>
 
