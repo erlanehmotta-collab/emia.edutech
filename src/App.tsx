@@ -103,6 +103,7 @@ export default function App() {
   const [imageRotation, setImageRotation] = useState<number>(0); // Rotação em graus (0, 90, 180, 270)
   const [imageStyle, setImageStyle] = useState<"none" | "simple_border" | "soft_shadow" | "rounded_frame" | "academic_box">("academic_box");
   const [isImageSelected, setIsImageSelected] = useState<boolean>(false); // O menu só aparece quando a foto é selecionada (Padrão Word)
+  const [hiddenPageNumbers, setHiddenPageNumbers] = useState<Set<number>>(new Set()); // Páginas com numeração oculta pelo usuário
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -2706,10 +2707,63 @@ ${latexChapters}
                     return (
                       <div 
                         key={pIdx}
-                        className="w-full max-w-[760px] bg-white text-gray-900 shadow-md border border-gray-200 rounded-sm relative flex flex-col p-8 sm:p-12 md:p-16 my-4 select-text print:shadow-none print:border-none print:m-0 print:p-0 print:h-[297mm] print:w-[210mm] print:break-after-page min-h-[900px]"
+                        className="w-full max-w-[760px] bg-white text-gray-900 shadow-md border border-gray-200 rounded-sm relative flex flex-col p-8 sm:p-12 md:p-16 my-4 select-text print:shadow-none print:border-none print:m-0 print:p-0 print:h-[297mm] print:w-[210mm] print:break-after-page min-h-[900px] group/page"
                       >
+                        {/* BARRA DE CONTROLE DA PÁGINA (aparece no hover) */}
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 translate-y-0 opacity-0 group-hover/page:opacity-100 transition-all duration-200 z-30 flex items-center gap-1 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg rounded-xl px-2 py-1 print:hidden">
+                          <span className="text-[10px] font-bold text-slate-500 px-1.5">Pág. {pageNum}</span>
+                          <span className="h-3 w-px bg-slate-200" />
+                          {/* Ocultar / Mostrar Numeração */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHiddenPageNumbers(prev => {
+                                const next = new Set(prev);
+                                if (next.has(pIdx)) {
+                                  next.delete(pIdx);
+                                } else {
+                                  next.add(pIdx);
+                                }
+                                return next;
+                              });
+                            }}
+                            title={hiddenPageNumbers.has(pIdx) ? "Mostrar numeração desta página" : "Ocultar numeração desta página"}
+                            className={`px-2 py-0.5 text-[10px] font-medium rounded-lg transition-all flex items-center gap-1 ${hiddenPageNumbers.has(pIdx) ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+                          >
+                            {hiddenPageNumbers.has(pIdx) ? '🔢 Mostrar Nº' : '🚫 Ocultar Nº'}
+                          </button>
+                          <span className="h-3 w-px bg-slate-200" />
+                          {/* Apagar Página */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newPages = pages.filter((_, i) => i !== pIdx);
+                              if (newPages.length === 0) {
+                                setGeneratedText("");
+                              } else {
+                                setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
+                              }
+                              // Ajusta os índices ocultos após remoção
+                              setHiddenPageNumbers(prev => {
+                                const next = new Set<number>();
+                                prev.forEach(idx => {
+                                  if (idx < pIdx) next.add(idx);
+                                  else if (idx > pIdx) next.add(idx - 1);
+                                });
+                                return next;
+                              });
+                            }}
+                            title="Apagar esta página"
+                            className="px-2 py-0.5 text-[10px] font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all flex items-center gap-1"
+                          >
+                            🗑️ Apagar
+                          </button>
+                        </div>
+
                         {/* NUMERAÇÃO OFICIAL IMPRESSA NO CANTO SUPERIOR DIREITO */}
-                        {isBodyPage && (
+                        {isBodyPage && !hiddenPageNumbers.has(pIdx) && (
                           <div className="absolute top-[4%] right-[5%] font-mono text-xs font-bold text-gray-800 select-none">
                             {hasCoverPages ? pageNum : pIdx + 1}
                           </div>
