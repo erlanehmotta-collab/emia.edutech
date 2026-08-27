@@ -2818,7 +2818,7 @@ ${latexChapters}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Arquivos Base (Para basear IA ou Juntar trabalhos)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Arquivos Base (Para basear IA ou Editar trabalhos)</label>
                 <div 
                   {...getRootProps()} 
                   className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer transition-colors ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
@@ -2844,15 +2844,6 @@ ${latexChapters}
                         </button>
                       </div>
                     ))}
-                    
-                    <Button 
-                      onClick={handleMergeFiles} 
-                      disabled={isLoading} 
-                      className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 text-sm mt-2"
-                    >
-                      {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                      Apenas Editar Textos Sem IA
-                    </Button>
                   </div>
                 )}
               </div>
