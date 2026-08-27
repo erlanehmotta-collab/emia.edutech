@@ -2265,6 +2265,16 @@ ${latexChapters}
             <span>Google Gemini</span>
           </div>
 
+          {/* Botão Trabalho em Grupo posicionado ao lado do Gemini */}
+          <button 
+            onClick={() => setIsGroupMode(true)} 
+            className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+            title="Montar trabalho acadêmico feito em grupo com múltiplos alunos"
+          >
+            <span className="text-sm">👥</span>
+            <span>Trabalho em Grupo</span>
+          </button>
+
           {/* Indicador de Cota Própria / Créditos */}
           {isMaster ? (
             <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm">
@@ -2286,16 +2296,6 @@ ${latexChapters}
               <span className="bg-amber-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold ml-1">+ Recarregar (PIX)</span>
             </button>
           )}
-
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setIsGroupMode(true)} 
-            className="border-emerald-300 bg-emerald-50/80 text-emerald-800 hover:bg-emerald-100 font-bold shadow-2xs"
-          >
-            <span className="mr-1.5">👥</span>
-            Trabalho em Grupo
-          </Button>
 
           <Button variant="outline" size="sm" onClick={() => setShowProfileModal(true)} className="border-gray-200">
             <User className="w-4 h-4 mr-2" />
@@ -4136,6 +4136,9 @@ ${latexChapters}
 
             </div>
           </div>
+        </div>
+      )}
+
       {/* MODAL TRABALHO EM GRUPO (Aberto pelo botão da barra superior) */}
       {isGroupMode && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
