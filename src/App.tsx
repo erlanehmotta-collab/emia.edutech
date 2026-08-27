@@ -414,6 +414,7 @@ ${formatted}`;
 
             updateGeneratedTextWithHistory(formatted);
             setActiveTab("editor");
+            setFiles([]); // Limpa a lista de arquivos acumulados após subir para o editor
             setErrorMessage("✅ Documento revisado ortograficamente e 100% normalizado na ABNT!");
             setTimeout(() => setErrorMessage(""), 4500);
             logAction("Upload com Revisão Ortográfica e ABNT Completa", formatted);
