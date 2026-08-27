@@ -389,34 +389,11 @@ export default function App() {
           }
 
           if (extracted && extracted.trim()) {
-            setErrorMessage("🧠 Aplicando Revisão Ortográfica e Normalização ABNT no documento...");
-
-            // 1. Normaliza Citações NBR 10520:2023 (Sobrenome, 2023)
+            // Normalização Local 100% Offline e Instantânea (Zero dependência de IA ou rede)
             let formatted = normalizeCitationsToABNT2023(extracted);
-            // 2. Organiza a ordem oficial das seções (ABNT NBR 14724 / 6022)
             formatted = organizeTextInABNTOrder(formatted);
 
-            // 3. Tenta passar pela IA para revisão filológica, ortográfica e gramatical
-            try {
-              const promptSpelling = `Você é um Professor Titular de Língua Portuguesa Brasileira e Normalizador ABNT Oficial (NBR 14724, 6022, 6028, 6023, 10520:2023).
-Faça uma revisão ortográfica, gramatical, sintática e estrutural impecável no documento acadêmico extraído a seguir:
-1. ORTOGRAFIA & GRAMÁTICA: Corrija acentuação (Novo Acordo Ortográfico), pontuação, concordâncias, regências e crases mantendo todo o sentido e termos técnicos.
-2. REGRAS ABNT: Formate as seções com numeração progressiva em maiúsculas (ex: 1 INTRODUÇÃO, 2 DESENVOLVIMENTO, 3 RESULTADOS, 4 CONSIDERAÇÕES FINAIS, REFERÊNCIAS). Citações em caixa mista (Silva, 2023, p. 15).
-3. ESTRUTURA: Separe seções principais com '--- [QUEBRA DE PÁGINA] ---'.
-4. Retorne APENAS o documento completo formatado e revisado, sem comentários externos.
-
-DOCUMENTO:
-${formatted}`;
-
-              const aiReviewed = await callGeminiDirectly(promptSpelling, customGeminiKey, "gemini-3.6-flash");
-              if (aiReviewed && aiReviewed.trim().length > 50) {
-                formatted = normalizeCitationsToABNT2023(aiReviewed.trim());
-              }
-            } catch (aiErr) {
-              console.warn("Revisão ortográfica via IA falhou ou chave ausente, aplicando normalização ABNT local:", aiErr);
-            }
-
-            // 4. Limpa espaçamentos excessivos
+            // Limpa espaçamentos excessivos
             formatted = formatted
               .replace(/\r\n/g, '\n')
               .replace(/\n{4,}/g, '\n\n\n')
@@ -425,9 +402,9 @@ ${formatted}`;
             updateGeneratedTextWithHistory(formatted);
             setActiveTab("editor");
             setFiles([]); // Limpa a lista de arquivos acumulados após subir para o editor
-            setErrorMessage("✅ Documento revisado ortograficamente e 100% normalizado na ABNT!");
-            setTimeout(() => setErrorMessage(""), 4500);
-            logAction("Upload com Revisão Ortográfica e ABNT Completa", formatted);
+            setErrorMessage("✅ Documento carregado e formatado no padrão ABNT com sucesso!");
+            setTimeout(() => setErrorMessage(""), 3500);
+            logAction("Upload e Edição Direta ABNT (Modo Offline)", formatted);
           }
         } catch (uploadErr) {
           console.error(uploadErr);
