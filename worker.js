@@ -38,7 +38,7 @@ export default {
         // Fallback Seguro com Chave Criptografada em Base64
         if (!apiKey) {
           try {
-            const _enc = "QVEuQWI4Uk42SkhxLXp0ck92UFNGMUZ1UEwyOU1JamxsWFd1Yld0YTB6aWp3UDItRWczOWc=";
+            const _enc = "QVEuQWI4Uk42S0oxQVRTYUR4X3pCMnc4cFY1TEVfbzJwYVp2Qk0tbVY2MnkwYWhVakxmOFE=";
             apiKey = atob(_enc);
           } catch (_) {}
         }
@@ -50,7 +50,7 @@ export default {
           });
         }
 
-        const model = body.model || "gemini-3.6-flash";
+        const model = body.model || "gemini-3.7-flash";
         const prompt = body.prompt || "";
 
         const geminiRes = await fetch(
