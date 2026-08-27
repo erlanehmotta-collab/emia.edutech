@@ -2583,21 +2583,7 @@ ${latexChapters}
             </div>
           ) : null}
 
-          {/* Botão Slides (EMIA.SLIDES - Amarelo Pastel com Texto Branco) */}
-          <button 
-            onClick={handleOpenSlidesStudio} 
-            className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
-              activeTab === "slides" 
-                ? "bg-amber-500 text-white shadow-xs ring-2 ring-amber-300" 
-                : "bg-amber-400/90 hover:bg-amber-500/90 text-white shadow-2xs border border-amber-300/40"
-            }`}
-            title="Abrir Estúdio EMIA.SLIDES"
-          >
-            <Presentation className="w-3.5 h-3.5 text-white stroke-[2] group-hover:scale-110 transition-transform" />
-            <span className="tracking-tight text-white">Slides</span>
-          </button>
-
-          {/* Botão Chat Acadêmico (Antes de Trabalho em Grupo) */}
+          {/* Botão Chat Acadêmico */}
           <button 
             onClick={() => setActiveTab("chat")}
             className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
@@ -2609,6 +2595,20 @@ ${latexChapters}
           >
             <UserCheck className={`w-3.5 h-3.5 stroke-[1.8] group-hover:scale-110 transition-transform ${activeTab === "chat" ? "text-white" : "text-indigo-600"}`} />
             <span className="tracking-tight">Chat Acadêmico</span>
+          </button>
+
+          {/* Botão Slides (EMIA.SLIDES - Amarelo Pastel com Texto Branco - Entre Chat e Trabalho em Grupo) */}
+          <button 
+            onClick={handleOpenSlidesStudio} 
+            className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
+              activeTab === "slides" 
+                ? "bg-amber-500 text-white shadow-xs ring-2 ring-amber-300" 
+                : "bg-amber-400/90 hover:bg-amber-500/90 text-white shadow-2xs border border-amber-300/40"
+            }`}
+            title="Abrir Estúdio EMIA.SLIDES"
+          >
+            <Presentation className="w-3.5 h-3.5 text-white stroke-[2] group-hover:scale-110 transition-transform" />
+            <span className="tracking-tight text-white">Slides</span>
           </button>
 
           {/* Botão Trabalho em Grupo (Verde Claro Suave e Harmonioso) */}
