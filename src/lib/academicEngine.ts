@@ -52,6 +52,7 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
   }
 
   const fallbackModels = [
+    "gemini-3.6-flash",
     "gemini-3.5-flash-lite",
     "gemini-3.5-flash",
     "gemini-3.7-flash",
@@ -62,7 +63,7 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 14000); // Timeout rápido de 14s
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       const res = await fetch(url, {
         method: "POST",
@@ -86,7 +87,7 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
         }
       }
     } catch (e) {
-      console.warn(`Tentativa rápida com modelo ${m} falhou ou esgotou tempo:`, e);
+      console.warn(`Tentativa com modelo ${m} falhou ou esgotou tempo:`, e);
     }
   }
 
