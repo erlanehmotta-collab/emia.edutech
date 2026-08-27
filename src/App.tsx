@@ -191,10 +191,18 @@ export default function App() {
   
   const attachmentRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
   
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', text: string}[]>([]);
   const [chatMessage, setChatMessage] = useState("");
   const [isChatting, setIsChatting] = useState(false);
+
+  // Rolagem automática para a última mensagem no Chat Acadêmico
+  useEffect(() => {
+    if (chatMessagesEndRef.current) {
+      chatMessagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatHistory, isChatting]);
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -1833,13 +1841,19 @@ GUIA DE USO DO APLICATIVO EMIA.EDUTECH:
 - PDF A4, Word (.docx) e LaTeX: Exportação em alta fidelidade com paginação ABNT.
 - Inserir Capa & Sumário Dinâmico: Criação instantânea de elementos pré-textuais.
 
+4. HABILIDADES ESPECIAIS DO CHAT (CRIATIVAS E DIDÁTICAS):
+- 🎙️ Roteiro de PODCAST: Se solicitado, crie um roteiro de podcast dinâmico com 2 apresentadores (Host e Especialista), linguagem leve, descontraída e didática explicando todo o conteúdo acadêmico.
+- 🎵 MÚSICA CHICLETE: Se solicitado, componha uma letra de música chiclete (estilo pop/refrão marcante ou paródia) com rimas fáceis para memorizar todos os conceitos e fórmulas do tema!
+- 🎨 HISTÓRIA EM QUADRINHOS (HQ): Se solicitado, crie um roteiro em quadrinhos com descrição visual de cada quadro (painel), personagens acadêmicos carismáticos, balões de fala e onomatopeias.
+- 🧠 MAPA MENTAL: Se solicitado, gere a estrutura hierárquica completa de Mapa Mental, incluindo diagrama formatado em Markdown ou código Mermaid (ex: \`\`\`mermaid graph TD ... \`\`\`).
+
 ${generatedText ? `[DOCUMENTO ATUAL DO USUÁRIO]\n${generatedText.substring(0, 3500)}\n[/DOCUMENTO ATUAL]\n` : ""}
 [HISTÓRICO RECENTE]
 ${chatHistory.slice(-4).map(h => `${h.role === 'user' ? 'Aluno' : 'Assistente'}: ${h.text}`).join('\n')}
 Aluno: ${userMessage}
 Assistente:`;
 
-        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.5-flash-lite");
+        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.6-flash");
       } catch (directErr) {
         console.warn("Tentativa direta falhou, tentando rota /api/chat:", directErr);
         try {
@@ -3355,9 +3369,10 @@ ${latexChapters}
               >
                 {(() => {
                   let pages: string[] = [];
+                  const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
                   
-                  if (generatedText && generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
-                    pages = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
+                  if (generatedText && pageBreakRegex.test(generatedText)) {
+                    pages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
                   } else if (generatedText && generatedText.trim()) {
                     let bodyContent = generatedText;
                     let referencesContent = "";
@@ -4117,7 +4132,7 @@ ${latexChapters}
                     <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center">
                       <UserCheck className="w-12 h-12 mb-4 text-blue-200" />
                       <p>Olá! Sou o Assistente de Estudos do EMIA.EDUTECH.</p>
-                      <p className="text-sm mt-2">Dúvidas sobre o texto gerado? Me faça uma pergunta! Eu lerei o seu documento e te ajudarei a compreender os conceitos de forma dinâmica. Você também pode me pedir para ajudar a modificar, editar ou reescrever partes do seu texto.</p>
+                      <p className="text-sm mt-2">Dúvidas sobre o texto gerado? Me faça uma pergunta! Eu lerei o seu documento e te ajudarei a compreender os conceitos de forma dinâmica. Você também pode me pedir para ajudar a modificar, editar, criar um podcast ou música chiclete sobre o seu tema.</p>
                     </div>
                   ) : (
                     chatHistory.map((msg, idx) => (
@@ -4137,6 +4152,8 @@ ${latexChapters}
                       </div>
                     </div>
                   )}
+                  {/* Elemento de rolagem automática para a última mensagem */}
+                  <div ref={chatMessagesEndRef} />
                 </div>
                 <div className="p-4 bg-white border-t border-gray-200">
                   <form onSubmit={handleSendMessage} className="flex gap-2 mb-2">
@@ -4144,8 +4161,8 @@ ${latexChapters}
                       type="text" 
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
-                      placeholder="Faça uma pergunta ou peça para gerar algo..."
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Faça uma pergunta, peça um podcast ou música..."
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                     <Button type="submit" disabled={isChatting || !chatMessage.trim()} className="bg-blue-600">
                       Enviar
