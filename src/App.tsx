@@ -1229,24 +1229,27 @@ ${generatedText}`;
   const handleInsertCover = async () => {
     setIsLoading(true);
     try {
-      const inst = institution ? institution.toUpperCase() : "INSTITUIÇÃO DE ENSINO SUPERIOR";
+      const inst = (institution || "INSTITUIÇÃO DE ENSINO SUPERIOR").toUpperCase();
       const crs = course ? course.toUpperCase() : "CURSO DE GRADUAÇÃO";
-      const aut = studentName ? studentName.toUpperCase() : "NOME DO(A) AUTOR(A)";
+      const subMat = subject ? `DISCIPLINA: ${subject.toUpperCase()}` : "";
+      const shiftClassInfo = [shift ? `Turno: ${shift}` : "", classroom ? `Sala/Turma: ${classroom}` : ""].filter(Boolean).join(" • ");
+      const aut = (studentName || "NOME DO(A) AUTOR(A)").toUpperCase();
       const tit = (title || "TÍTULO DO TRABALHO").toUpperCase();
-      const sub = subtitle ? `: ${subtitle}` : "";
-      const cid = city ? city.toUpperCase() : "CIDADE - UF";
+      const sub = subtitle ? ` - ${subtitle}` : "";
+      const cid = (city || "CIDADE - UF").toUpperCase();
       const an = year || String(new Date().getFullYear());
-      const adv = advisor || "Prof. Dr. Orientador";
+      const adv = advisor ? `Orientador(a): ${advisor}` : "";
 
-      const presentationNote = documentType.includes("artigo")
-        ? `Artigo científico/acadêmico apresentado ao(à) ${inst}, como requisito de avaliação acadêmica.`
-        : `Trabalho de Conclusão de Curso apresentado ao(à) ${inst}, como requisito parcial para obtenção de grau.`;
+      const docTypeLabel = documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType === "artigo" || documentType === "artigo_cientifico" ? "Artigo Científico" : documentType === "projeto" ? "Projeto de Pesquisa" : documentType === "relatorio" ? "Relatório Técnico" : "Trabalho de Conclusão de Curso (TCC)";
+
+      const presentationNote = `                                          ${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para a disciplina de ${subject || course}` : ""}.\n${shiftClassInfo ? `\n                                          ${shiftClassInfo}` : ""}\n${adv ? `\n                                          ${adv}` : ""}`;
 
       // 1. CAPA OFICIAL (NBR 14724)
-      const coverPage = `${inst}\n${crs}\n\n\n\n${aut}\n\n\n\n${tit}${sub}\n\n\n\n\n\n\n\n${cid}\n${an}`;
+      const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
+      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${aut}\n\n\n\n${tit}${sub}\n\n\n\n\n\n\n\n${cid}\n${an}`;
 
       // 2. FOLHA DE ROSTO / CONTRACAPA OFICIAL (NBR 14724)
-      const titlePage = `${aut}\n\n\n\n${tit}${sub}\n\n\n${presentationNote}\nOrientador(a): ${adv}\n\n\n\n\n\n${cid}\n${an}`;
+      const titlePage = `${aut}\n\n\n\n${tit}${sub}\n\n\n\n${presentationNote}\n\n\n\n\n\n\n\n${cid}\n${an}`;
 
       const coverBlock = `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
 
@@ -1259,11 +1262,20 @@ ${generatedText}`;
         }
       }
 
-      const updatedFullText = coverBlock + (cleanBody.trim() ? cleanBody.trim() : "1 INTRODUÇÃO\n\nInsira ou continue seu trabalho acadêmico aqui...");
+      let updatedFullText = coverBlock + (cleanBody.trim() ? cleanBody.trim() : "1 INTRODUÇÃO\n\nInsira ou continue seu trabalho acadêmico aqui...");
+      
+      // Aplica a Skill Acadêmica ABNT NBR 10520:2023 no documento completo
+      updatedFullText = normalizeCitationsToABNT2023(updatedFullText);
+      updatedFullText = updatedFullText
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{4,}/g, '\n\n\n')
+        .replace(/[ \t]+$/gm, '');
+
       setGeneratedText(updatedFullText);
       setActiveTab("editor");
-      setErrorMessage("✅ Capa e Contracapa (Folha de Rosto) oficiais inseridas com sucesso!");
+      setErrorMessage("✅ Capa e Contracapa ABNT inseridas e texto normalizado com a Skill Acadêmica!");
       setTimeout(() => setErrorMessage(""), 3500);
+      logAction("Inserção de Capa e Normalização ABNT", updatedFullText.substring(0, 500));
     } catch (error) {
       console.error(error);
       setErrorMessage(error instanceof Error ? error.message : "Erro ao inserir capa e contracapa.");
