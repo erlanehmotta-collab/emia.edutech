@@ -659,12 +659,15 @@ export default function App() {
                 localStorage.setItem("emia_authenticated", "true");
                 setIsAuthenticated(true);
                 
-                if (email === "erlane.digital@gmail.com") {
+                const cleanEmail = email.toLowerCase();
+                const isMasterUser = cleanEmail === "erlane.digital@gmail.com" || cleanEmail === "cadumajor@gmail.com";
+
+                if (isMasterUser) {
                   setIsMaster(true);
                   setCredits(9999);
                   localStorage.setItem("emia_is_master", "true");
                   localStorage.setItem("emia_credits", "9999");
-                  logAction(`Login Mestre Administrativo realizado (${email})`);
+                  logAction(`Login Mestre / Acesso Vitalício realizado (${cleanEmail})`);
                 } else {
                   setIsMaster(false);
                   const savedGeminiKey = localStorage.getItem("emia_custom_gemini_key");
@@ -672,7 +675,7 @@ export default function App() {
                     // Usuário ainda não tem a chave configurada: abre o modal simples do Google AI Studio na hora
                     setShowApiKeyModal(true);
                   }
-                  logAction(`Login de Aluno via Google realizado (${email})`);
+                  logAction(`Login de Aluno via Google realizado (${cleanEmail})`);
                 }
               } catch (e) {
                 console.error("Falha ao validar autenticação Google:", e);
@@ -726,16 +729,19 @@ export default function App() {
     localStorage.setItem("emia_authenticated", "true");
     localStorage.setItem("emia_user_email", clean);
 
-    if (clean === "erlane.digital@gmail.com") {
+    const cleanEmail = clean.toLowerCase();
+    const isMasterUser = cleanEmail === "erlane.digital@gmail.com" || cleanEmail === "cadumajor@gmail.com";
+
+    if (isMasterUser) {
       setIsMaster(true);
       setCredits(9999);
       localStorage.setItem("emia_is_master", "true");
       localStorage.setItem("emia_credits", "9999");
-      logAction(`Login Mestre Administrativo via Google (${selectedEngine === 'gemini' ? 'Google Gemini' : 'ChatGPT'}) realizado`);
+      logAction(`Login Mestre / Acesso Vitalício (${cleanEmail} • IA: ${selectedEngine}) realizado`);
     } else {
       setIsMaster(false);
       setShowPixModal(true);
-      logAction(`Login de Aluno via Google (${clean} • IA: ${selectedEngine}) realizado`);
+      logAction(`Login de Aluno via Google (${cleanEmail} • IA: ${selectedEngine}) realizado`);
     }
 
     setShowGoogleModal(false);
@@ -2372,93 +2378,98 @@ ${latexChapters}
     setTimeout(() => setErrorMessage(""), 3500);
   };
 
-  // Função para Estruturar o Texto Acadêmico em Roteiro de Slides
+  // Função para Estruturar o Texto Acadêmico em Roteiro de Slides com Dados Reais do Palco
   const parseDocumentIntoSlides = (text: string) => {
-    const pages = text ? text.split("--- [QUEBRA DE PÁGINA] ---") : [];
-    const mainBody = pages.slice(2).join("\n\n") || text;
+    const cleanDoc = (text || "").replace(/\r\n/g, '\n');
+    const sections: Array<{ title: string; bullets: string[]; notes?: string; isCover?: boolean; badge?: string; layout?: "card" | "split" | "bullets" | "quote" | "metrics" }> = [];
 
-    return [
-      {
-        title: (title || "Apresentação de Trabalho Acadêmico").toUpperCase(),
-        subtitle: subtitle || (course ? `Curso de ${course}` : "Seminário & Defesa"),
-        author: studentName || "Autor(a)",
-        institution: institution || "Instituição de Ensino",
-        year: year || new Date().getFullYear().toString(),
-        isCover: true,
-        bullets: [
-          `Autor: ${studentName || "Acadêmico"}`,
-          `Orientador: ${advisor || "Docente Responsável"}`,
-          `Instituição: ${institution || "Universidade / Faculdade"}`,
-          `Ano: ${year || new Date().getFullYear()}`
-        ],
-        notes: "Slide inicial: Agradeça à banca examinadora e apresente o título do seu trabalho."
-      },
-      {
-        title: "1. Introdução e Contextualização",
-        isCover: false,
-        bullets: [
-          "Relevância e atualidade do tema no cenário acadêmico contemporâneo.",
-          "Justificativa da pesquisa e motivação teórica/prática.",
-          "Delimitação do escopo e contextualização do problema investigado.",
-          "Aderência às diretrizes e estado da arte da literatura."
-        ],
-        notes: "Destaque por que esse tema é importante e o que motivou a realização desta pesquisa."
-      },
-      {
-        title: "2. Problema de Pesquisa & Objetivos",
-        isCover: false,
-        bullets: [
-          "Problema Central: Como solucionar ou analisar o fenômeno proposto?",
-          "Objetivo Geral: Investigar, mapear e analisar criticamente as variáveis.",
-          "Objetivos Específicos: Levantar referencial, aplicar metodologia e analisar dados.",
-          "Hipótese condutora do estudo e impacto esperado."
-        ],
-        notes: "Apresente a pergunta norteadora e deixe claro o objetivo que você buscou alcançar."
-      },
-      {
-        title: "3. Fundamentação Teórica & Metodologia",
-        isCover: false,
-        bullets: [
-          "Bases conceituais fundamentadas em autores e referências consolidadas.",
-          "Abordagem metodológica: Classificação (Qualitativa / Quantitativa).",
-          "Procedimentos de coleta e análise sistemática dos dados.",
-          "Critérios de rigor científico e conformidade normativa ABNT."
-        ],
-        notes: "Explique como o estudo foi conduzido metodologicamente e quais autores apoiaram a teoria."
-      },
-      {
-        title: "4. Desenvolvimento & Principais Achados",
-        isCover: false,
-        bullets: [
-          "Apresentação dos principais resultados obtidos na investigação.",
-          "Discussão crítica correlacionando os dados com a literatura.",
-          "Evidências encontradas e confirmação das hipóteses levantadas.",
-          "Análise dos impactos práticos observados na área de estudo."
-        ],
-        notes: "Este é o coração da apresentação: mostre com clareza o que foi descoberto ou analisado."
-      },
-      {
-        title: "5. Considerações Finais & Conclusão",
-        isCover: false,
-        bullets: [
-          "Cumprimento integral dos objetivos propostos no início da pesquisa.",
-          "Principais contribuições teóricas e práticas para a comunidade.",
-          "Limitações metodológicas identificadas durante o percurso.",
-          "Sugestões e perspectivas para investigações e estudos futuros."
-        ],
-        notes: "Sintetize as respostas aos objetivos e encerre reforçando o valor do trabalho."
-      },
-      {
-        title: "6. Referências Bibliográficas (ABNT)",
-        isCover: false,
-        bullets: [
-          `ASSOCIAÇÃO BRASILEIRA DE NORMAS TÉCNICAS. NBR 14724. Rio de Janeiro: ABNT, ${year || new Date().getFullYear()}.`,
-          "Fontes científicas, artigos indexados e obras especializadas citadas no corpo do texto.",
-          "Material disponível para consulta detalhada no documento completo."
-        ],
-        notes: "Mencione as principais fontes utilizadas e abra espaço para perguntas da banca."
+    // 1. Slide de Capa Real com os Metadados do Trabalho
+    sections.push({
+      title: (title || "Apresentação do Trabalho Acadêmico").toUpperCase(),
+      bullets: [
+        `Autor(a): ${studentName || "Acadêmico(a)"}`,
+        `Orientador(a): ${advisor || "Docente Orientador(a)"}`,
+        `Instituição: ${institution || "Instituição de Ensino Superior"}`,
+        `Curso: ${course || "Graduação / Pós-Graduação"}`,
+        `Ano de Apresentação: ${year || new Date().getFullYear()}`
+      ],
+      notes: "Slide inicial: Agradeça à banca examinadora e apresente o título e objetivo do trabalho.",
+      isCover: true,
+      badge: "Apresentação Oficial",
+      layout: "card"
+    });
+
+    // 2. Extrai seções reais do documento (ex: 1 INTRODUÇÃO, 2 FUNDAMENTAÇÃO, 3 RESULTADOS, CONCLUSÃO, etc.)
+    const cleanBody = cleanDoc
+      .replace(/--- \[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\] ---/gi, '\n\n')
+      .replace(/\[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\]/gi, '\n\n')
+      .replace(/^CAPA[\s\S]*?(?=\n\s*(?:RESUMO|1\s+|INTRODUÇÃO))/i, '');
+
+    // Busca seções com numeração ABNT (ex: "1 INTRODUÇÃO", "2 METODOLOGIA", "3 RESULTADOS") ou títulos em caixa alta
+    const sectionRegex = /(?:^|\n)(?:#+\s*)?(\d+(?:\.\d+)*\s+[A-ZÀ-Ú\s–\-]{3,}|RESUMO|ABSTRACT|CONSIDERAÇÕES FINAIS|CONCLUSÃO|REFERÊNCIAS)\b/g;
+    
+    const matches: Array<{ title: string; index: number }> = [];
+    let match;
+    while ((match = sectionRegex.exec(cleanBody)) !== null) {
+      matches.push({ title: match[1].trim(), index: match.index });
+    }
+
+    if (matches.length > 0) {
+      for (let i = 0; i < matches.length; i++) {
+        const current = matches[i];
+        const nextIndex = i + 1 < matches.length ? matches[i + 1].index : cleanBody.length;
+        const sectionContent = cleanBody.substring(current.index, nextIndex).trim();
+        
+        // Separa linhas e parágrafos reais do conteúdo
+        const lines = sectionContent
+          .split('\n')
+          .slice(1) // Pula o título da seção
+          .map(l => l.replace(/^[\*\-\#\d\.\s]+/, '').trim())
+          .filter(l => l.length > 20);
+
+        // Agrupa as ideias em 3 a 5 tópicos sintetizados reais
+        const realBullets: string[] = [];
+        for (const line of lines) {
+          if (realBullets.length >= 4) break;
+          // Pega frases significativas do parágrafo
+          const sentences = line.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 15);
+          if (sentences.length > 0 && !realBullets.includes(sentences[0])) {
+            realBullets.push(sentences[0].substring(0, 160) + (sentences[0].length > 160 ? "..." : ""));
+          }
+        }
+
+        if (realBullets.length === 0) {
+          realBullets.push("Aprofundamento teórico e análise sistemática dos conceitos centrais investigados.");
+          realBullets.push("Fundamentação alinhada aos dados empíricos e literatura especializada.");
+        }
+
+        const isResult = current.title.includes("RESULTADO") || current.title.includes("DISCUSS");
+        const isConcl = current.title.includes("CONCLUS") || current.title.includes("CONSIDERA");
+
+        sections.push({
+          title: current.title,
+          bullets: realBullets,
+          notes: `Destaque os pontos cruciais da seção "${current.title}" e faça conexões com os objetivos do estudo.`,
+          badge: isResult ? "Resultados & Dados" : isConcl ? "Conclusão Final" : `Módulo ${i + 1}`,
+          layout: isResult ? "split" : isConcl ? "metrics" : "bullets"
+        });
       }
-    ];
+    } else {
+      // Caso o texto não tenha títulos numerados explícitos, fatia os parágrafos reais do texto
+      const paragraphs = cleanBody.split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 50);
+      paragraphs.slice(0, 5).forEach((p, pIdx) => {
+        const sentences = p.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 15);
+        sections.push({
+          title: `Tópico ${pIdx + 1}: ${title ? title.substring(0, 40) : "Desenvolvimento"}`,
+          bullets: sentences.slice(0, 3).map(s => s.substring(0, 150)),
+          notes: "Apresente estes conceitos enfatizando o rigor metodológico.",
+          badge: `Parte ${pIdx + 1}`,
+          layout: "bullets"
+        });
+      });
+    }
+
+    return sections;
   };
 
   const handleOpenSlidesStudio = () => {
@@ -2468,12 +2479,7 @@ ${latexChapters}
     }
     const textToParse = generatedText && generatedText.trim() ? generatedText : "1 INTRODUÇÃO\n\nApresentação acadêmica estruturada.";
     const parsed = parseDocumentIntoSlides(textToParse);
-    const enriched = parsed.map((s, idx) => ({
-      ...s,
-      layout: (idx === 0 ? "card" : idx % 3 === 0 ? "split" : idx % 2 === 0 ? "metrics" : "bullets") as "card" | "split" | "bullets" | "quote" | "metrics",
-      badge: idx === 0 ? "Apresentação Oficial" : `Módulo ${idx}`
-    }));
-    setEditableSlides(enriched);
+    setEditableSlides(parsed as any);
     setActiveSlideIndex(0);
     setActiveTab("slides");
   };

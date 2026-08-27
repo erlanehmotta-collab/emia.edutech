@@ -38,8 +38,8 @@ export default {
           });
         }
 
-        // Admin Geral
-        if (email === "erlane.digital@gmail.com") {
+        // Admin Geral & Acessos Vitalícios
+        if (email === "erlane.digital@gmail.com" || email === "cadumajor@gmail.com") {
           return new Response(JSON.stringify({ credits: 9999, isMaster: true }), {
             headers: { "Content-Type": "application/json", ...corsHeaders }
           });
