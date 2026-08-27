@@ -241,7 +241,7 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [stageHeight, setStageHeight] = useState<number>(0);
   const [showSlidesModal, setShowSlidesModal] = useState<boolean>(false);
-  const [slidesTheme, setSlidesTheme] = useState<"academic" | "modern" | "dark" | "sunset" | "neon">("academic");
+  const [slidesTheme, setSlidesTheme] = useState<"academic" | "modern" | "dark" | "sunset" | "neon" | "emerald" | "lavender" | "solar">("academic");
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
   const [editableSlides, setEditableSlides] = useState<Array<{
     title: string;
@@ -249,7 +249,7 @@ export default function App() {
     bullets: string[];
     notes?: string;
     isCover?: boolean;
-    layout?: "card" | "split" | "bullets" | "quote" | "metrics";
+    layout?: "card" | "split" | "bullets" | "quote" | "metrics" | "timeline" | "comparison";
     badge?: string;
   }>>([]);
 
@@ -3963,37 +3963,40 @@ ${latexChapters}
 
             {activeTab === "slides" && (
               <div className="flex-1 flex flex-col h-full bg-slate-900 text-white overflow-hidden select-text">
-                {/* Top Control Bar do Estúdio de Slides (Estilo Gamma App) */}
+                {/* Top Control Bar do Estúdio de Slides (EMIA.SLIDES) */}
                 <div className="bg-slate-950/80 border-b border-slate-800 px-6 py-3 flex items-center justify-between gap-4 backdrop-blur-md">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-orange-500/20 text-white">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center shadow-md shadow-orange-500/20 text-white">
                       <Presentation className="w-4 h-4" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                        Estúdio de Slides Gamma
+                      <h2 className="text-sm font-black text-slate-100 flex items-center gap-2 tracking-tight">
+                        EMIA.SLIDES
                         <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                           {editableSlides.length} Cartões
                         </span>
                       </h2>
-                      <p className="text-[11px] text-slate-400">Edição direta nos cartões em tempo real</p>
+                      <p className="text-[11px] text-slate-400">Estúdio de Apresentações com Templates Inteligentes</p>
                     </div>
                   </div>
 
-                  {/* Seleção de Templates Visuais (Gamma Cards Themes) */}
-                  <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-xl p-1">
-                    <span className="text-[11px] font-bold text-slate-400 px-2">Tema:</span>
+                  {/* Seleção Expandida de Temas Visuais (EMIA.SLIDES Themes) */}
+                  <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 rounded-xl p-1 overflow-x-auto scrollbar-hide max-w-xl">
+                    <span className="text-[11px] font-bold text-slate-400 px-1.5 flex-shrink-0">Tema:</span>
                     {[
                       { id: "academic", name: "Acadêmico", color: "bg-blue-600" },
                       { id: "modern", name: "Moderno", color: "bg-teal-600" },
                       { id: "sunset", name: "Sunset", color: "bg-gradient-to-r from-orange-500 to-rose-500" },
-                      { id: "dark", name: "Obsidian", color: "bg-slate-800" },
+                      { id: "emerald", name: "Esmeralda", color: "bg-emerald-500" },
+                      { id: "lavender", name: "Lavanda", color: "bg-indigo-400" },
+                      { id: "solar", name: "Solar Gold", color: "bg-amber-400" },
                       { id: "neon", name: "Cyberpunk", color: "bg-purple-600" },
+                      { id: "dark", name: "Obsidian", color: "bg-slate-700" },
                     ].map(t => (
                       <button
                         key={t.id}
                         onClick={() => setSlidesTheme(t.id as any)}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                        className={`text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all flex-shrink-0 ${
                           slidesTheme === t.id
                             ? "bg-slate-800 text-white shadow-sm ring-1 ring-amber-500"
                             : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
@@ -4010,7 +4013,7 @@ ${latexChapters}
                     <Button
                       onClick={exportPPTXSlides}
                       size="sm"
-                      className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs h-8 px-3"
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs h-8 px-3 font-semibold"
                       title="Baixar em PowerPoint (.pptx)"
                     >
                       <Download className="w-3.5 h-3.5 mr-1 text-amber-400" />
@@ -4028,17 +4031,17 @@ ${latexChapters}
                       onClick={() => setActiveTab("editor")}
                       variant="ghost"
                       size="sm"
-                      className="text-xs text-slate-400 hover:text-white hover:bg-slate-800 h-8"
+                      className="text-xs text-slate-400 hover:text-white hover:bg-slate-800 h-8 font-medium"
                     >
                       Voltar ao Documento
                     </Button>
                   </div>
                 </div>
 
-                {/* Workspace Central Estilo Gamma (Lista de Cartões com Layout Editável) */}
+                {/* Workspace Central EMIA.SLIDES */}
                 <div className="flex-1 flex overflow-hidden">
                   {/* Navegador Lateral de Slides (Miniaturas) */}
-                  <div className="w-56 bg-slate-950/50 border-r border-slate-800/80 p-3 overflow-y-auto space-y-2.5 flex-shrink-0">
+                  <div className="w-60 bg-slate-950/50 border-r border-slate-800/80 p-3 overflow-y-auto space-y-2.5 flex-shrink-0">
                     <div className="flex items-center justify-between mb-1 px-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Slides</span>
                       <button
@@ -4086,7 +4089,7 @@ ${latexChapters}
                       <div className="w-full max-w-4xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
                         {/* Seletor de Layout Gamma do Cartão */}
                         <div className="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2 rounded-2xl">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[11px] font-bold text-slate-400 px-2">Layout:</span>
                             {[
                               { id: "card", label: "🃏 Cartão" },
@@ -4094,6 +4097,8 @@ ${latexChapters}
                               { id: "bullets", label: "📋 Tópicos" },
                               { id: "metrics", label: "📊 Métricas" },
                               { id: "quote", label: "💬 Destaque" },
+                              { id: "timeline", label: "⏳ Cronologia" },
+                              { id: "comparison", label: "⚖️ Comparação" },
                             ].map(l => (
                               <button
                                 key={l.id}
@@ -4120,7 +4125,7 @@ ${latexChapters}
                               setEditableSlides(updated);
                               setActiveSlideIndex(prev => Math.max(0, prev - 1));
                             }}
-                            className="text-xs text-rose-400 hover:text-rose-300 px-3 py-1 hover:bg-rose-500/10 rounded-lg transition-colors"
+                            className="text-xs text-rose-400 hover:text-rose-300 px-3 py-1 hover:bg-rose-500/10 rounded-lg transition-colors flex-shrink-0"
                           >
                             Excluir Slide
                           </button>
@@ -4135,6 +4140,12 @@ ${latexChapters}
                               ? "bg-gradient-to-br from-teal-950 via-slate-900 to-emerald-950 border-teal-800/50 text-white"
                               : slidesTheme === "sunset"
                               ? "bg-gradient-to-br from-rose-950 via-slate-900 to-amber-950 border-orange-800/50 text-white"
+                              : slidesTheme === "emerald"
+                              ? "bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 border-emerald-800/50 text-white"
+                              : slidesTheme === "lavender"
+                              ? "bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 border-indigo-700/50 text-white"
+                              : slidesTheme === "solar"
+                              ? "bg-gradient-to-br from-amber-950 via-slate-900 to-orange-950 border-amber-600/50 text-white"
                               : slidesTheme === "neon"
                               ? "bg-gradient-to-br from-purple-950 via-slate-900 to-fuchsia-950 border-purple-800/50 text-white"
                               : "bg-slate-900 border-slate-800 text-slate-100"
@@ -4240,6 +4251,66 @@ ${latexChapters}
                                 className="text-lg md:text-xl font-medium italic text-slate-100 leading-relaxed focus:outline-none focus:bg-white/10 p-2 rounded"
                               >
                                 "{editableSlides[activeSlideIndex].bullets[0] || "Destaque conceitual ou citação principal da pesquisa..."}"
+                              </div>
+                            </div>
+                          ) : editableSlides[activeSlideIndex].layout === "timeline" ? (
+                            <div className="space-y-4 my-auto relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-white/20">
+                              {editableSlides[activeSlideIndex].bullets.slice(0, 4).map((bullet, bIdx) => (
+                                <div key={bIdx} className="flex items-start gap-4 pl-1 relative">
+                                  <div className="w-5 h-5 rounded-full bg-amber-400 border-4 border-slate-900 flex-shrink-0 mt-0.5" />
+                                  <div className="bg-white/5 p-3 rounded-xl border border-white/10 flex-1">
+                                    <span className="text-[10px] font-bold uppercase text-amber-300">Etapa 0{bIdx + 1}</span>
+                                    <div
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e) => {
+                                        const updated = [...editableSlides];
+                                        updated[activeSlideIndex].bullets[bIdx] = e.currentTarget.innerText;
+                                        setEditableSlides(updated);
+                                      }}
+                                      className="text-xs text-slate-200 mt-0.5 focus:outline-none focus:bg-white/10 p-1 rounded"
+                                    >
+                                      {bullet}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : editableSlides[activeSlideIndex].layout === "comparison" ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-auto">
+                              <div className="bg-emerald-950/40 p-5 rounded-2xl border border-emerald-500/30">
+                                <div className="text-xs font-bold uppercase text-emerald-400 mb-2 flex items-center gap-1.5">
+                                  <span>✅ Vantagens & Conquistas</span>
+                                </div>
+                                <div
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => {
+                                    const updated = [...editableSlides];
+                                    updated[activeSlideIndex].bullets[0] = e.currentTarget.innerText;
+                                    setEditableSlides(updated);
+                                  }}
+                                  className="text-xs text-slate-200 leading-relaxed focus:outline-none focus:bg-white/10 p-1 rounded"
+                                >
+                                  {editableSlides[activeSlideIndex].bullets[0] || "Pontos positivos e avanços identificados..."}
+                                </div>
+                              </div>
+                              <div className="bg-rose-950/40 p-5 rounded-2xl border border-rose-500/30">
+                                <div className="text-xs font-bold uppercase text-rose-400 mb-2 flex items-center gap-1.5">
+                                  <span>⚠️ Desafios & Limitações</span>
+                                </div>
+                                <div
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => {
+                                    const updated = [...editableSlides];
+                                    updated[activeSlideIndex].bullets[1] = e.currentTarget.innerText;
+                                    setEditableSlides(updated);
+                                  }}
+                                  className="text-xs text-slate-200 leading-relaxed focus:outline-none focus:bg-white/10 p-1 rounded"
+                                >
+                                  {editableSlides[activeSlideIndex].bullets[1] || "Desafios encontrados e oportunidades de melhoria..."}
+                                </div>
                               </div>
                             </div>
                           ) : (
