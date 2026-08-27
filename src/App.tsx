@@ -195,65 +195,6 @@ export default function App() {
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', text: string}[]>([]);
   const [chatMessage, setChatMessage] = useState("");
   const [isChatting, setIsChatting] = useState(false);
-  const [isListeningVoiceChat, setIsListeningVoiceChat] = useState(false);
-  const [voiceChatActive, setVoiceChatActive] = useState(false); // Quando ativo, o chat fala as respostas em áudio
-  const recognitionRef = useRef<any>(null);
-
-  // Iniciar / Parar gravação de voz no Chat Acadêmico (Web Speech Recognition API)
-  const handleToggleVoiceInput = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setErrorMessage("Reconhecimento de voz por microfone não suportado neste navegador. Use o Chrome ou Edge.");
-      setTimeout(() => setErrorMessage(""), 3500);
-      return;
-    }
-
-    if (isListeningVoiceChat) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsListeningVoiceChat(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "pt-BR";
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
-        setIsListeningVoiceChat(true);
-        setErrorMessage("🎙️ Ouvindo sua voz... Fale sua pergunta ou instrução.");
-      };
-
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript && transcript.trim()) {
-          setChatMessage(transcript.trim());
-          setErrorMessage("✅ Áudio capturado com sucesso!");
-          setTimeout(() => setErrorMessage(""), 2000);
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.warn("Erro no reconhecimento de voz:", event.error);
-        setIsListeningVoiceChat(false);
-        setErrorMessage("Microfone não capturou áudio. Tente novamente.");
-        setTimeout(() => setErrorMessage(""), 2500);
-      };
-
-      recognition.onend = () => {
-        setIsListeningVoiceChat(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err) {
-      console.error(err);
-      setIsListeningVoiceChat(false);
-    }
-  };
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -932,24 +873,9 @@ export default function App() {
       }
 
       let finalText = "";
+      
+      // Chamada direta instantânea pelo Motor Acadêmico de Alta Velocidade (gemini-3.5-flash-lite)
       try {
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: customHeaders,
-          body: formData,
-        });
-        
-        const textData = await res.text();
-        const data = JSON.parse(textData);
-        if (data.success && data.text) {
-          finalText = data.text;
-        }
-      } catch (apiErr) {
-        console.warn("[EMIA API Fallback] Usando Motor Acadêmico Autônomo:", apiErr);
-      }
-
-      // Se a rota da API não respondeu (ex: modo estático/local), executa pelo Motor Acadêmico Resiliente
-      if (!finalText) {
         finalText = await generateAcademicText({
           title: cleanTitle,
           subtitle,
@@ -963,6 +889,22 @@ export default function App() {
           advisor,
           customGeminiKey,
         });
+      } catch (genErr) {
+        console.warn("[EMIA Motor Direto] Tentando via /api/generate fallback:", genErr);
+        try {
+          const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: customHeaders,
+            body: formData,
+          });
+          const textData = await res.text();
+          const data = JSON.parse(textData);
+          if (data.success && data.text) {
+            finalText = data.text;
+          }
+        } catch (apiErr) {
+          console.error("Todas as tentativas falharam:", apiErr);
+        }
       }
 
       if (finalText) {
@@ -1918,27 +1860,6 @@ Assistente:`;
 
       if (assistantResponse) {
         setChatHistory([...updatedHistory, { role: 'assistant', text: assistantResponse }]);
-        
-        // Se a resposta em voz estiver ativada, lê a resposta em áudio com voz humana
-        if (voiceChatActive && 'speechSynthesis' in window) {
-          const cleanText = assistantResponse.replace(/[\*\_#`]/g, ' ').replace(/\s+/g, ' ').trim();
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = "pt-BR";
-          utterance.rate = speechRate || 1.0;
-          utterance.volume = speechVolume || 1.0;
-          utterance.pitch = speechGender === "female" ? 1.05 : 0.92;
-          
-          const voices = window.speechSynthesis.getVoices();
-          const ptVoices = voices.filter(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.startsWith("pt"));
-          let selectedVoice = speechGender === "female"
-            ? ptVoices.find(v => v.name.toLowerCase().includes("francisca") || v.name.toLowerCase().includes("luciana") || v.name.toLowerCase().includes("leticia"))
-            : ptVoices.find(v => v.name.toLowerCase().includes("antonio") || v.name.toLowerCase().includes("felipe"));
-          if (!selectedVoice && ptVoices.length > 0) selectedVoice = ptVoices[0];
-          if (selectedVoice) utterance.voice = selectedVoice;
-
-          window.speechSynthesis.speak(utterance);
-        }
       } else {
         setErrorMessage("Erro ao gerar resposta do chat. Tente novamente.");
       }
@@ -4213,54 +4134,12 @@ ${latexChapters}
                   )}
                 </div>
                 <div className="p-4 bg-white border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVoiceChatActive(prev => !prev);
-                          if (!voiceChatActive) {
-                            setErrorMessage("🔊 Respostas por voz ativadas! O assistente falará com você.");
-                          } else {
-                            window.speechSynthesis?.cancel();
-                            setErrorMessage("🔇 Respostas por voz desativadas.");
-                          }
-                          setTimeout(() => setErrorMessage(""), 2500);
-                        }}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
-                          voiceChatActive 
-                            ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs font-bold" 
-                            : "text-slate-500 hover:bg-slate-100"
-                        }`}
-                        title="Ativar ou desativar resposta em áudio falada pelo assistente"
-                      >
-                        <Volume2 className={`w-3.5 h-3.5 ${voiceChatActive ? "text-amber-700" : "text-slate-400"}`} />
-                        <span>{voiceChatActive ? "Voz Ativa" : "Ouvir Respostas"}</span>
-                      </button>
-                    </div>
-
-                    <span className="text-[11px] text-slate-400">Pressione Enter ou clique no microfone para falar</span>
-                  </div>
-
                   <form onSubmit={handleSendMessage} className="flex gap-2 mb-2">
-                    <button
-                      type="button"
-                      onClick={handleToggleVoiceInput}
-                      className={`px-3 py-2 rounded-lg border transition-all flex items-center justify-center active:scale-95 ${
-                        isListeningVoiceChat 
-                          ? "bg-rose-500 text-white border-rose-600 animate-pulse shadow-md ring-2 ring-rose-300" 
-                          : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-300"
-                      }`}
-                      title={isListeningVoiceChat ? "Gravando áudio... Clique para parar" : "Falar por microfone"}
-                    >
-                      {isListeningVoiceChat ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-blue-600" />}
-                    </button>
-
                     <input 
                       type="text" 
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
-                      placeholder={isListeningVoiceChat ? "Ouvindo sua voz..." : "Faça uma pergunta por texto ou microfone..."}
+                      placeholder="Faça uma pergunta ou peça para gerar algo..."
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <Button type="submit" disabled={isChatting || !chatMessage.trim()} className="bg-blue-600">
