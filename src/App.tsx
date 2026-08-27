@@ -1230,7 +1230,7 @@ ${generatedText}`;
     setIsLoading(true);
     try {
       const inst = (institution || "INSTITUIÇÃO DE ENSINO SUPERIOR").toUpperCase();
-      const crs = course ? course.toUpperCase() : "CURSO DE GRADUAÇÃO";
+      const crs = course ? course.toUpperCase() : "";
       const subMat = subject ? `DISCIPLINA: ${subject.toUpperCase()}` : "";
       const shiftClassInfo = [shift ? `Turno: ${shift}` : "", classroom ? `Sala/Turma: ${classroom}` : ""].filter(Boolean).join(" • ");
       const aut = (studentName || "NOME DO(A) AUTOR(A)").toUpperCase();
@@ -1242,23 +1242,31 @@ ${generatedText}`;
 
       const docTypeLabel = documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType === "artigo" || documentType === "artigo_cientifico" ? "Artigo Científico" : documentType === "projeto" ? "Projeto de Pesquisa" : documentType === "relatorio" ? "Relatório Técnico" : "Trabalho de Conclusão de Curso (TCC)";
 
-      const presentationNote = `                                          ${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para a disciplina de ${subject || course}` : ""}.\n${shiftClassInfo ? `\n                                          ${shiftClassInfo}` : ""}\n${adv ? `\n                                          ${adv}` : ""}`;
+      const presentationNote = `${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para a disciplina de ${subject || course}` : ""}.${shiftClassInfo ? `\n${shiftClassInfo}` : ""}${adv ? `\n${adv}` : ""}`;
 
       // 1. CAPA OFICIAL (NBR 14724)
       const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
-      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${aut}\n\n\n\n${tit}${sub}\n\n\n\n\n\n\n\n${cid}\n${an}`;
+      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
 
       // 2. FOLHA DE ROSTO / CONTRACAPA OFICIAL (NBR 14724)
-      const titlePage = `${aut}\n\n\n\n${tit}${sub}\n\n\n\n${presentationNote}\n\n\n\n\n\n\n\n${cid}\n${an}`;
+      const titlePage = `${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
 
-      const coverBlock = `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
+      const coverBlock = `CAPA\n${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\nFOLHA DE ROSTO\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
 
-      // Remove capas anteriores se já existirem
+      // Remove capas anteriores se já existirem no documento
       let cleanBody = generatedText || "";
       if (cleanBody.includes("--- [QUEBRA DE PÁGINA] ---")) {
         const parts = cleanBody.split("--- [QUEBRA DE PÁGINA] ---");
-        if (parts.length >= 3) {
-          cleanBody = parts.slice(2).join("--- [QUEBRA DE PÁGINA] ---").trim();
+        // Filtra e descarta páginas que sejam capas ou folhas de rosto antigas
+        const filteredParts = parts.filter(p => {
+          const t = p.trim();
+          return !t.startsWith("CAPA") && !t.startsWith("FOLHA DE ROSTO") && t !== "CAPA_AUTO" && t !== "FOLHA_ROSTO_AUTO" && !t.includes("requisito parcial");
+        });
+        cleanBody = filteredParts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n").trim();
+      } else {
+        const t = cleanBody.trim();
+        if (t.startsWith("CAPA") || t.includes("requisito parcial")) {
+          cleanBody = "";
         }
       }
 
@@ -3115,93 +3123,91 @@ ${latexChapters}
                         {/* RENDERIZAÇÃO DA CAPA ABNT (TOTALMENTE EDITÁVEL) */}
                         {isCover ? (
                           <div className="flex-1 flex flex-col justify-between text-center font-['Arial'] text-gray-900 py-4 select-text">
-                            {/* TOPO: INSTITUIÇÃO E CURSO */}
+                            {/* TOPO: INSTITUIÇÃO E CURSO / DISCIPLINA */}
                             <div>
-                              {((institution && institution.trim()) || (lines[0] && lines[0] !== "CAPA_AUTO" && lines[0].trim())) && (
-                                <div
-                                  contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => setInstitution(e.currentTarget.innerText.trim())}
-                                  className="font-bold text-sm sm:text-base uppercase tracking-wider focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                >
-                                  {institution || lines[0]}
-                                </div>
-                              )}
-                              {((course && course.trim()) || (lines[1] && lines[1] !== lines[0] && lines[1] !== "CAPA_AUTO" && lines[1].trim())) && (
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setInstitution(e.currentTarget.innerText.trim())}
+                                className="font-bold text-sm sm:text-base uppercase tracking-wider focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {institution || (lines.find(l => l !== "CAPA" && l !== "CAPA_AUTO") || "INSTITUIÇÃO DE ENSINO SUPERIOR")}
+                              </div>
+                              {course && (
                                 <div
                                   contentEditable
                                   suppressContentEditableWarning
                                   onBlur={(e) => setCourse(e.currentTarget.innerText.trim())}
                                   className="font-semibold text-xs sm:text-sm uppercase text-gray-700 mt-1 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
                                 >
-                                  {course || lines[1]}
+                                  {course}
+                                </div>
+                              )}
+                              {subject && (
+                                <div
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => setSubject(e.currentTarget.innerText.replace(/^DISCIPLINA:\s*/i, '').trim())}
+                                  className="font-medium text-xs uppercase text-gray-600 mt-0.5 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                                >
+                                  DISCIPLINA: {subject}
                                 </div>
                               )}
                             </div>
 
                             {/* AUTOR: CENTRALIZADO ENTRE O TOPO E O MEIO CONFORME ABNT NBR 14724 */}
-                            {((studentName && studentName.trim()) || (lines[2] && lines[2] !== "CAPA_AUTO" && lines[2].trim())) && (
-                              <div className="my-auto py-4">
-                                <div
-                                  contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => setStudentName(e.currentTarget.innerText.trim())}
-                                  className="font-semibold text-sm sm:text-base uppercase tracking-wide focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                >
-                                  {studentName || lines[2]}
-                                </div>
+                            <div className="my-auto py-6">
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setStudentName(e.currentTarget.innerText.trim())}
+                                className="font-semibold text-sm sm:text-base uppercase tracking-wide focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {studentName || "NOME DO(A) AUTOR(A)"}
                               </div>
-                            )}
+                            </div>
 
                             {/* CENTRO: TÍTULO E SUBTÍTULO */}
                             <div className="my-auto py-6">
-                              {((title && title.trim()) || (lines[3] && lines[3] !== "CAPA_AUTO" && lines[3].trim())) && (
-                                <div
-                                  contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => setTitle(e.currentTarget.innerText.trim())}
-                                  className="font-extrabold text-base sm:text-lg uppercase tracking-tight text-gray-900 leading-snug focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                >
-                                  {title || lines[3]}
-                                </div>
-                              )}
-                              {((subtitle && subtitle.trim()) || (lines[4] && lines[4] !== "CAPA_AUTO" && lines[4].trim())) && (
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setTitle(e.currentTarget.innerText.trim())}
+                                className="font-extrabold text-base sm:text-lg uppercase tracking-tight text-gray-900 leading-snug focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {title || "TÍTULO DO TRABALHO"}
+                              </div>
+                              {subtitle && (
                                 <div
                                   contentEditable
                                   suppressContentEditableWarning
                                   onBlur={(e) => setSubtitle(e.currentTarget.innerText.trim())}
                                   className="font-normal text-xs sm:text-sm text-gray-700 mt-1 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
                                 >
-                                  {subtitle || lines[4]}
+                                  {subtitle}
                                 </div>
                               )}
                             </div>
 
-                            {/* RODAPÉ: CIDADE E ANO (SOMENTE SE INFORMADO) */}
-                            {(((city && city.trim()) || (lines[5] && lines[5] !== "CAPA_AUTO" && lines[5].trim())) || ((year && year.trim()) || (lines[6] && lines[6] !== "CAPA_AUTO" && lines[6].trim()))) && (
-                              <div className="mt-auto pt-6">
-                                {((city && city.trim()) || (lines[5] && lines[5] !== "CAPA_AUTO" && lines[5].trim())) && (
-                                  <div
-                                    contentEditable
-                                    suppressContentEditableWarning
-                                    onBlur={(e) => setCity(e.currentTarget.innerText.trim())}
-                                    className="font-bold text-xs sm:text-sm uppercase text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                  >
-                                    {city || lines[5]}
-                                  </div>
-                                )}
-                                {((year && year.trim()) || (lines[6] && lines[6] !== "CAPA_AUTO" && lines[6].trim())) && (
-                                  <div
-                                    contentEditable
-                                    suppressContentEditableWarning
-                                    onBlur={(e) => setYear(e.currentTarget.innerText.trim())}
-                                    className="font-bold text-xs sm:text-sm text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                  >
-                                    {year || lines[6]}
-                                  </div>
-                                )}
+                            {/* RODAPÉ: CIDADE E ANO */}
+                            <div className="mt-auto pt-6">
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setCity(e.currentTarget.innerText.trim())}
+                                className="font-bold text-xs sm:text-sm uppercase text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {city || "CIDADE - UF"}
                               </div>
-                            )}
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setYear(e.currentTarget.innerText.trim())}
+                                className="font-bold text-xs sm:text-sm text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {year || String(new Date().getFullYear())}
+                              </div>
+                            </div>
                           </div>
                         ) : isTitlePage ? (
                           /* RENDERIZAÇÃO DA FOLHA DE ROSTO ABNT (TOTALMENTE EDITÁVEL) */
