@@ -2442,6 +2442,22 @@ ${latexChapters}
             </div>
           ) : null}
 
+          {/* Botão Slides (Ao lado de Chat Acadêmico) */}
+          <button 
+            onClick={() => {
+              if (!generatedText) {
+                setErrorMessage("Gere ou insira um texto primeiro para criar os slides.");
+                return;
+              }
+              setShowSlidesModal(true);
+            }} 
+            className="h-8 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold px-3.5 rounded-xl text-xs shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+            title="Apresentação em Slides"
+          >
+            <Presentation className="w-3.5 h-3.5 stroke-[2] group-hover:scale-110 transition-transform" />
+            <span className="tracking-tight">Slides</span>
+          </button>
+
           {/* Botão Chat Acadêmico (Antes de Trabalho em Grupo) */}
           <button 
             onClick={() => setActiveTab("chat")}
@@ -2848,14 +2864,14 @@ ${latexChapters}
                   onClick={() => setActiveTab("editor")} 
                   variant="ghost" 
                   size="sm" 
-                  className={`text-[11px] h-7 px-2 font-bold rounded-lg transition-all flex items-center gap-1 whitespace-nowrap ${
+                  className={`text-xs h-7 px-3 font-extrabold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === "editor" || activeTab === "generator" 
-                      ? "bg-white text-blue-700 shadow-xs" 
+                      ? "bg-white text-blue-700 shadow-xs border border-blue-200/60" 
                       : "text-gray-700 hover:bg-gray-200/60"
                   }`}
                   title="Exibir Documento Acadêmico"
                 >
-                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <FileText className="w-4 h-4 text-blue-600" />
                   Documento
                 </Button>
                 <Button 
@@ -2926,31 +2942,11 @@ ${latexChapters}
                   onClick={handlePaginate} 
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
+                  className="text-xs h-7 px-1.5 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
                   title="Paginar / Repaginar Documento ABNT A4"
                 >
                   <Hash className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                  Paginar / Repaginar
-                </Button>
-              </div>
-
-              {/* Ação de Apresentação */}
-              <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5 flex-nowrap">
-                <Button 
-                  onClick={() => {
-                    if (!generatedText) {
-                      setErrorMessage("Gere ou insira um texto primeiro para criar os slides.");
-                      return;
-                    }
-                    setShowSlidesModal(true);
-                  }} 
-                  disabled={!generatedText} 
-                  size="sm" 
-                  className="text-xs h-7 px-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-xs rounded-lg flex items-center gap-1 active:scale-95 transition-all whitespace-nowrap"
-                  title="Apresentação em Slides"
-                >
-                  <Presentation className="w-3.5 h-3.5" />
-                  Slides
+                  Paginar
                 </Button>
               </div>
 
@@ -2992,20 +2988,20 @@ ${latexChapters}
               </div>
             </div>
 
-            {/* Controle de Zoom Elegante (À Direita) */}
-            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-xl p-0.5 gap-0.5 select-none shadow-2xs h-8 ml-auto flex-shrink-0">
+            {/* Controle de Zoom Ultra-Compacto e Delicado (À Direita) */}
+            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-lg p-0.5 gap-0.5 select-none shadow-2xs h-6 ml-auto flex-shrink-0">
               <button
                 onClick={() => setZoomScale(z => Math.max(30, z - 10))}
                 title="Diminuir Zoom (-10%)"
-                className="p-1.5 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
+                className="p-0.5 hover:bg-white rounded text-gray-700 hover:text-blue-600 transition-all active:scale-95 flex items-center justify-center w-5 h-5"
               >
-                <ZoomOut className="w-3.5 h-3.5 stroke-[2.2]" />
+                <ZoomOut className="w-2.5 h-2.5 stroke-[2]" />
               </button>
               
               <button
                 onClick={() => setZoomScale(65)}
                 title="Restaurar Zoom Padrão (65%)"
-                className="px-2 py-0.5 text-xs font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-lg min-w-[40px] text-center"
+                className="px-1 text-[10px] font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded min-w-[28px] text-center"
               >
                 {zoomScale}%
               </button>
@@ -3013,9 +3009,9 @@ ${latexChapters}
               <button
                 onClick={() => setZoomScale(z => Math.min(150, z + 10))}
                 title="Aumentar Zoom (+10%)"
-                className="p-1.5 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
+                className="p-0.5 hover:bg-white rounded text-gray-700 hover:text-blue-600 transition-all active:scale-95 flex items-center justify-center w-5 h-5"
               >
-                <ZoomIn className="w-3.5 h-3.5 stroke-[2.2]" />
+                <ZoomIn className="w-2.5 h-2.5 stroke-[2]" />
               </button>
             </div>
           </div>
