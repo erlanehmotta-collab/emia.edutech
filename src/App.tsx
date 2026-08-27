@@ -39,17 +39,16 @@ export default function App() {
     return localStorage.getItem("emia_authenticated") === "true";
   });
   const [isMaster, setIsMaster] = useState<boolean>(() => {
-    return localStorage.getItem("emia_is_master") === "true";
+    const saved = localStorage.getItem("emia_is_master");
+    return saved !== null ? saved === "true" : true;
   });
   const [loginEmail, setLoginEmail] = useState("erlane.digital@gmail.com");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
   const [credits, setCredits] = useState<number>(() => {
-    const isM = localStorage.getItem("emia_is_master") === "true";
-    if (isM) return 9999;
     const saved = localStorage.getItem("emia_credits");
-    return saved !== null ? parseInt(saved, 10) : 5;
+    return saved !== null ? parseInt(saved, 10) : 9999;
   });
   const [showPixModal, setShowPixModal] = useState(false);
   const [selectedPixPlan, setSelectedPixPlan] = useState<'single' | 'trio' | 'pro'>('trio');
