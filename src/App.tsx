@@ -2801,19 +2801,19 @@ ${latexChapters}
           style={{ height: 'calc(100vh - 4.5rem + 150px)', minHeight: '830px' }}
         >
           
-          {/* Top Bar with Clean, Elegant Single Toolbar */}
-          <div className="flex items-center justify-between border-b border-gray-200/80 mb-3 pb-2 gap-2 bg-white/50 backdrop-blur-xs px-1">
+          {/* Top Bar with Clean, Elegant Single Line Toolbar */}
+          <div className="flex items-center justify-between border-b border-gray-200/80 mb-3 pb-2 gap-2 bg-white/50 backdrop-blur-xs px-1 overflow-x-auto scrollbar-hide flex-nowrap">
             
-            {/* Grupo Harmônico e Elegante de Ações na Esquerda */}
-            <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Grupo Harmônico e Elegante de Ações na Esquerda em Linha Única */}
+            <div className="flex items-center gap-1.5 flex-nowrap flex-shrink-0">
               
               {/* Ferramentas de Redação & Estrutura Acadêmica */}
-              <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5">
+              <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5 flex-nowrap">
                 <Button 
                   onClick={() => setActiveTab("editor")} 
                   variant="ghost" 
                   size="sm" 
-                  className={`text-xs h-7 px-2.5 font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                  className={`text-xs h-7 px-2.5 font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === "editor" || activeTab === "generator" 
                       ? "bg-white text-blue-700 shadow-xs" 
                       : "text-gray-700 hover:bg-gray-200/60"
@@ -2828,7 +2828,7 @@ ${latexChapters}
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg"
+                  className="text-xs h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
                   title="Corrigir Ortografia e Gramática"
                 >
                   {isLoading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />}
@@ -2839,7 +2839,7 @@ ${latexChapters}
                   onClick={handleInsertCover} 
                   disabled={isLoading} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg"
+                  className="text-xs h-7 px-2 font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg whitespace-nowrap"
                   title="Inserir Capa e Folha de Rosto ABNT"
                 >
                   {isLoading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-600" /> : <BookOpen className="w-3.5 h-3.5 mr-1 text-blue-600" />}
@@ -2850,7 +2850,7 @@ ${latexChapters}
                   onClick={handleGenerateTOC} 
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 rounded-lg"
+                  className="text-xs h-7 px-2 font-semibold text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 rounded-lg whitespace-nowrap"
                   title="Gerar Sumário Dinâmico ABNT"
                 >
                   <ListOrdered className="w-3.5 h-3.5 mr-1 text-indigo-600" />
@@ -2860,7 +2860,7 @@ ${latexChapters}
                   size="sm" 
                   onClick={() => setShowReferenceModal(true)} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-slate-700 hover:bg-slate-100 rounded-lg"
+                  className="text-xs h-7 px-2 font-semibold text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap"
                   title="Gerar Referência por Link/DOI"
                 >
                   <Link className="w-3.5 h-3.5 mr-1 text-gray-500" />
@@ -2871,7 +2871,7 @@ ${latexChapters}
                   onClick={handlePaginate} 
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg"
+                  className="text-xs h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
                   title="Repaginar Documento A4"
                 >
                   <Hash className="w-3.5 h-3.5 mr-1 text-emerald-600" />
@@ -2880,7 +2880,7 @@ ${latexChapters}
               </div>
 
               {/* Ação de Apresentação */}
-              <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5">
+              <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5 flex-nowrap">
                 <Button 
                   onClick={() => {
                     if (!generatedText) {
@@ -2891,7 +2891,7 @@ ${latexChapters}
                   }} 
                   disabled={!generatedText} 
                   size="sm" 
-                  className="text-xs h-7 px-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-xs rounded-lg flex items-center gap-1 active:scale-95 transition-all"
+                  className="text-xs h-7 px-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-xs rounded-lg flex items-center gap-1 active:scale-95 transition-all whitespace-nowrap"
                   title="Apresentação em Slides"
                 >
                   <Presentation className="w-3.5 h-3.5" />
@@ -2900,13 +2900,13 @@ ${latexChapters}
               </div>
 
               {/* Grupo de Exportação e Cópia (PDF, Word, Copiar) */}
-              <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5">
+              <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5 flex-nowrap">
                 <Button 
                   onClick={exportPDF} 
                   disabled={!generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs h-7 px-2 text-rose-700 hover:bg-rose-50 hover:text-rose-800 rounded-lg font-semibold"
+                  className="text-xs h-7 px-2 text-rose-700 hover:bg-rose-50 hover:text-rose-800 rounded-lg font-semibold whitespace-nowrap"
                   title="Exportar PDF A4"
                 >
                   <Download className="w-3.5 h-3.5 mr-1 text-rose-600" />
@@ -2917,7 +2917,7 @@ ${latexChapters}
                   disabled={!generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs h-7 px-2 text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg font-semibold"
+                  className="text-xs h-7 px-2 text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg font-semibold whitespace-nowrap"
                   title="Exportar Documento Word (.docx)"
                 >
                   <FileDown className="w-3.5 h-3.5 mr-1 text-blue-600" />
@@ -2928,7 +2928,7 @@ ${latexChapters}
                   disabled={!generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs h-7 px-2 text-gray-700 hover:bg-gray-200/60 rounded-lg font-medium"
+                  className="text-xs h-7 px-2 text-gray-700 hover:bg-gray-200/60 rounded-lg font-medium whitespace-nowrap"
                   title="Copiar Texto Completo"
                 >
                   <Copy className="w-3.5 h-3.5 mr-1 text-gray-500" />
@@ -2938,7 +2938,7 @@ ${latexChapters}
             </div>
 
             {/* Controle de Zoom Elegante (À Direita) */}
-            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-xl p-0.5 gap-0.5 select-none shadow-2xs h-8 ml-auto">
+            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-xl p-0.5 gap-0.5 select-none shadow-2xs h-8 ml-auto flex-shrink-0">
               <button
                 onClick={() => setZoomScale(z => Math.max(30, z - 10))}
                 title="Diminuir Zoom (-10%)"
