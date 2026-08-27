@@ -2984,7 +2984,6 @@ ${latexChapters}
                 className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-100"
               >
                 {(() => {
-                  const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
                   let pages: string[] = [];
                   
                   if (generatedText && generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
@@ -3017,25 +3016,19 @@ ${latexChapters}
                       bodyPages.push(referencesContent);
                     }
 
-                    // Apenas Monografias/TCCs/Relatórios/Projetos recebem Capa e Folha de Rosto automáticas se houver dados
-                    if (requiresFormalCover && (studentName || institution || course)) {
-                      pages = ["CAPA_AUTO", "FOLHA_ROSTO_AUTO", ...bodyPages];
-                    } else {
-                      pages = bodyPages;
-                    }
+                    pages = bodyPages.length > 0 ? bodyPages : [generatedText];
                   } else {
-                    if (requiresFormalCover && (studentName || institution || course)) {
-                      pages = ["CAPA_AUTO", "FOLHA_ROSTO_AUTO", ""];
-                    } else {
-                      pages = [""];
-                    }
+                    pages = [""];
                   }
 
                   const renderSingleA4Sheet = (text: string, pIdx: number) => {
-                    const hasCoverPages = pages[0] === "CAPA_AUTO" || (pages.length >= 3 && requiresFormalCover);
-                    const isCover = hasCoverPages && pIdx === 0;
-                    const isTitlePage = hasCoverPages && pIdx === 1;
-                    const isBodyPage = !hasCoverPages || pIdx >= 2;
+                    const cleanT = text.trim();
+                    const isExplicitCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA") || (pIdx === 0 && cleanT.startsWith(institution || "UNIVERSIDADE") && !cleanT.includes("INTRODUÇÃO"));
+                    const isExplicitTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA DE ROSTO") || cleanT.includes("requisito parcial");
+                    
+                    const isCover = cleanT === "CAPA_AUTO" || isExplicitCover;
+                    const isTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || isExplicitTitlePage;
+                    const isBodyPage = !isCover && !isTitlePage;
                     const pageNum = pIdx + 1;
                     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
 
@@ -3115,7 +3108,7 @@ ${latexChapters}
                             title="Clique para apagar a numeração desta página"
                             className="absolute top-[4%] right-[5%] font-mono text-xs font-bold text-gray-800 select-none hover:text-red-500 hover:line-through cursor-pointer transition-colors print:pointer-events-none z-20"
                           >
-                            {hasCoverPages ? pageNum : pIdx + 1}
+                            {pageNum}
                           </button>
                         )}
 
