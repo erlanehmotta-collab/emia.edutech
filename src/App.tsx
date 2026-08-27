@@ -2467,10 +2467,10 @@ ${latexChapters}
           </button>
         )}
 
-        {/* Sidebar Controls (Compacta e Recolhível para puxar o palco) */}
+        {/* Sidebar Controls (Recolhível para puxar o palco) */}
         {!isSidebarCollapsed && (
-          <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 flex flex-col gap-6 transition-all">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col gap-6 transition-all">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Novo Trabalho</h2>
                 <div className="flex items-center gap-1">
