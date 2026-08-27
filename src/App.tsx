@@ -213,6 +213,7 @@ export default function App() {
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [speechRate, setSpeechRate] = useState<number>(1.0); // Velocidade padrão: 1x, 1.25x, 1.5x, 2x
   const [speechVolume, setSpeechVolume] = useState<number>(1.0); // Volume padrão: 1.0 (100%), 0.75, 0.5
+  const [speechGender, setSpeechGender] = useState<"female" | "male">("female"); // Seleção de voz: Feminina (padrão) ou Masculina
 
   // Leitura em Áudio do Texto Acadêmico (Web Speech API)
   const handleToggleSpeech = () => {
@@ -269,26 +270,31 @@ export default function App() {
     utterance.lang = "pt-BR";
     utterance.rate = speechRate || 1.0;
     utterance.volume = speechVolume || 1.0;
-    utterance.pitch = 1.0;
+    utterance.pitch = speechGender === "female" ? 1.05 : 0.92;
 
-    // Seleção de vozes neurais / naturais premium (Microsoft Francisca/Antonio Natural, Google português do Brasil, Apple Luciana/Felipe)
+    // Seleção de vozes neurais brasileiras conforme o gênero escolhido
     const voices = window.speechSynthesis.getVoices();
-    const humanVoice = voices.find(v => 
-      (v.lang === "pt-BR" || v.lang === "pt_BR") && 
-      (v.name.toLowerCase().includes("natural") || 
-       v.name.toLowerCase().includes("neural") || 
-       v.name.toLowerCase().includes("google") || 
-       v.name.toLowerCase().includes("francisca") || 
-       v.name.toLowerCase().includes("antonio") ||
-       v.name.toLowerCase().includes("thalita") ||
-       v.name.toLowerCase().includes("luciana") || 
-       v.name.toLowerCase().includes("felipe") ||
-       v.name.toLowerCase().includes("leticia") ||
-       v.name.toLowerCase().includes("online"))
-    ) || voices.find(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR")) || voices.find(v => v.lang.startsWith("pt"));
+    const ptVoices = voices.filter(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.startsWith("pt"));
 
-    if (humanVoice) {
-      utterance.voice = humanVoice;
+    let selectedVoice = null;
+    if (speechGender === "female") {
+      selectedVoice = ptVoices.find(v => {
+        const n = v.name.toLowerCase();
+        return n.includes("francisca") || n.includes("thalita") || n.includes("luciana") || n.includes("leticia") || n.includes("maria") || n.includes("female") || (n.includes("google") && !n.includes("male"));
+      });
+    } else {
+      selectedVoice = ptVoices.find(v => {
+        const n = v.name.toLowerCase();
+        return n.includes("antonio") || n.includes("felipe") || n.includes("ricardo") || n.includes("daniel") || n.includes("male") || n.includes("homem");
+      });
+    }
+
+    if (!selectedVoice && ptVoices.length > 0) {
+      selectedVoice = ptVoices[0];
+    }
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
 
     utterance.onstart = () => {
@@ -2701,6 +2707,25 @@ ${latexChapters}
                   <span className="tracking-tight">Ouvir Texto</span>
                 </>
               )}
+            </button>
+
+            {/* Alternador de Voz: Feminina (👩) / Masculina (👨) */}
+            <button
+              onClick={() => {
+                const nextGender = speechGender === "female" ? "male" : "female";
+                setSpeechGender(nextGender);
+                if (isSpeaking) {
+                  window.speechSynthesis.cancel();
+                  setIsSpeaking(false);
+                  setErrorMessage(`Voz alterada para ${nextGender === "female" ? "Feminina 👩" : "Masculina 👨"}. Clique em 'Ouvir Texto' para iniciar.`);
+                  setTimeout(() => setErrorMessage(""), 2500);
+                }
+              }}
+              className="h-7 px-2 flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-100/90 hover:bg-amber-200/90 rounded-md transition-all active:scale-90 select-none"
+              title={`Alternar Gênero da Voz (Atual: ${speechGender === "female" ? "Feminina 👩" : "Masculina 👨"})`}
+            >
+              <span>{speechGender === "female" ? "👩" : "👨"}</span>
+              <span className="text-[10px] hidden sm:inline">{speechGender === "female" ? "Fem" : "Masc"}</span>
             </button>
 
             {/* Controle de Velocidade de Reprodução: 1x -> 1.25x -> 1.5x -> 2x */}
