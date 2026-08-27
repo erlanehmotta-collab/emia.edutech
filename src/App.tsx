@@ -1819,13 +1819,13 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
     if (attachmentRef.current) attachmentRef.current.value = "";
   };
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, customMsg?: string) => {
     if (e) e.preventDefault();
-    if (!chatMessage.trim()) return;
+    const msgToSend = (customMsg !== undefined ? customMsg : chatMessage).trim();
+    if (!msgToSend) return;
 
-    const userMessage = chatMessage;
     setChatMessage("");
-    const updatedHistory = [...chatHistory, { role: 'user' as const, text: userMessage }];
+    const updatedHistory = [...chatHistory, { role: 'user' as const, text: msgToSend }];
     setChatHistory(updatedHistory);
     setIsChatting(true);
     logAction("Envio de instrução/mensagem no Chat de Edição");
@@ -1881,7 +1881,7 @@ GUIA RÁPIDO DO APP:
 ${generatedText ? `[DOCUMENTO ATUAL DO USUÁRIO]\n${generatedText.substring(0, 3500)}\n[/DOCUMENTO ATUAL]\n` : ""}
 [HISTÓRICO RECENTE]
 ${chatHistory.slice(-4).map(h => `${h.role === 'user' ? 'Aluno' : 'Assistente'}: ${h.text}`).join('\n')}
-Aluno: ${userMessage}
+Aluno: ${msgToSend}
 Assistente:`;
 
         assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.6-flash");
@@ -4173,9 +4173,7 @@ ${latexChapters}
                       {/* Botões informais de ação rápida */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full text-left">
                         <button
-                          onClick={() => {
-                            setChatMessage("Explica de forma simples os pontos principais deste trabalho.");
-                          }}
+                          onClick={() => handleSendMessage(undefined, "Explica de forma simples os pontos principais deste trabalho.")}
                           className="p-3 bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-blue-700 transition-all flex items-center gap-2 shadow-2xs group"
                         >
                           <span>💬</span>
@@ -4183,9 +4181,7 @@ ${latexChapters}
                         </button>
 
                         <button
-                          onClick={() => {
-                            setChatMessage("Cria um quiz com 4 perguntas de múltipla escolha para testar meu conhecimento sobre o tema.");
-                          }}
+                          onClick={() => handleSendMessage(undefined, "Cria um quiz com 4 perguntas de múltipla escolha para testar meu conhecimento sobre o tema.")}
                           className="p-3 bg-white hover:bg-amber-50 border border-gray-200 hover:border-amber-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-amber-800 transition-all flex items-center gap-2 shadow-2xs group"
                         >
                           <span>🎯</span>
@@ -4193,9 +4189,7 @@ ${latexChapters}
                         </button>
 
                         <button
-                          onClick={() => {
-                            setChatMessage("Como uso os campos do app e o botão de Trabalho em Grupo?");
-                          }}
+                          onClick={() => handleSendMessage(undefined, "Como uso os campos do app e o botão de Trabalho em Grupo?")}
                           className="p-3 bg-white hover:bg-emerald-50 border border-gray-200 hover:border-emerald-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-emerald-800 transition-all flex items-center gap-2 shadow-2xs group"
                         >
                           <span>📱</span>
@@ -4203,9 +4197,7 @@ ${latexChapters}
                         </button>
 
                         <button
-                          onClick={() => {
-                            setChatMessage("Tenho uma dúvida sobre normas ABNT neste trabalho. O que preciso ajustar?");
-                          }}
+                          onClick={() => handleSendMessage(undefined, "Tenho uma dúvida sobre normas ABNT neste trabalho. O que preciso ajustar?")}
                           className="p-3 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-indigo-800 transition-all flex items-center gap-2 shadow-2xs group"
                         >
                           <span>📑</span>
@@ -4213,9 +4205,7 @@ ${latexChapters}
                         </button>
 
                         <button
-                          onClick={() => {
-                            setChatMessage("Quero melhorar e editar uma parte do texto. Pode me ajudar?");
-                          }}
+                          onClick={() => handleSendMessage(undefined, "Quero melhorar e editar uma parte do texto. Pode me ajudar?")}
                           className="p-3 bg-white hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-purple-800 transition-all flex items-center gap-2 shadow-2xs group"
                         >
                           <span>✏️</span>
@@ -4223,9 +4213,7 @@ ${latexChapters}
                         </button>
 
                         <button
-                          onClick={() => {
-                            setChatMessage("Cria um roteiro de podcast dinâmico com 2 apresentadores sobre este trabalho.");
-                          }}
+                          onClick={() => handleSendMessage(undefined, "Cria um roteiro de podcast dinâmico com 2 apresentadores sobre este trabalho.")}
                           className="p-3 bg-white hover:bg-rose-50 border border-gray-200 hover:border-rose-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-rose-800 transition-all flex items-center gap-2 shadow-2xs group"
                         >
                           <span>🎙️</span>
