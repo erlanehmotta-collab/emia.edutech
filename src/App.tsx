@@ -2713,28 +2713,7 @@ ${latexChapters}
                         <div className="absolute -top-1 left-1/2 -translate-x-1/2 translate-y-0 opacity-0 group-hover/page:opacity-100 transition-all duration-200 z-30 flex items-center gap-1 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg rounded-xl px-2 py-1 print:hidden">
                           <span className="text-[10px] font-bold text-slate-500 px-1.5">Pág. {pageNum}</span>
                           <span className="h-3 w-px bg-slate-200" />
-                          {/* Ocultar / Mostrar Numeração */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setHiddenPageNumbers(prev => {
-                                const next = new Set(prev);
-                                if (next.has(pIdx)) {
-                                  next.delete(pIdx);
-                                } else {
-                                  next.add(pIdx);
-                                }
-                                return next;
-                              });
-                            }}
-                            title={hiddenPageNumbers.has(pIdx) ? "Mostrar numeração desta página" : "Ocultar numeração desta página"}
-                            className={`px-2 py-0.5 text-[10px] font-medium rounded-lg transition-all flex items-center gap-1 ${hiddenPageNumbers.has(pIdx) ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
-                          >
-                            {hiddenPageNumbers.has(pIdx) ? '🔢 Mostrar Nº' : '🚫 Ocultar Nº'}
-                          </button>
-                          <span className="h-3 w-px bg-slate-200" />
-                          {/* Apagar Página */}
+                          {/* Apagar Página (qualquer uma, inclusive capa) */}
                           <button
                             type="button"
                             onClick={(e) => {
@@ -2745,7 +2724,7 @@ ${latexChapters}
                               } else {
                                 setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
                               }
-                              // Ajusta os índices ocultos após remoção
+                              // Ajusta os índices de numeração oculta após remoção e renumera
                               setHiddenPageNumbers(prev => {
                                 const next = new Set<number>();
                                 prev.forEach(idx => {
@@ -2755,18 +2734,30 @@ ${latexChapters}
                                 return next;
                               });
                             }}
-                            title="Apagar esta página"
+                            title="Apagar esta página inteira do documento"
                             className="px-2 py-0.5 text-[10px] font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all flex items-center gap-1"
                           >
-                            🗑️ Apagar
+                            🗑️ Apagar Página
                           </button>
                         </div>
 
-                        {/* NUMERAÇÃO OFICIAL IMPRESSA NO CANTO SUPERIOR DIREITO */}
+                        {/* NUMERAÇÃO OFICIAL IMPRESSA NO CANTO SUPERIOR DIREITO — Clicável para apagar o número */}
                         {isBodyPage && !hiddenPageNumbers.has(pIdx) && (
-                          <div className="absolute top-[4%] right-[5%] font-mono text-xs font-bold text-gray-800 select-none">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHiddenPageNumbers(prev => {
+                                const next = new Set(prev);
+                                next.add(pIdx);
+                                return next;
+                              });
+                            }}
+                            title="Clique para apagar a numeração desta página"
+                            className="absolute top-[4%] right-[5%] font-mono text-xs font-bold text-gray-800 select-none hover:text-red-500 hover:line-through cursor-pointer transition-colors print:pointer-events-none z-20"
+                          >
                             {hasCoverPages ? pageNum : pIdx + 1}
-                          </div>
+                          </button>
                         )}
 
                         {/* RENDERIZAÇÃO DA CAPA ABNT (TOTALMENTE EDITÁVEL) */}
