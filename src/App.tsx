@@ -966,13 +966,28 @@ export default function App() {
         }
       }
 
-      const fullDoc = [coverPage, titlePage, ...bodyPages].join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+      // Aplica a Skill do Professor / Normalizador Acadêmico ABNT diretamente no texto montado
+      let formattedFullDoc = [coverPage, titlePage, ...bodyPages].join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+      
+      // 1. Normalização de citações ABNT NBR 10520:2023 (caixa mista)
+      formattedFullDoc = normalizeCitationsToABNT2023(formattedFullDoc);
 
-      setGeneratedText(fullDoc);
+      // 2. Normalização de espaçamentos e pontuações
+      formattedFullDoc = formattedFullDoc
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{4,}/g, '\n\n\n')
+        .replace(/[ \t]+$/gm, '');
+
+      // 3. Garante seções em CAIXA ALTA (NBR 6024)
+      formattedFullDoc = formattedFullDoc.replace(/^(#+\s*|\d+\s+)(introdução|materiais e métodos|desenvolvimento|fundamentação teórica|metodologia|resultados e discussão|conclusão|considerações finais|referências)/gmi, (match, prefix, t) => {
+        return `${prefix}${t.toUpperCase()}`;
+      });
+
+      setGeneratedText(formattedFullDoc);
       setActiveTab("editor");
-      setErrorMessage("✅ Trabalho em grupo montado com sucesso! Todas as seções foram unidas na ordem ABNT com capa e folha de rosto.");
+      setErrorMessage("✅ Trabalho em grupo montado e 100% normalizado com a Skill Acadêmica ABNT!");
       setTimeout(() => setErrorMessage(""), 5000);
-      logAction("Montagem de Trabalho em Grupo", fullDoc.substring(0, 500));
+      logAction("Montagem e Normalização ABNT de Trabalho em Grupo", formattedFullDoc.substring(0, 500));
     } catch (error) {
       console.error(error);
       setErrorMessage(error instanceof Error ? error.message : "Erro ao montar trabalho em grupo.");
