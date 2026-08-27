@@ -26,6 +26,84 @@ export default {
       });
     }
 
+    // Endpoint: Verificar Créditos do Aluno por E-mail (Hotmart / Local)
+    if (url.pathname === "/api/user-credits" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const email = (body.email || "").trim().toLowerCase();
+
+        if (!email) {
+          return new Response(JSON.stringify({ credits: 0 }), {
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+
+        // Admin Geral
+        if (email === "erlane.digital@gmail.com") {
+          return new Response(JSON.stringify({ credits: 9999, isMaster: true }), {
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+
+        let credits = 3; // Créditos padrão de cortesia / início
+        if (env.EMIA_KV) {
+          const stored = await env.EMIA_KV.get(`credits_${email}`);
+          if (stored !== null) {
+            credits = parseInt(stored, 10);
+          }
+        }
+
+        return new Response(JSON.stringify({ credits, isMaster: false }), {
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ credits: 3 }), {
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+    }
+
+    // Endpoint: Webhook Oficial da Hotmart (Ativação Automática de Créditos)
+    if (url.pathname === "/api/hotmart-webhook" && request.method === "POST") {
+      try {
+        const data = await request.json();
+        const buyerEmail = (data?.data?.buyer?.email || data?.buyer?.email || data?.email || "").trim().toLowerCase();
+        const event = data?.event || data?.status || "";
+        const productName = (data?.data?.product?.name || data?.product_name || "").toLowerCase();
+
+        if (buyerEmail && (event.includes("PURCHASE_APPROVED") || event.includes("approved") || event.includes("COMPLETED"))) {
+          // Determina a quantidade de créditos com base no pacote comprado
+          let creditsToAdd = 3; // Padrão
+          if (productName.includes("50") || productName.includes("pro") || productName.includes("tcc")) {
+            creditsToAdd = 50;
+          } else if (productName.includes("7") || productName.includes("semestre")) {
+            creditsToAdd = 7;
+          } else if (productName.includes("unitario") || productName.includes("1")) {
+            creditsToAdd = 1;
+          }
+
+          if (env.EMIA_KV) {
+            const current = await env.EMIA_KV.get(`credits_${buyerEmail}`);
+            const total = (current ? parseInt(current, 10) : 0) + creditsToAdd;
+            await env.EMIA_KV.put(`credits_${buyerEmail}`, String(total));
+          }
+
+          return new Response(JSON.stringify({ success: true, email: buyerEmail, added: creditsToAdd }), {
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+
+        return new Response(JSON.stringify({ success: true, message: "Ignorado ou não aprovado" }), {
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+    }
+
     // AI Generation    // 2. Proxy de IA com Google Gemini Flash
     if (url.pathname === "/api/generate" && request.method === "POST") {
       try {

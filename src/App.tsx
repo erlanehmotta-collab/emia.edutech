@@ -4977,7 +4977,7 @@ ${latexChapters}
                   </div>
                 </div>
 
-                {/* Pacote 3: R$ 9,90 = 7 Trabalhos */}
+                {/* Pacote 3: R$ 29,90 = 50 Trabalhos (Pacote Pro / TCC Completo) */}
                 <div 
                   onClick={() => setSelectedPixPlan('pro')}
                   className={`p-3 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between text-left relative ${
@@ -4987,15 +4987,15 @@ ${latexChapters}
                   }`}
                 >
                   <span className="absolute -top-2 right-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full uppercase">
-                    Popular
+                    Melhor Valor
                   </span>
                   <div>
-                    <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider">Semestre</span>
-                    <h3 className="text-sm font-black text-gray-900 mt-0.5">7 Trabalhos</h3>
-                    <p className="text-[11px] text-gray-500 mt-0.5">R$ 1,41/un</p>
+                    <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider">Pacote Pro</span>
+                    <h3 className="text-sm font-black text-gray-900 mt-0.5">50 Trabalhos</h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">R$ 0,59/un</p>
                   </div>
                   <div className="mt-2 pt-1.5 border-t border-gray-200/60 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-amber-800">R$ 9,90</span>
+                    <span className="text-[11px] font-bold text-amber-800">R$ 29,90</span>
                     <input 
                       type="radio" 
                       name="pixPlan" 
@@ -5014,7 +5014,7 @@ ${latexChapters}
                     Chave PIX Oficial (E-mail):
                   </label>
                   <span className="text-xs font-bold text-blue-700">
-                    Valor: {selectedPixPlan === 'single' ? 'R$ 1,99' : selectedPixPlan === 'trio' ? 'R$ 5,00' : 'R$ 9,90'}
+                    Valor: {selectedPixPlan === 'single' ? 'R$ 1,99' : selectedPixPlan === 'trio' ? 'R$ 5,00' : 'R$ 29,90'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
