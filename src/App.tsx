@@ -2302,53 +2302,64 @@ ${latexChapters}
           </div>
           <span className="font-semibold text-gray-900 text-lg">EMIA.EDUTECH</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Indicador de IA Ativa: Google Gemini */}
-          <div className="flex items-center gap-1.5 bg-blue-50/80 border border-blue-200/80 text-blue-900 px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs">
+          <div className="h-8 flex items-center gap-1.5 bg-blue-50/90 border border-blue-200 text-blue-900 px-3 rounded-xl text-xs font-bold shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
             <span>Google Gemini</span>
           </div>
 
-          {/* Botão Trabalho em Grupo posicionado ao lado do Gemini (Verde Claro Suave com Ícone Vazado) */}
+          {/* Botão Trabalho em Grupo (Verde Claro Suave e Harmonioso) */}
           <button 
             onClick={() => setIsGroupMode(true)} 
-            className="flex items-center gap-1.5 bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-300/80 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs hover:shadow-sm transition-all active:scale-95 group"
+            className="h-8 flex items-center gap-1.5 bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-300 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
             title="Montar trabalho acadêmico feito em grupo com múltiplos alunos"
           >
-            <Users className="w-4 h-4 text-emerald-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
+            <Users className="w-3.5 h-3.5 text-emerald-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
             <span className="tracking-tight">Trabalho em Grupo</span>
           </button>
 
           {/* Indicador de Cota Própria / Créditos */}
           {isMaster ? (
-            <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm">
+            <div className="h-8 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-xs px-3 rounded-xl shadow-xs">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>👑 Acesso Mestre (Ilimitado)</span>
+              <span>👑 Acesso Mestre</span>
             </div>
           ) : (customGeminiKey || customOpenaiKey) ? (
-            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs px-3 py-1.5 rounded-lg shadow-xs">
+            <div className="h-8 flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs px-3 rounded-xl shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Cota Própria Conectada (Ilimitado)</span>
+              <span>Cota Própria Conectada</span>
             </div>
           ) : (
             <button 
               onClick={() => setShowPixModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 text-amber-900 border border-amber-300/60 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm"
+              className="h-8 flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 rounded-xl text-xs font-semibold transition-all shadow-2xs"
             >
-              <Coins className="w-4 h-4 text-amber-600 animate-pulse" />
-              <span>{credits} {credits === 1 ? 'Trabalho Restante' : 'Trabalhos Restantes'}</span>
-              <span className="bg-amber-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold ml-1">+ Recarregar (PIX)</span>
+              <Coins className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+              <span>{credits} {credits === 1 ? 'Trabalho' : 'Trabalhos'}</span>
+              <span className="bg-amber-600 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold ml-0.5">+ PIX</span>
             </button>
           )}
 
-          <Button variant="outline" size="sm" onClick={() => setShowProfileModal(true)} className="border-gray-200">
-            <User className="w-4 h-4 mr-2" />
-            Perfil e Histórico
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair
-          </Button>
+          {/* Botão Perfil e Histórico (Índigo/Lavanda Elegante) */}
+          <button 
+            onClick={() => setShowProfileModal(true)}
+            className="h-8 flex items-center gap-1.5 bg-indigo-50/90 hover:bg-indigo-100/90 text-indigo-900 border border-indigo-200 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+            title="Ver perfil e histórico de trabalhos acadêmicos"
+          >
+            <User className="w-3.5 h-3.5 text-indigo-600 stroke-[1.8] group-hover:scale-110 transition-transform" />
+            <span className="tracking-tight">Perfil e Histórico</span>
+          </button>
+
+          {/* Botão Sair */}
+          <button 
+            onClick={handleLogout}
+            className="h-8 flex items-center gap-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50/80 px-2.5 rounded-xl text-xs font-medium transition-all"
+            title="Encerrar sessão"
+          >
+            <LogOut className="w-3.5 h-3.5 stroke-[1.8]" />
+            <span>Sair</span>
+          </button>
         </div>
       </header>
 
