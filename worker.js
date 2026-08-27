@@ -63,15 +63,51 @@ export default {
       }
     }
 
-    // Endpoint: Webhook Oficial da Hotmart (Ativação Automática de Créditos)
-    if (url.pathname === "/api/hotmart-webhook" && request.method === "POST") {
+    // Endpoint: Webhook Universal Multi-Plataformas (Hotmart, Kiwify, Eduzz, Monetizze, Cakto)
+    if ((url.pathname === "/api/hotmart-webhook" || url.pathname === "/api/webhook") && request.method === "POST") {
       try {
         const data = await request.json();
-        const buyerEmail = (data?.data?.buyer?.email || data?.buyer?.email || data?.email || "").trim().toLowerCase();
-        const event = data?.event || data?.status || "";
-        const productName = (data?.data?.product?.name || data?.product_name || "").toLowerCase();
 
-        if (buyerEmail && (event.includes("PURCHASE_APPROVED") || event.includes("approved") || event.includes("COMPLETED"))) {
+        // 1. Extração inteligente do E-mail do Comprador (compatível com todas as plataformas)
+        const buyerEmail = (
+          data?.data?.buyer?.email || // Hotmart 2.0
+          data?.buyer?.email ||       // Hotmart 1.0
+          data?.Customer?.email ||    // Kiwify
+          data?.customer?.email ||    // Kiwify v2
+          data?.cus_email ||          // Eduzz
+          data?.buyer_email ||        // Monetizze
+          data?.email ||              // Padrão Geral / Cakto
+          ""
+        ).trim().toLowerCase();
+
+        // 2. Extração do Status de Pagamento Aprovado
+        const event = (
+          data?.event || 
+          data?.status || 
+          data?.order_status || 
+          data?.trans_status || 
+          ""
+        ).toLowerCase();
+
+        const isApproved = 
+          event.includes("approved") || 
+          event.includes("paid") || 
+          event.includes("completed") || 
+          event.includes("pago") || 
+          event.includes("autorizado") || 
+          event.includes("purchase_approved") ||
+          event === "3"; // Monetizze pago
+
+        // 3. Extração do Nome do Produto / Pacote
+        const productName = (
+          data?.data?.product?.name || 
+          data?.Product?.name || 
+          data?.product_name || 
+          data?.prod_name || 
+          ""
+        ).toLowerCase();
+
+        if (buyerEmail && isApproved) {
           // Determina a quantidade de créditos com base no pacote comprado
           let creditsToAdd = 3; // Padrão
           if (productName.includes("50") || productName.includes("pro") || productName.includes("tcc")) {
@@ -88,12 +124,17 @@ export default {
             await env.EMIA_KV.put(`credits_${buyerEmail}`, String(total));
           }
 
-          return new Response(JSON.stringify({ success: true, email: buyerEmail, added: creditsToAdd }), {
+          return new Response(JSON.stringify({ 
+            success: true, 
+            platform: "Universal Webhook", 
+            email: buyerEmail, 
+            added: creditsToAdd 
+          }), {
             headers: { "Content-Type": "application/json", ...corsHeaders }
           });
         }
 
-        return new Response(JSON.stringify({ success: true, message: "Ignorado ou não aprovado" }), {
+        return new Response(JSON.stringify({ success: true, message: "Evento registrado" }), {
           headers: { "Content-Type": "application/json", ...corsHeaders }
         });
       } catch (err) {
