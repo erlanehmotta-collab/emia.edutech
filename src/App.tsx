@@ -2633,6 +2633,30 @@ ${latexChapters}
             <span className="tracking-tight">Chat Acadêmico</span>
           </button>
 
+          {/* Botão Ouvir (Leitura em Áudio do Texto Acadêmico) */}
+          <button 
+            onClick={handleToggleSpeech}
+            disabled={!generatedText || !generatedText.trim()}
+            className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed ${
+              isSpeaking 
+                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs animate-pulse ring-2 ring-amber-300" 
+                : "bg-amber-50/90 hover:bg-amber-100/90 text-amber-900 border border-amber-200"
+            }`}
+            title={isSpeaking ? "Interromper Leitura em Áudio" : "Ouvir Leitura do Texto Acadêmico em Áudio"}
+          >
+            {isSpeaking ? (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-white stroke-[2] group-hover:scale-110 transition-transform" />
+                <span className="tracking-tight text-white">Parar Áudio</span>
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-amber-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
+                <span className="tracking-tight">Ouvir</span>
+              </>
+            )}
+          </button>
+
           {/* Botão Slides (EMIA.SLIDES - Amarelo Pastel com Texto Branco) */}
           <button 
             onClick={handleOpenSlidesStudio} 
@@ -3113,30 +3137,6 @@ ${latexChapters}
                 >
                   <Hash className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                   Paginar
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={handleToggleSpeech} 
-                  disabled={!generatedText || !generatedText.trim()} 
-                  variant="ghost" 
-                  className={`text-xs h-7 px-2 font-semibold rounded-lg whitespace-nowrap transition-all ${
-                    isSpeaking 
-                      ? "bg-amber-100 text-amber-900 border border-amber-300 animate-pulse" 
-                      : "text-amber-800 hover:bg-amber-50 hover:text-amber-900"
-                  }`}
-                  title={isSpeaking ? "Pausar / Interromper Leitura em Áudio" : "Ouvir Leitura do Documento em Áudio"}
-                >
-                  {isSpeaking ? (
-                    <>
-                      <VolumeX className="w-3.5 h-3.5 mr-1 text-amber-700" />
-                      <span>Parar</span>
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 className="w-3.5 h-3.5 mr-1 text-amber-700" />
-                      <span>Ouvir</span>
-                    </>
-                  )}
                 </Button>
               </div>
 
