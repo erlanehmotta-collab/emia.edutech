@@ -35,7 +35,7 @@ export function getActiveGeminiKey(customKey?: string): string {
 
   // 4. Chave Mestre Criptografada e Ofuscada em Memória (Decodificação Dinâmica Segura)
   try {
-    const _c1 = "QVEuQWI4Uk42S0oxQVRSYUR4X3pCMnc4cFY1TEVfbzJwYVp2Qk0tbVY2MnkwYWhValxmOFE=";
+    const _c1 = "QVEuQWI4Uk42S0oxQVRTYUR4X3pCMnc4cFY1TEVfbzJwYVp2Qk0tbVY2MnkwYWhVakxmOFE=";
     const _k = typeof atob === "function" ? atob(_c1) : Buffer.from(_c1, 'base64').toString('binary');
     if (_k && _k.length > 10) return _k;
   } catch (e) {
@@ -53,8 +53,8 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
 
   const fallbackModels = [
     model,
-    "gemini-3.6-flash",
     "gemini-3.7-flash",
+    "gemini-3.6-flash",
     "gemini-flash-latest"
   ];
 
