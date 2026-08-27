@@ -52,7 +52,8 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
   }
 
   const fallbackModels = [
-    model,
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
     "gemini-3.7-flash",
     "gemini-3.6-flash",
     "gemini-flash-latest"
