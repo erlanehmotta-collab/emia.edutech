@@ -2988,20 +2988,20 @@ ${latexChapters}
               </div>
             </div>
 
-            {/* Controle de Zoom Equilibrado e Elegante (À Direita) */}
-            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-xl p-0.5 gap-0.5 select-none shadow-2xs h-7 ml-auto flex-shrink-0">
+            {/* Controle de Zoom Harmonioso e Delicado (À Direita) */}
+            <div className="flex items-center bg-gray-100/90 hover:bg-gray-200/60 border border-gray-300/70 rounded-lg p-0.5 gap-0.5 select-none shadow-2xs h-7 ml-auto flex-shrink-0 transition-colors">
               <button
                 onClick={() => setZoomScale(z => Math.max(30, z - 10))}
                 title="Diminuir Zoom (-10%)"
-                className="p-1 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
+                className="w-6 h-6 flex items-center justify-center hover:bg-white rounded-md text-gray-700 hover:text-blue-600 transition-all active:scale-90"
               >
-                <ZoomOut className="w-3.2 h-3.2 stroke-[2]" />
+                <ZoomOut className="w-3.5 h-3.5 stroke-[2]" />
               </button>
               
               <button
                 onClick={() => setZoomScale(65)}
                 title="Restaurar Zoom Padrão (65%)"
-                className="px-1.5 py-0.5 text-xs font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-lg min-w-[34px] text-center"
+                className="px-1.5 h-6 flex items-center justify-center text-[11px] font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-md min-w-[34px] text-center tracking-tight transition-all"
               >
                 {zoomScale}%
               </button>
@@ -3009,9 +3009,9 @@ ${latexChapters}
               <button
                 onClick={() => setZoomScale(z => Math.min(150, z + 10))}
                 title="Aumentar Zoom (+10%)"
-                className="p-1 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
+                className="w-6 h-6 flex items-center justify-center hover:bg-white rounded-md text-gray-700 hover:text-blue-600 transition-all active:scale-90"
               >
-                <ZoomIn className="w-3.2 h-3.2 stroke-[2]" />
+                <ZoomIn className="w-3.5 h-3.5 stroke-[2]" />
               </button>
             </div>
           </div>
