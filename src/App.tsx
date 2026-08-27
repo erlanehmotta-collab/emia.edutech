@@ -5,7 +5,8 @@ import {
   Settings, Loader2, LogOut, ShieldCheck, Download, Copy,
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check,
-  ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users
+  ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
+  Undo2, Redo2
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -159,6 +160,33 @@ export default function App() {
   const [generatedReference, setGeneratedReference] = useState("");
 
   const [generatedText, setGeneratedText] = useState("");
+  const [historyStack, setHistoryStack] = useState<string[]>([]);
+  const [redoStack, setRedoStack] = useState<string[]>([]);
+
+  // Atualizador seguro com histórico de Desfazer/Refazer
+  const updateGeneratedTextWithHistory = (newText: string) => {
+    if (newText === generatedText) return;
+    setHistoryStack(prev => [...prev.slice(-30), generatedText]); // guarda até 30 passos
+    setRedoStack([]); // limpa refazer ao criar nova ação
+    setGeneratedText(newText);
+  };
+
+  const handleUndo = () => {
+    if (historyStack.length === 0) return;
+    const prevText = historyStack[historyStack.length - 1];
+    setHistoryStack(prev => prev.slice(0, prev.length - 1));
+    setRedoStack(prev => [...prev, generatedText]);
+    setGeneratedText(prevText);
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+    const nextText = redoStack[redoStack.length - 1];
+    setRedoStack(prev => prev.slice(0, prev.length - 1));
+    setHistoryStack(prev => [...prev, generatedText]);
+    setGeneratedText(nextText);
+  };
+
   const [authenticityReport, setAuthenticityReport] = useState("");
   const [formatRules, setFormatRules] = useState("");
   
@@ -1297,6 +1325,9 @@ ${generatedText}`;
       setErrorMessage("Por favor, gere ou insira um texto para paginar.");
       return;
     }
+
+    // Limpa números ocultos para permitir repaginar tudo de novo
+    setHiddenPageNumbers(new Set());
     
     // Separa a Capa/Folha de Rosto (elementos pré-textuais não numerados) do corpo do trabalho
     let coverBlocks: string[] = [];
@@ -1304,17 +1335,22 @@ ${generatedText}`;
 
     if (generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
       const parts = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
-      if (parts.length >= 3) {
-        coverBlocks = [parts[0].trim(), parts[1].trim()];
-        bodyText = parts.slice(2).join("--- [QUEBRA DE PÁGINA] ---").trim();
-      }
+      const coverParts: string[] = [];
+      const bodyParts: string[] = [];
+      parts.forEach(p => {
+        const t = p.trim();
+        if (t.startsWith("CAPA") || t.startsWith("FOLHA DE ROSTO") || t === "CAPA_AUTO" || t === "FOLHA_ROSTO_AUTO" || t.includes("requisito parcial")) {
+          coverParts.push(t);
+        } else if (t.length > 0) {
+          bodyParts.push(t);
+        }
+      });
+      coverBlocks = coverParts;
+      bodyText = bodyParts.join("\n\n");
     }
 
-    // Remove paginações anteriores
-    bodyText = bodyText.replace(/\n*---\s*\[Página\s*\d+\]\s*---\n*/gi, '\n\n');
-
     // Divide em páginas A4 (~2200 caracteres com espaçamento 1.5)
-    const paragraphs = bodyText.split('\n\n');
+    const paragraphs = bodyText.split(/\n\n+/);
     let pages: string[] = [];
     let currentChunk = "";
 
@@ -1330,19 +1366,13 @@ ${generatedText}`;
       pages.push(currentChunk.trim());
     }
 
-    const paginatedBody = pages.map((page, idx) => {
-      const pageNum = idx + 1;
-      return `${page}\n\n--- [Página ${pageNum}] ---`;
-    }).join('\n\n');
+    const allPages = [...coverBlocks, ...pages];
+    const fullResult = allPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
 
-    const fullResult = coverBlocks.length > 0
-      ? `${coverBlocks[0]}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${coverBlocks[1]}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${paginatedBody}`
-      : paginatedBody;
-
-    setGeneratedText(fullResult);
+    updateGeneratedTextWithHistory(fullResult);
     setActiveTab("editor");
-    logAction("Paginação no rodapé (1, 2, 3...) aplicada com sucesso");
-    setErrorMessage("✅ Numeração de páginas (1, 2, 3...) aplicada no rodapé conforme a ABNT!");
+    logAction("Paginação e Repaginação A4 ABNT aplicada com sucesso");
+    setErrorMessage("✅ Documento paginado e repaginado conforme as normas da ABNT!");
     setTimeout(() => setErrorMessage(""), 3500);
   };
 
@@ -2832,6 +2862,28 @@ ${latexChapters}
                   Documento
                 </Button>
                 <Button 
+                  onClick={handleUndo}
+                  disabled={historyStack.length === 0}
+                  variant="ghost"
+                  size="sm"
+                  className="text-[11px] h-7 px-1.5 font-semibold text-slate-700 hover:bg-slate-200/70 rounded-lg whitespace-nowrap disabled:opacity-35"
+                  title="Desfazer última alteração (Ctrl+Z)"
+                >
+                  <Undo2 className="w-3.5 h-3.5 mr-0.5 text-slate-600" />
+                  Desfazer
+                </Button>
+                <Button 
+                  onClick={handleRedo}
+                  disabled={redoStack.length === 0}
+                  variant="ghost"
+                  size="sm"
+                  className="text-[11px] h-7 px-1.5 font-semibold text-slate-700 hover:bg-slate-200/70 rounded-lg whitespace-nowrap disabled:opacity-35"
+                  title="Refazer alteração (Ctrl+Y)"
+                >
+                  <Redo2 className="w-3.5 h-3.5 mr-0.5 text-slate-600" />
+                  Refazer
+                </Button>
+                <Button 
                   onClick={handleCorrectSpelling} 
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
@@ -2880,10 +2932,10 @@ ${latexChapters}
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
                   className="text-xs h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
-                  title="Repaginar Documento A4"
+                  title="Paginar / Repaginar Documento ABNT A4"
                 >
                   <Hash className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                  Paginar
+                  Paginar / Repaginar
                 </Button>
               </div>
 
@@ -3723,10 +3775,17 @@ ${latexChapters}
                   };
 
                   return (
-                    <div className="flex-1 w-full h-full flex flex-col items-center justify-start py-6 px-3 md:px-8 pb-12 relative overflow-y-auto overflow-x-hidden select-text">
+                    <div className="flex-1 w-full h-full flex flex-col items-center justify-start py-6 px-3 md:px-8 pb-12 relative overflow-y-auto overflow-x-auto select-text">
                       
-                      {/* DOCUMENTO CONTÍNUO COM TODAS AS PÁGINAS A4 EMPILHADAS */}
-                      <div className="w-full flex flex-col items-center gap-6">
+                      {/* DOCUMENTO CONTÍNUO COM TODAS AS PÁGINAS A4 EMPILHADAS COM ZOOM REAL */}
+                      <div 
+                        className="flex flex-col items-center gap-6 transition-transform duration-200 origin-top"
+                        style={{ 
+                          transform: `scale(${zoomScale / 100})`, 
+                          width: `${100 / (zoomScale / 100)}%`,
+                          maxWidth: `${(760 * 100) / zoomScale}px`
+                        }}
+                      >
                         {pages.map((pText, idx) => renderSingleA4Sheet(pText, idx))}
                       </div>
 
