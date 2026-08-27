@@ -232,7 +232,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isLoading]);
 
-  const [activeTab, setActiveTab] = useState<"generator" | "editor" | "report" | "chat">("generator");
+  const [activeTab, setActiveTab] = useState<"generator" | "editor" | "slides" | "report" | "chat">("generator");
   const [editorMode, setEditorMode] = useState<"a4" | "raw">("a4");
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [viewLayout, setViewLayout] = useState<"book" | "continuous">("book");
@@ -241,7 +241,17 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [stageHeight, setStageHeight] = useState<number>(0);
   const [showSlidesModal, setShowSlidesModal] = useState<boolean>(false);
-  const [slidesTheme, setSlidesTheme] = useState<"academic" | "modern" | "dark">("academic");
+  const [slidesTheme, setSlidesTheme] = useState<"academic" | "modern" | "dark" | "sunset" | "neon">("academic");
+  const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
+  const [editableSlides, setEditableSlides] = useState<Array<{
+    title: string;
+    subtitle?: string;
+    bullets: string[];
+    notes?: string;
+    isCover?: boolean;
+    layout?: "card" | "split" | "bullets" | "quote" | "metrics";
+    badge?: string;
+  }>>([]);
 
   // Sincroniza atalhos de teclado (Seta Esquerda / Direita) para passar páginas estilo livro
   useEffect(() => {
@@ -2314,6 +2324,22 @@ ${latexChapters}
     ];
   };
 
+  const handleOpenSlidesStudio = () => {
+    if (!generatedText || !generatedText.trim()) {
+      setErrorMessage("Gere ou insira um documento no editor primeiro para abrir o Estúdio de Slides.");
+      return;
+    }
+    const parsed = parseDocumentIntoSlides(generatedText);
+    const enriched = parsed.map((s, idx) => ({
+      ...s,
+      layout: (idx === 0 ? "card" : idx % 3 === 0 ? "split" : idx % 2 === 0 ? "metrics" : "bullets") as "card" | "split" | "bullets" | "quote" | "metrics",
+      badge: idx === 0 ? "Apresentação Oficial" : `Módulo ${idx}`
+    }));
+    setEditableSlides(enriched);
+    setActiveSlideIndex(0);
+    setActiveTab("slides");
+  };
+
   // Exportação Direta em PowerPoint (.pptx) 100% compatível com Google Slides
   const exportPPTXSlides = async () => {
     const pptx = new pptxgen();
@@ -2554,17 +2580,15 @@ ${latexChapters}
             </div>
           ) : null}
 
-          {/* Botão Slides (Ao lado de Chat Acadêmico) */}
+          {/* Botão Slides (Estúdio Interativo Gamma-Style no Palco) */}
           <button 
-            onClick={() => {
-              if (!generatedText) {
-                setErrorMessage("Gere ou insira um texto primeiro para criar os slides.");
-                return;
-              }
-              setShowSlidesModal(true);
-            }} 
-            className="h-8 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold px-3.5 rounded-xl text-xs shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
-            title="Apresentação em Slides"
+            onClick={handleOpenSlidesStudio} 
+            className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
+              activeTab === "slides" 
+                ? "bg-gradient-to-r from-amber-600 to-orange-700 text-white shadow-xs ring-2 ring-orange-400/50" 
+                : "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+            }`}
+            title="Abrir Estúdio de Slides Interativo (Estilo Gamma)"
           >
             <Presentation className="w-3.5 h-3.5 stroke-[2] group-hover:scale-110 transition-transform" />
             <span className="tracking-tight">Slides</span>
@@ -3934,6 +3958,360 @@ ${latexChapters}
                     <Lock className="w-3 h-3 mr-1" />
                     Criptografia de ponta a ponta: apenas o remetente e o destinatário autorizado acessam as mensagens.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "slides" && (
+              <div className="flex-1 flex flex-col h-full bg-slate-900 text-white overflow-hidden select-text">
+                {/* Top Control Bar do Estúdio de Slides (Estilo Gamma App) */}
+                <div className="bg-slate-950/80 border-b border-slate-800 px-6 py-3 flex items-center justify-between gap-4 backdrop-blur-md">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-orange-500/20 text-white">
+                      <Presentation className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                        Estúdio de Slides Gamma
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          {editableSlides.length} Cartões
+                        </span>
+                      </h2>
+                      <p className="text-[11px] text-slate-400">Edição direta nos cartões em tempo real</p>
+                    </div>
+                  </div>
+
+                  {/* Seleção de Templates Visuais (Gamma Cards Themes) */}
+                  <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-xl p-1">
+                    <span className="text-[11px] font-bold text-slate-400 px-2">Tema:</span>
+                    {[
+                      { id: "academic", name: "Acadêmico", color: "bg-blue-600" },
+                      { id: "modern", name: "Moderno", color: "bg-teal-600" },
+                      { id: "sunset", name: "Sunset", color: "bg-gradient-to-r from-orange-500 to-rose-500" },
+                      { id: "dark", name: "Obsidian", color: "bg-slate-800" },
+                      { id: "neon", name: "Cyberpunk", color: "bg-purple-600" },
+                    ].map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => setSlidesTheme(t.id as any)}
+                        className={`text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+                          slidesTheme === t.id
+                            ? "bg-slate-800 text-white shadow-sm ring-1 ring-amber-500"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${t.color}`} />
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Ações Rápidas: PPTX, Google Slides e Voltar */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={exportPPTXSlides}
+                      size="sm"
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs h-8 px-3"
+                      title="Baixar em PowerPoint (.pptx)"
+                    >
+                      <Download className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                      Baixar .PPTX
+                    </Button>
+                    <Button
+                      onClick={openInGoogleSlides}
+                      size="sm"
+                      className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs h-8 px-3.5 font-bold shadow-md shadow-orange-500/20"
+                    >
+                      <Share2 className="w-3.5 h-3.5 mr-1" />
+                      Google Slides
+                    </Button>
+                    <Button
+                      onClick={() => setActiveTab("editor")}
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-slate-400 hover:text-white hover:bg-slate-800 h-8"
+                    >
+                      Voltar ao Documento
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Workspace Central Estilo Gamma (Lista de Cartões com Layout Editável) */}
+                <div className="flex-1 flex overflow-hidden">
+                  {/* Navegador Lateral de Slides (Miniaturas) */}
+                  <div className="w-56 bg-slate-950/50 border-r border-slate-800/80 p-3 overflow-y-auto space-y-2.5 flex-shrink-0">
+                    <div className="flex items-center justify-between mb-1 px-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Slides</span>
+                      <button
+                        onClick={() => {
+                          const newSlide = {
+                            title: `Novo Slide ${editableSlides.length + 1}`,
+                            bullets: ["Ponto chave 1", "Ponto chave 2", "Ponto chave 3"],
+                            layout: "bullets" as const,
+                            badge: `Módulo ${editableSlides.length + 1}`
+                          };
+                          setEditableSlides(prev => [...prev, newSlide]);
+                          setActiveSlideIndex(editableSlides.length);
+                        }}
+                        className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-0.5 font-bold"
+                      >
+                        <Plus className="w-3 h-3" /> Adicionar
+                      </button>
+                    </div>
+
+                    {editableSlides.map((slide, sIdx) => (
+                      <div
+                        key={sIdx}
+                        onClick={() => setActiveSlideIndex(sIdx)}
+                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                          activeSlideIndex === sIdx
+                            ? "bg-slate-800/90 border-amber-500/80 shadow-md ring-1 ring-amber-500/50"
+                            : "bg-slate-900/40 border-slate-800/80 hover:bg-slate-800/40 hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1">
+                          <span>#{sIdx + 1}</span>
+                          <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                            {slide.layout || "card"}
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-200 truncate">{slide.title || "Sem título"}</p>
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{slide.bullets?.[0] || slide.subtitle || "Conteúdo..."}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Palco Central: Cartão do Slide Ativo em Destaque Interativo */}
+                  <div className="flex-1 p-6 md:p-10 overflow-y-auto flex flex-col items-center justify-start bg-gradient-to-b from-slate-900 to-slate-950">
+                    {editableSlides[activeSlideIndex] && (
+                      <div className="w-full max-w-4xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                        {/* Seletor de Layout Gamma do Cartão */}
+                        <div className="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2 rounded-2xl">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-slate-400 px-2">Layout:</span>
+                            {[
+                              { id: "card", label: "🃏 Cartão" },
+                              { id: "split", label: "🌗 Split" },
+                              { id: "bullets", label: "📋 Tópicos" },
+                              { id: "metrics", label: "📊 Métricas" },
+                              { id: "quote", label: "💬 Destaque" },
+                            ].map(l => (
+                              <button
+                                key={l.id}
+                                onClick={() => {
+                                  const updated = [...editableSlides];
+                                  updated[activeSlideIndex].layout = l.id as any;
+                                  setEditableSlides(updated);
+                                }}
+                                className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                                  editableSlides[activeSlideIndex].layout === l.id
+                                    ? "bg-amber-500 text-slate-950 font-bold"
+                                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                                }`}
+                              >
+                                {l.label}
+                              </button>
+                            ))}
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              if (editableSlides.length <= 1) return;
+                              const updated = editableSlides.filter((_, i) => i !== activeSlideIndex);
+                              setEditableSlides(updated);
+                              setActiveSlideIndex(prev => Math.max(0, prev - 1));
+                            }}
+                            className="text-xs text-rose-400 hover:text-rose-300 px-3 py-1 hover:bg-rose-500/10 rounded-lg transition-colors"
+                          >
+                            Excluir Slide
+                          </button>
+                        </div>
+
+                        {/* Cartão de Visualização / Edição Estilo Gamma */}
+                        <div
+                          className={`rounded-3xl p-8 md:p-12 shadow-2xl border transition-all duration-300 min-h-[460px] flex flex-col justify-between ${
+                            slidesTheme === "academic"
+                              ? "bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 border-blue-800/50 text-white"
+                              : slidesTheme === "modern"
+                              ? "bg-gradient-to-br from-teal-950 via-slate-900 to-emerald-950 border-teal-800/50 text-white"
+                              : slidesTheme === "sunset"
+                              ? "bg-gradient-to-br from-rose-950 via-slate-900 to-amber-950 border-orange-800/50 text-white"
+                              : slidesTheme === "neon"
+                              ? "bg-gradient-to-br from-purple-950 via-slate-900 to-fuchsia-950 border-purple-800/50 text-white"
+                              : "bg-slate-900 border-slate-800 text-slate-100"
+                          }`}
+                        >
+                          {/* Topo do Cartão (Badge e Número) */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => {
+                                const updated = [...editableSlides];
+                                updated[activeSlideIndex].badge = e.currentTarget.innerText;
+                                setEditableSlides(updated);
+                              }}
+                              className="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 text-amber-300 border border-white/10 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                            >
+                              {editableSlides[activeSlideIndex].badge || `SLIDE ${activeSlideIndex + 1}`}
+                            </div>
+                            <span className="text-xs font-mono font-bold text-slate-400">
+                              {activeSlideIndex + 1} / {editableSlides.length}
+                            </span>
+                          </div>
+
+                          {/* Título Principal Editável */}
+                          <div
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => {
+                              const updated = [...editableSlides];
+                              updated[activeSlideIndex].title = e.currentTarget.innerText;
+                              setEditableSlides(updated);
+                            }}
+                            className="text-2xl md:text-3xl font-black tracking-tight text-white mb-6 focus:outline-none focus:bg-white/5 p-2 rounded-xl transition-colors"
+                          >
+                            {editableSlides[activeSlideIndex].title}
+                          </div>
+
+                          {/* Renderização Dinâmica por Layout Gamma */}
+                          {editableSlides[activeSlideIndex].layout === "split" ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-auto">
+                              <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+                                <h4 className="text-xs font-bold uppercase text-amber-400 mb-2">Visão Geral</h4>
+                                <div
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => {
+                                    const updated = [...editableSlides];
+                                    updated[activeSlideIndex].bullets[0] = e.currentTarget.innerText;
+                                    setEditableSlides(updated);
+                                  }}
+                                  className="text-sm text-slate-200 leading-relaxed focus:outline-none focus:bg-white/10 p-1 rounded"
+                                >
+                                  {editableSlides[activeSlideIndex].bullets[0] || "Explique o ponto principal..."}
+                                </div>
+                              </div>
+                              <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+                                <h4 className="text-xs font-bold uppercase text-teal-400 mb-2">Impacto & Evidências</h4>
+                                <div
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => {
+                                    const updated = [...editableSlides];
+                                    updated[activeSlideIndex].bullets[1] = e.currentTarget.innerText;
+                                    setEditableSlides(updated);
+                                  }}
+                                  className="text-sm text-slate-200 leading-relaxed focus:outline-none focus:bg-white/10 p-1 rounded"
+                                >
+                                  {editableSlides[activeSlideIndex].bullets[1] || "Detalhe os desdobramentos..."}
+                                </div>
+                              </div>
+                            </div>
+                          ) : editableSlides[activeSlideIndex].layout === "metrics" ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-auto">
+                              {editableSlides[activeSlideIndex].bullets.slice(0, 3).map((bullet, bIdx) => (
+                                <div key={bIdx} className="bg-white/5 p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+                                  <span className="text-3xl font-black text-amber-400 mb-1">0{bIdx + 1}</span>
+                                  <div
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => {
+                                      const updated = [...editableSlides];
+                                      updated[activeSlideIndex].bullets[bIdx] = e.currentTarget.innerText;
+                                      setEditableSlides(updated);
+                                    }}
+                                    className="text-xs text-slate-200 leading-normal focus:outline-none focus:bg-white/10 p-1 rounded"
+                                  >
+                                    {bullet}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : editableSlides[activeSlideIndex].layout === "quote" ? (
+                            <div className="bg-white/5 p-8 rounded-2xl border-l-4 border-amber-400 my-auto">
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => {
+                                  const updated = [...editableSlides];
+                                  updated[activeSlideIndex].bullets[0] = e.currentTarget.innerText;
+                                  setEditableSlides(updated);
+                                }}
+                                className="text-lg md:text-xl font-medium italic text-slate-100 leading-relaxed focus:outline-none focus:bg-white/10 p-2 rounded"
+                              >
+                                "{editableSlides[activeSlideIndex].bullets[0] || "Destaque conceitual ou citação principal da pesquisa..."}"
+                              </div>
+                            </div>
+                          ) : (
+                            /* Layout Padrão Tópicos / Cartão */
+                            <div className="space-y-3 my-auto">
+                              {editableSlides[activeSlideIndex].bullets.map((bullet, bIdx) => (
+                                <div key={bIdx} className="flex items-start gap-3 bg-white/5 hover:bg-white/10 p-3.5 rounded-2xl border border-white/5 transition-colors group">
+                                  <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">
+                                    {bIdx + 1}
+                                  </div>
+                                  <div
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) => {
+                                      const updated = [...editableSlides];
+                                      updated[activeSlideIndex].bullets[bIdx] = e.currentTarget.innerText;
+                                      setEditableSlides(updated);
+                                    }}
+                                    className="flex-1 text-sm text-slate-200 leading-relaxed focus:outline-none focus:bg-white/10 p-1 rounded"
+                                  >
+                                    {bullet}
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const updated = [...editableSlides];
+                                      updated[activeSlideIndex].bullets = updated[activeSlideIndex].bullets.filter((_, i) => i !== bIdx);
+                                      setEditableSlides(updated);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 p-1 transition-opacity"
+                                    title="Remover tópico"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                onClick={() => {
+                                  const updated = [...editableSlides];
+                                  updated[activeSlideIndex].bullets.push("Novo ponto de apresentação...");
+                                  setEditableSlides(updated);
+                                }}
+                                className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 pt-2"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Adicionar Tópico
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Rodapé do Slide com Notas do Apresentador */}
+                          <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-300">Notas de Apresentação:</span>
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => {
+                                  const updated = [...editableSlides];
+                                  updated[activeSlideIndex].notes = e.currentTarget.innerText;
+                                  setEditableSlides(updated);
+                                }}
+                                className="text-slate-300 italic focus:outline-none focus:bg-white/10 px-2 py-0.5 rounded"
+                              >
+                                {editableSlides[activeSlideIndex].notes || "Dica de fala para o slide..."}
+                              </div>
+                            </div>
+                            <span>EMIA.EDUTECH</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
