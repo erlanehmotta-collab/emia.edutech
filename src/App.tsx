@@ -2988,20 +2988,20 @@ ${latexChapters}
               </div>
             </div>
 
-            {/* Controle de Zoom Ultra-Compacto e Delicado (À Direita) */}
-            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-lg p-0.5 gap-0.5 select-none shadow-2xs h-6 ml-auto flex-shrink-0">
+            {/* Controle de Zoom Equilibrado e Elegante (À Direita) */}
+            <div className="flex items-center bg-gray-100 border border-gray-300/80 rounded-xl p-0.5 gap-0.5 select-none shadow-2xs h-7 ml-auto flex-shrink-0">
               <button
                 onClick={() => setZoomScale(z => Math.max(30, z - 10))}
                 title="Diminuir Zoom (-10%)"
-                className="p-0.5 hover:bg-white rounded text-gray-700 hover:text-blue-600 transition-all active:scale-95 flex items-center justify-center w-5 h-5"
+                className="p-1 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
               >
-                <ZoomOut className="w-2.5 h-2.5 stroke-[2]" />
+                <ZoomOut className="w-3.2 h-3.2 stroke-[2]" />
               </button>
               
               <button
                 onClick={() => setZoomScale(65)}
                 title="Restaurar Zoom Padrão (65%)"
-                className="px-1 text-[10px] font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded min-w-[28px] text-center"
+                className="px-1.5 py-0.5 text-xs font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-lg min-w-[34px] text-center"
               >
                 {zoomScale}%
               </button>
@@ -3009,9 +3009,9 @@ ${latexChapters}
               <button
                 onClick={() => setZoomScale(z => Math.min(150, z + 10))}
                 title="Aumentar Zoom (+10%)"
-                className="p-0.5 hover:bg-white rounded text-gray-700 hover:text-blue-600 transition-all active:scale-95 flex items-center justify-center w-5 h-5"
+                className="p-1 hover:bg-white rounded-lg text-gray-700 hover:text-blue-600 transition-all active:scale-95"
               >
-                <ZoomIn className="w-2.5 h-2.5 stroke-[2]" />
+                <ZoomIn className="w-3.2 h-3.2 stroke-[2]" />
               </button>
             </div>
           </div>
