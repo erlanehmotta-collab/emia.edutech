@@ -2716,9 +2716,10 @@ ${latexChapters}
                 setSpeechGender(nextGender);
                 if (isSpeaking) {
                   window.speechSynthesis.cancel();
-                  setIsSpeaking(false);
-                  setErrorMessage(`Voz alterada para ${nextGender === "female" ? "Feminina 👩" : "Masculina 👨"}. Clique em 'Ouvir Texto' para iniciar.`);
-                  setTimeout(() => setErrorMessage(""), 2500);
+                  setTimeout(() => handleToggleSpeech(), 100);
+                } else {
+                  setErrorMessage(`Voz alterada para ${nextGender === "female" ? "Feminina 👩" : "Masculina 👨"}.`);
+                  setTimeout(() => setErrorMessage(""), 2000);
                 }
               }}
               className="h-7 px-2 flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-100/90 hover:bg-amber-200/90 rounded-md transition-all active:scale-90 select-none"
@@ -2728,17 +2729,16 @@ ${latexChapters}
               <span className="text-[10px] hidden sm:inline">{speechGender === "female" ? "Fem" : "Masc"}</span>
             </button>
 
-            {/* Controle de Velocidade de Reprodução: 1x -> 1.25x -> 1.5x -> 2x */}
+            {/* Controle de Velocidade de Reprodução: 1x -> 1.25x -> 1.5x -> 2x (Sem Interromper) */}
             <button
               onClick={() => {
                 const rates = [1.0, 1.25, 1.5, 2.0];
                 const nextRate = rates[(rates.indexOf(speechRate) + 1) % rates.length];
                 setSpeechRate(nextRate);
                 if (isSpeaking) {
+                  // Reinicia a fala instantaneamente com a nova velocidade de forma transparente
                   window.speechSynthesis.cancel();
-                  setIsSpeaking(false);
-                  setErrorMessage(`Velocidade alterada para ${nextRate}x. Clique em 'Ouvir Texto' para iniciar.`);
-                  setTimeout(() => setErrorMessage(""), 2500);
+                  setTimeout(() => handleToggleSpeech(), 100);
                 }
               }}
               className="h-7 px-2 flex items-center justify-center text-[11px] font-extrabold text-amber-900 bg-amber-100/90 hover:bg-amber-200/90 rounded-md transition-all active:scale-90 select-none"
@@ -2747,7 +2747,7 @@ ${latexChapters}
               {speechRate}x
             </button>
 
-            {/* Controle de Volume: 100% -> 75% -> 50% */}
+            {/* Controle de Volume: 100% -> 75% -> 50% (Sem Interromper) */}
             <button
               onClick={() => {
                 const vols = [1.0, 0.75, 0.5];
@@ -2755,9 +2755,7 @@ ${latexChapters}
                 setSpeechVolume(nextVol);
                 if (isSpeaking) {
                   window.speechSynthesis.cancel();
-                  setIsSpeaking(false);
-                  setErrorMessage(`Volume ajustado para ${Math.round(nextVol * 100)}%.`);
-                  setTimeout(() => setErrorMessage(""), 2000);
+                  setTimeout(() => handleToggleSpeech(), 100);
                 }
               }}
               className="h-7 px-1.5 flex items-center justify-center text-[10px] font-bold text-amber-800 hover:bg-amber-100/90 rounded-md transition-all active:scale-90 select-none"
