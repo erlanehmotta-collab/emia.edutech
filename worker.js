@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker for EMIA.EDU / EMIA Edutech
+ * Cloudflare Worker for EDUTECH.EMIA
  * Handles API requests and serves static assets from Vite dist/
  */
 
@@ -95,7 +95,7 @@ export default {
       }
     }
 
-    return new Response("EMIA.EDU Worker Online", {
+    return new Response("EDUTECH.EMIA Worker Online", {
       headers: { "Content-Type": "text/plain", ...corsHeaders }
     });
   }
