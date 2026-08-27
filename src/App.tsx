@@ -211,6 +211,7 @@ export default function App() {
   const [isImageSelected, setIsImageSelected] = useState<boolean>(false); // O menu só aparece quando a foto é selecionada (Padrão Word)
   const [hiddenPageNumbers, setHiddenPageNumbers] = useState<Set<number>>(new Set()); // Páginas com numeração oculta pelo usuário
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [speechRate, setSpeechRate] = useState<number>(1.0); // Velocidade padrão: 1x, 1.25x, 1.5x, 2x
 
   // Leitura em Áudio do Texto Acadêmico (Web Speech API)
   const handleToggleSpeech = () => {
@@ -244,7 +245,7 @@ export default function App() {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(cleanSpeechText);
     utterance.lang = "pt-BR";
-    utterance.rate = 0.98; // Velocidade natural e calma de locução acadêmica
+    utterance.rate = speechRate || 1.0; // Velocidade configurada pelo usuário (1x, 1.5x, etc.)
     utterance.pitch = 1.0;
 
     // Seleção de vozes neurais / naturais premium (Microsoft Francisca/Antonio Natural, Google português do Brasil, Apple Luciana/Felipe)
@@ -269,7 +270,7 @@ export default function App() {
 
     utterance.onstart = () => {
       setIsSpeaking(true);
-      setErrorMessage("🔊 Reproduzindo leitura do documento em áudio...");
+      setErrorMessage(`🔊 Reproduzindo leitura do documento em áudio (${speechRate}x)...`);
     };
 
     utterance.onend = () => {
@@ -2654,29 +2655,50 @@ ${latexChapters}
             <span className="tracking-tight">Chat Acadêmico</span>
           </button>
 
-          {/* Botão Ouvir Texto (Leitura em Áudio do Texto Acadêmico com Voz Humana) */}
-          <button 
-            onClick={handleToggleSpeech}
-            disabled={!generatedText || !generatedText.trim()}
-            className={`h-8 flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed ${
-              isSpeaking 
-                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs animate-pulse ring-2 ring-amber-300" 
-                : "bg-amber-50/90 hover:bg-amber-100/90 text-amber-900 border border-amber-200"
-            }`}
-            title={isSpeaking ? "Interromper Leitura em Áudio" : "Ouvir Leitura do Texto Acadêmico em Áudio"}
-          >
-            {isSpeaking ? (
-              <>
-                <VolumeX className="w-3.5 h-3.5 text-white stroke-[2] group-hover:scale-110 transition-transform" />
-                <span className="tracking-tight text-white">Parar Texto</span>
-              </>
-            ) : (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-amber-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
-                <span className="tracking-tight">Ouvir Texto</span>
-              </>
-            )}
-          </button>
+          {/* Grupo de Áudio: Botão Ouvir Texto + Controle de Velocidade (1x, 1.25x, 1.5x, 2x) */}
+          <div className="flex items-center bg-amber-50/80 border border-amber-200 rounded-xl p-0.5 shadow-2xs gap-0.5">
+            <button 
+              onClick={handleToggleSpeech}
+              disabled={!generatedText || !generatedText.trim()}
+              className={`h-7 flex items-center gap-1.5 px-3 rounded-lg text-xs font-bold transition-all active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed ${
+                isSpeaking 
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs animate-pulse" 
+                  : "hover:bg-amber-100/80 text-amber-900"
+              }`}
+              title={isSpeaking ? "Interromper Leitura em Áudio" : "Ouvir Leitura do Texto Acadêmico em Áudio"}
+            >
+              {isSpeaking ? (
+                <>
+                  <VolumeX className="w-3.5 h-3.5 text-white stroke-[2] group-hover:scale-110 transition-transform" />
+                  <span className="tracking-tight text-white">Parar Texto</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-amber-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
+                  <span className="tracking-tight">Ouvir Texto</span>
+                </>
+              )}
+            </button>
+
+            {/* Controle de Velocidade de Reprodução: 1x -> 1.25x -> 1.5x -> 2x */}
+            <button
+              onClick={() => {
+                const rates = [1.0, 1.25, 1.5, 2.0];
+                const nextRate = rates[(rates.indexOf(speechRate) + 1) % rates.length];
+                setSpeechRate(nextRate);
+                if (isSpeaking) {
+                  window.speechSynthesis.cancel();
+                  setIsSpeaking(false);
+                  setErrorMessage(`Velocidade alterada para ${nextRate}x. Clique em 'Ouvir Texto' para iniciar.`);
+                  setTimeout(() => setErrorMessage(""), 2500);
+                }
+              }}
+              className="h-7 px-2 flex items-center justify-center text-[11px] font-extrabold text-amber-900 bg-amber-100/90 hover:bg-amber-200/90 rounded-md transition-all active:scale-90 select-none"
+              title="Alternar Velocidade de Áudio (1x, 1.25x, 1.5x, 2x)"
+            >
+              {speechRate}x
+            </button>
+          </div>
 
           {/* Botão Slides (EMIA.SLIDES - Amarelo Pastel com Texto Branco) */}
           <button 
