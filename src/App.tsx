@@ -2467,10 +2467,10 @@ ${latexChapters}
           </button>
         )}
 
-        {/* Sidebar Controls (Recolhível para puxar o palco) */}
+        {/* Sidebar Controls (Compacta e Recolhível para puxar o palco) */}
         {!isSidebarCollapsed && (
-          <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col gap-6 transition-all">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 flex flex-col gap-6 transition-all">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Novo Trabalho</h2>
                 <div className="flex items-center gap-1">
@@ -2802,10 +2802,10 @@ ${latexChapters}
         >
           
           {/* Top Bar with Clean, Elegant Single Line Toolbar */}
-          <div className="flex items-center justify-between border-b border-gray-200/80 mb-3 pb-2 gap-2 bg-white/50 backdrop-blur-xs px-1 overflow-x-auto scrollbar-hide flex-nowrap">
+          <div className="flex items-center justify-between border-b border-gray-200/80 mb-3 pb-2 gap-1.5 bg-white/50 backdrop-blur-xs px-1 overflow-x-auto scrollbar-hide flex-nowrap">
             
             {/* Grupo Harmônico e Elegante de Ações na Esquerda em Linha Única */}
-            <div className="flex items-center gap-1.5 flex-nowrap flex-shrink-0">
+            <div className="flex items-center gap-1 flex-nowrap flex-shrink-0">
               
               {/* Ferramentas de Redação & Estrutura Acadêmica */}
               <div className="flex items-center bg-gray-50 border border-gray-200/80 rounded-xl p-0.5 shadow-2xs gap-0.5 flex-nowrap">
@@ -2813,7 +2813,7 @@ ${latexChapters}
                   onClick={() => setActiveTab("editor")} 
                   variant="ghost" 
                   size="sm" 
-                  className={`text-xs h-7 px-2.5 font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  className={`text-[11px] h-7 px-2 font-bold rounded-lg transition-all flex items-center gap-1 whitespace-nowrap ${
                     activeTab === "editor" || activeTab === "generator" 
                       ? "bg-white text-blue-700 shadow-xs" 
                       : "text-gray-700 hover:bg-gray-200/60"
@@ -2828,7 +2828,7 @@ ${latexChapters}
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
+                  className="text-[11px] h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
                   title="Corrigir Ortografia e Gramática"
                 >
                   {isLoading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />}
@@ -2839,7 +2839,7 @@ ${latexChapters}
                   onClick={handleInsertCover} 
                   disabled={isLoading} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg whitespace-nowrap"
+                  className="text-[11px] h-7 px-1.5 font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg whitespace-nowrap"
                   title="Inserir Capa e Folha de Rosto ABNT"
                 >
                   {isLoading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-600" /> : <BookOpen className="w-3.5 h-3.5 mr-1 text-blue-600" />}
@@ -2850,7 +2850,7 @@ ${latexChapters}
                   onClick={handleGenerateTOC} 
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 rounded-lg whitespace-nowrap"
+                  className="text-[11px] h-7 px-1.5 font-semibold text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 rounded-lg whitespace-nowrap"
                   title="Gerar Sumário Dinâmico ABNT"
                 >
                   <ListOrdered className="w-3.5 h-3.5 mr-1 text-indigo-600" />
@@ -2860,7 +2860,7 @@ ${latexChapters}
                   size="sm" 
                   onClick={() => setShowReferenceModal(true)} 
                   variant="ghost" 
-                  className="text-xs h-7 px-2 font-semibold text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap"
+                  className="text-[11px] h-7 px-1.5 font-semibold text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap"
                   title="Gerar Referência por Link/DOI"
                 >
                   <Link className="w-3.5 h-3.5 mr-1 text-gray-500" />
