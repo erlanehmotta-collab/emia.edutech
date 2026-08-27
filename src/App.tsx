@@ -5,7 +5,7 @@ import {
   Settings, Loader2, LogOut, ShieldCheck, Download, Copy,
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check,
-  ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move
+  ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -2309,13 +2309,13 @@ ${latexChapters}
             <span>Google Gemini</span>
           </div>
 
-          {/* Botão Trabalho em Grupo posicionado ao lado do Gemini (Verde Claro Suave e Elegante) */}
+          {/* Botão Trabalho em Grupo posicionado ao lado do Gemini (Verde Claro Suave com Ícone Vazado) */}
           <button 
             onClick={() => setIsGroupMode(true)} 
             className="flex items-center gap-1.5 bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border border-emerald-300/80 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs hover:shadow-sm transition-all active:scale-95 group"
             title="Montar trabalho acadêmico feito em grupo com múltiplos alunos"
           >
-            <span className="text-sm group-hover:scale-110 transition-transform">👥</span>
+            <Users className="w-4 h-4 text-emerald-700 stroke-[1.8] group-hover:scale-110 transition-transform" />
             <span className="tracking-tight">Trabalho em Grupo</span>
           </button>
 
@@ -4190,8 +4190,8 @@ ${latexChapters}
             {/* Header do Modal */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shadow-sm">
-                  👥
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center shadow-xs">
+                  <Users className="w-5 h-5 stroke-[1.8]" />
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-gray-900">Montagem de Trabalho em Grupo</h2>
