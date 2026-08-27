@@ -6,7 +6,7 @@ import {
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
-  Undo2, Redo2, Maximize2
+  Undo2, Redo2, Maximize2, Minimize2
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -2645,19 +2645,19 @@ ${latexChapters}
 
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 items-start relative">
         
-        {/* Botão flutuante para reabrir a barra lateral quando recolhida */}
+        {/* Botão flutuante para reabrir a barra lateral quando recolhida (Setinhas de Tela Cheia / Expandir) */}
         {isSidebarCollapsed && (
           <button
             onClick={() => setIsSidebarCollapsed(false)}
-            title="Expandir formulário do trabalho"
+            title="Mostrar Formulário (Sair da Tela Cheia)"
             className="hidden lg:flex items-center gap-1.5 bg-white border border-gray-300 hover:border-blue-500 shadow-lg text-gray-800 hover:text-blue-600 px-3 py-2 rounded-r-xl font-bold text-xs fixed left-0 top-32 z-30 transition-all hover:translate-x-1 group"
           >
-            <PanelLeftOpen className="w-4 h-4 text-blue-600 group-hover:scale-110" />
+            <Minimize2 className="w-4 h-4 text-blue-600 group-hover:scale-110" />
             <span>Formulário</span>
           </button>
         )}
 
-        {/* Sidebar Controls (Recolhível para puxar o palco) */}
+        {/* Sidebar Controls (Recolhível com ícone de setinhas para tela cheia) */}
         {!isSidebarCollapsed && (
           <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col gap-6 transition-all">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -2671,10 +2671,10 @@ ${latexChapters}
                     onClick={() => setIsSidebarCollapsed(true)} 
                     variant="ghost" 
                     size="sm" 
-                    title="Puxar o palco (recolher painel)"
-                    className="text-xs h-7 px-2 text-gray-500 hover:text-blue-600"
+                    title="Tela Cheia no Palco (Ocultar formulário)"
+                    className="text-xs h-7 px-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                   >
-                    <PanelLeftClose className="w-4 h-4" />
+                    <Maximize2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
