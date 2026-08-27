@@ -2657,13 +2657,8 @@ ${latexChapters}
             </button>
           )}
 
-          {/* Indicador de Cota Própria / Créditos para Master ou Chave Própria */}
-          {isMaster ? (
-            <div className="h-8 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-xs px-3 rounded-xl shadow-xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>👑 Acesso Mestre</span>
-            </div>
-          ) : (customGeminiKey || customOpenaiKey) ? (
+          {/* Indicador de Cota Própria para Chave Própria */}
+          {(customGeminiKey || customOpenaiKey) && !isMaster ? (
             <div className="h-8 flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs px-3 rounded-xl shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Cota Própria Conectada</span>
