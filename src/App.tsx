@@ -67,6 +67,17 @@ export default function App() {
   const [year, setYear] = useState("");
   const [advisor, setAdvisor] = useState("");
 
+  // Modo Trabalho em Grupo
+  const [isGroupMode, setIsGroupMode] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<string[]>([""]);
+  const [sectionSlots, setSectionSlots] = useState<Record<string, File | null>>({
+    introducao: null,
+    fundamentacao: null,
+    resultados: null,
+    conclusao: null,
+    referencias: null,
+  });
+
   // Profile and Audit State
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -787,6 +798,107 @@ export default function App() {
     } catch (error) {
       console.error(error);
       setErrorMessage(error instanceof Error ? error.message : "Erro ao extrair e organizar textos.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // MONTAR TRABALHO EM GRUPO — Extrai cada seção, gera capa com todos os membros e monta tudo
+  const handleGroupAssemble = async () => {
+    const filledSlots = Object.entries(sectionSlots).filter(([, file]) => file !== null);
+    if (filledSlots.length === 0) {
+      setErrorMessage("Adicione pelo menos um arquivo em uma das seções para montar o trabalho.");
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const sectionLabels: Record<string, string> = {
+        introducao: "1 INTRODUÇÃO",
+        fundamentacao: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA",
+        resultados: "3 RESULTADOS E DISCUSSÃO",
+        conclusao: "4 CONSIDERAÇÕES FINAIS",
+        referencias: "REFERÊNCIAS",
+      };
+
+      // Extrai texto de cada slot via backend ou client-side
+      const sectionTexts: Record<string, string> = {};
+      for (const [key, file] of Object.entries(sectionSlots)) {
+        if (!file) continue;
+        let text = "";
+        try {
+          const formData = new FormData();
+          formData.append("files", file);
+          const res = await fetch("/api/extract", { method: "POST", body: formData });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.text) text = data.text;
+          }
+        } catch { /* fallback abaixo */ }
+
+        if (!text) {
+          if (file.type.includes("text") || file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".csv")) {
+            text = await file.text();
+          } else if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") {
+            const ab = await file.arrayBuffer();
+            const latin = new TextDecoder("latin1").decode(new Uint8Array(ab));
+            const matches = latin.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
+            text = matches.length > 0
+              ? matches.map(m => m.replace(/^\(/, '').replace(/\)\s*(?:Tj|'|")$/, '')).join(' ').replace(/\\([()\\])/g, '$1').replace(/\s+/g, ' ')
+              : latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 15).join('\n\n');
+          }
+        }
+        if (text.trim()) sectionTexts[key] = text.trim();
+      }
+
+      if (Object.keys(sectionTexts).length === 0) {
+        setErrorMessage("Não foi possível extrair texto de nenhum arquivo. Verifique os formatos.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Monta dados da capa
+      const currentYear = new Date().getFullYear().toString();
+      const instName = (institution || "INSTITUIÇÃO DE ENSINO").toUpperCase();
+      const courseName = course ? course.toUpperCase() : "";
+      const membersText = groupMembers.filter(m => m.trim()).map(m => m.trim().toUpperCase()).join("\n");
+      const authorNames = membersText || (studentName || "NOME DOS AUTORES").toUpperCase();
+      const docTitle = (title || "TÍTULO DO TRABALHO").toUpperCase();
+      const docSubtitle = subtitle ? ` - ${subtitle}` : "";
+      const docCity = (city || "CIDADE - UF").toUpperCase();
+      const docYear = year || currentYear;
+      const advText = advisor ? `Orientador(a): ${advisor}` : "";
+
+      // Capa ABNT com todos os membros
+      const coverPage = `${instName}${courseName ? `\n${courseName}` : ""}\n\n\n\n${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+
+      // Folha de Rosto
+      const titlePage = `${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n                                          Trabalho Acadêmico apresentado à ${instName}${courseName ? ` como requisito parcial de avaliação para o curso de ${courseName}` : ""}.\n${advText ? `\n                                          ${advText}` : ""}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+
+      // Monta seções na ordem correta
+      const orderedSections = ["introducao", "fundamentacao", "resultados", "conclusao", "referencias"];
+      const bodyPages: string[] = [];
+      for (const key of orderedSections) {
+        if (sectionTexts[key]) {
+          const label = sectionLabels[key];
+          const rawText = sectionTexts[key];
+          // Remove cabeçalhos duplicados do próprio arquivo se já tiver
+          const cleanText = rawText.replace(/^---\s*(?:Início|Conteúdo)\s*d[eo]\s*(?:Arquivo|PDF):.*?---\s*/gi, '').trim();
+          bodyPages.push(`${label}\n\n${cleanText}`);
+        }
+      }
+
+      // Monta documento final com quebras de página
+      const fullDoc = [coverPage, titlePage, ...bodyPages].join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+
+      setGeneratedText(fullDoc);
+      setActiveTab("editor");
+      setErrorMessage("✅ Trabalho em grupo montado com sucesso! Todas as seções foram unidas na ordem ABNT com capa e folha de rosto.");
+      setTimeout(() => setErrorMessage(""), 5000);
+      logAction("Montagem de Trabalho em Grupo", fullDoc.substring(0, 500));
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(error instanceof Error ? error.message : "Erro ao montar trabalho em grupo.");
     } finally {
       setIsLoading(false);
     }
@@ -2487,6 +2599,121 @@ ${latexChapters}
               </div>
             </div>
           </div>
+
+            {/* PAINEL TRABALHO EM GRUPO */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <button 
+                onClick={() => setIsGroupMode(!isGroupMode)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all text-sm font-semibold ${isGroupMode ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'}`}
+              >
+                <span className="flex items-center gap-2">
+                  <span>👥</span>
+                  <span>Trabalho em Grupo</span>
+                </span>
+                <span className="text-xs text-gray-500">{isGroupMode ? "▲ Fechar" : "▼ Abrir"}</span>
+              </button>
+
+              {isGroupMode && (
+                <div className="mt-4 space-y-4">
+                  {/* Membros do Grupo */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Membros do Grupo</label>
+                    <div className="space-y-2">
+                      {groupMembers.map((member, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-gray-400 w-5 text-center">{idx + 1}.</span>
+                          <input
+                            type="text"
+                            value={member}
+                            onChange={(e) => {
+                              const updated = [...groupMembers];
+                              updated[idx] = e.target.value;
+                              setGroupMembers(updated);
+                            }}
+                            placeholder={`Nome do Aluno ${idx + 1}`}
+                            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                          />
+                          {groupMembers.length > 1 && (
+                            <button
+                              onClick={() => setGroupMembers(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-red-400 hover:text-red-600 p-1"
+                              title="Remover membro"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setGroupMembers(prev => [...prev, ""])}
+                      className="mt-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Adicionar Membro
+                    </button>
+                  </div>
+
+                  {/* Slots de Seções */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Seções do Trabalho</label>
+                    <div className="space-y-2">
+                      {([
+                        { key: "introducao", label: "1 INTRODUÇÃO", icon: "📖" },
+                        { key: "fundamentacao", label: "2 FUNDAMENTAÇÃO", icon: "📚" },
+                        { key: "resultados", label: "3 RESULTADOS", icon: "📊" },
+                        { key: "conclusao", label: "4 CONCLUSÃO", icon: "✅" },
+                        { key: "referencias", label: "REFERÊNCIAS", icon: "🔗" },
+                      ] as const).map(({ key, label, icon }) => (
+                        <div key={key} className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all ${sectionSlots[key] ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200 border-dashed'}`}>
+                          <span className="text-sm">{icon}</span>
+                          <span className="text-xs font-semibold text-gray-700 flex-1 truncate">{label}</span>
+                          {sectionSlots[key] ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-medium text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded truncate max-w-[100px]">{sectionSlots[key]!.name}</span>
+                              <button
+                                onClick={() => setSectionSlots(prev => ({ ...prev, [key]: null }))}
+                                className="text-red-400 hover:text-red-600 p-0.5"
+                                title="Remover arquivo"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="cursor-pointer text-[10px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors">
+                              📎 Selecionar
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept=".pdf,.docx,.doc,.txt,.md,.csv"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setSectionSlots(prev => ({ ...prev, [key]: file }));
+                                  }
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Botão Montar */}
+                  <Button
+                    onClick={handleGroupAssemble}
+                    disabled={isLoading || Object.values(sectionSlots).every(f => f === null)}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 font-bold text-sm"
+                  >
+                    {isLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <span className="mr-2">🚀</span>}
+                    Montar Trabalho Completo
+                  </Button>
+                  <p className="text-[10px] text-gray-400 text-center">Gera Capa + Folha de Rosto + Seções na ordem ABNT com todos os nomes</p>
+                </div>
+              )}
+            </div>
+
         </div>
       )}
 
