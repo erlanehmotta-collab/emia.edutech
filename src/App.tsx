@@ -2287,6 +2287,16 @@ ${latexChapters}
             </button>
           )}
 
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setIsGroupMode(true)} 
+            className="border-emerald-300 bg-emerald-50/80 text-emerald-800 hover:bg-emerald-100 font-bold shadow-2xs"
+          >
+            <span className="mr-1.5">👥</span>
+            Trabalho em Grupo
+          </Button>
+
           <Button variant="outline" size="sm" onClick={() => setShowProfileModal(true)} className="border-gray-200">
             <User className="w-4 h-4 mr-2" />
             Perfil e Histórico
@@ -2599,120 +2609,6 @@ ${latexChapters}
               </div>
             </div>
           </div>
-
-            {/* PAINEL TRABALHO EM GRUPO */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <button 
-                onClick={() => setIsGroupMode(!isGroupMode)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all text-sm font-semibold ${isGroupMode ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'}`}
-              >
-                <span className="flex items-center gap-2">
-                  <span>👥</span>
-                  <span>Trabalho em Grupo</span>
-                </span>
-                <span className="text-xs text-gray-500">{isGroupMode ? "▲ Fechar" : "▼ Abrir"}</span>
-              </button>
-
-              {isGroupMode && (
-                <div className="mt-4 space-y-4">
-                  {/* Membros do Grupo */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Membros do Grupo</label>
-                    <div className="space-y-2">
-                      {groupMembers.map((member, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-gray-400 w-5 text-center">{idx + 1}.</span>
-                          <input
-                            type="text"
-                            value={member}
-                            onChange={(e) => {
-                              const updated = [...groupMembers];
-                              updated[idx] = e.target.value;
-                              setGroupMembers(updated);
-                            }}
-                            placeholder={`Nome do Aluno ${idx + 1}`}
-                            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
-                          />
-                          {groupMembers.length > 1 && (
-                            <button
-                              onClick={() => setGroupMembers(prev => prev.filter((_, i) => i !== idx))}
-                              className="text-red-400 hover:text-red-600 p-1"
-                              title="Remover membro"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setGroupMembers(prev => [...prev, ""])}
-                      className="mt-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 flex items-center gap-1 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Adicionar Membro
-                    </button>
-                  </div>
-
-                  {/* Slots de Seções */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Seções do Trabalho</label>
-                    <div className="space-y-2">
-                      {([
-                        { key: "introducao", label: "1 INTRODUÇÃO", icon: "📖" },
-                        { key: "fundamentacao", label: "2 FUNDAMENTAÇÃO", icon: "📚" },
-                        { key: "resultados", label: "3 RESULTADOS", icon: "📊" },
-                        { key: "conclusao", label: "4 CONCLUSÃO", icon: "✅" },
-                        { key: "referencias", label: "REFERÊNCIAS", icon: "🔗" },
-                      ] as const).map(({ key, label, icon }) => (
-                        <div key={key} className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all ${sectionSlots[key] ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200 border-dashed'}`}>
-                          <span className="text-sm">{icon}</span>
-                          <span className="text-xs font-semibold text-gray-700 flex-1 truncate">{label}</span>
-                          {sectionSlots[key] ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-medium text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded truncate max-w-[100px]">{sectionSlots[key]!.name}</span>
-                              <button
-                                onClick={() => setSectionSlots(prev => ({ ...prev, [key]: null }))}
-                                className="text-red-400 hover:text-red-600 p-0.5"
-                                title="Remover arquivo"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <label className="cursor-pointer text-[10px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors">
-                              📎 Selecionar
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.docx,.doc,.txt,.md,.csv"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    setSectionSlots(prev => ({ ...prev, [key]: file }));
-                                  }
-                                  e.target.value = "";
-                                }}
-                              />
-                            </label>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Botão Montar */}
-                  <Button
-                    onClick={handleGroupAssemble}
-                    disabled={isLoading || Object.values(sectionSlots).every(f => f === null)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 font-bold text-sm"
-                  >
-                    {isLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <span className="mr-2">🚀</span>}
-                    Montar Trabalho Completo
-                  </Button>
-                  <p className="text-[10px] text-gray-400 text-center">Gera Capa + Folha de Rosto + Seções na ordem ABNT com todos os nomes</p>
-                </div>
-              )}
-            </div>
 
         </div>
       )}
@@ -4239,6 +4135,163 @@ ${latexChapters}
               </div>
 
             </div>
+          </div>
+      {/* MODAL TRABALHO EM GRUPO (Aberto pelo botão da barra superior) */}
+      {isGroupMode && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-gray-100">
+            {/* Header do Modal */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shadow-sm">
+                  👥
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">Montagem de Trabalho em Grupo</h2>
+                  <p className="text-xs text-gray-500">Junte as partes feitas por cada aluno em um trabalho ABNT completo</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsGroupMode(false)} 
+                className="w-8 h-8 rounded-full hover:bg-gray-200/80 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Conteúdo do Modal */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Membros do Grupo */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-bold text-gray-800">Alunos / Integrantes do Grupo</label>
+                  <span className="text-xs text-gray-500">Serão impressos na Capa e Folha de Rosto</span>
+                </div>
+                <div className="space-y-2">
+                  {groupMembers.map((member, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-400 w-6 text-center">{idx + 1}º</span>
+                      <input
+                        type="text"
+                        value={member}
+                        onChange={(e) => {
+                          const updated = [...groupMembers];
+                          updated[idx] = e.target.value;
+                          setGroupMembers(updated);
+                        }}
+                        placeholder={`Nome completo do Aluno ${idx + 1}`}
+                        className="flex-1 px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      />
+                      {groupMembers.length > 1 && (
+                        <button
+                          onClick={() => setGroupMembers(prev => prev.filter((_, i) => i !== idx))}
+                          className="w-8 h-8 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 flex items-center justify-center transition-all"
+                          title="Remover membro"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setGroupMembers(prev => [...prev, ""])}
+                  className="mt-2.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1.5 transition-colors bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Adicionar Mais um Aluno
+                </button>
+              </div>
+
+              {/* Slots de Seções */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-bold text-gray-800">Arquivos por Seção ABNT</label>
+                  <span className="text-xs text-gray-500">PDF, Word (.docx), TXT ou MD</span>
+                </div>
+                <div className="space-y-2.5">
+                  {([
+                    { key: "introducao", label: "1 INTRODUÇÃO", desc: "Problematização, objetivos e justificativa", icon: "📖" },
+                    { key: "fundamentacao", label: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", desc: "Revisão bibliográfica e métodos", icon: "📚" },
+                    { key: "resultados", label: "3 RESULTADOS E DISCUSSÃO", desc: "Dados empíricos e análise", icon: "📊" },
+                    { key: "conclusao", label: "4 CONSIDERAÇÕES FINAIS", desc: "Conclusões e perspectivas futuras", icon: "✅" },
+                    { key: "referencias", label: "REFERÊNCIAS", desc: "Bibliografia no padrão NBR 6023", icon: "🔗" },
+                  ] as const).map(({ key, label, desc, icon }) => (
+                    <div 
+                      key={key} 
+                      className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                        sectionSlots[key] 
+                          ? 'bg-emerald-50/80 border-emerald-300 shadow-2xs' 
+                          : 'bg-gray-50/60 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="text-xl flex-shrink-0">{icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-gray-900 truncate">{label}</p>
+                          <p className="text-[11px] text-gray-500 truncate">{desc}</p>
+                        </div>
+                      </div>
+
+                      {sectionSlots[key] ? (
+                        <div className="flex items-center gap-2 ml-3">
+                          <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg truncate max-w-[160px]">
+                            {sectionSlots[key]!.name}
+                          </span>
+                          <button
+                            onClick={() => setSectionSlots(prev => ({ ...prev, [key]: null }))}
+                            className="w-7 h-7 rounded-lg hover:bg-red-100 text-red-500 flex items-center justify-center transition-all"
+                            title="Remover arquivo desta seção"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer text-xs font-bold text-emerald-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-emerald-300 px-3 py-1.5 rounded-xl transition-all shadow-2xs flex items-center gap-1.5 ml-3">
+                          <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Selecionar Arquivo</span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.docx,.doc,.txt,.md,.csv"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setSectionSlots(prev => ({ ...prev, [key]: file }));
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Rodapé do Modal com Botão de Montagem */}
+            <div className="p-5 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsGroupMode(false)}
+                className="border-gray-300"
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                onClick={async () => {
+                  await handleGroupAssemble();
+                  setIsGroupMode(false);
+                }}
+                disabled={isLoading || Object.values(sectionSlots).every(f => f === null)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm shadow-md shadow-emerald-600/20 flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🚀</span>}
+                Montar Trabalho Completo ABNT
+              </Button>
+            </div>
+
           </div>
         </div>
       )}
