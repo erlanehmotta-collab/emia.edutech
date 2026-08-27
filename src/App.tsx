@@ -941,13 +941,28 @@ export default function App() {
       // Folha de Rosto
       const titlePage = `${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n                                          ${typeLabel} apresentado à ${instName}${courseName ? ` como requisito parcial de avaliação para o curso de ${courseName}` : ""}.\n${advText ? `\n                                          ${advText}` : ""}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
 
-      // Monta seções dinamicamente conforme o tipo escolhido
+      // Monta seções dinamicamente conforme o tipo escolhido (com Quebra de Página automática a cada ~2200 caracteres de cada seção)
       const bodyPages: string[] = [];
       for (const { key, label } of activeSections) {
         if (sectionTexts[key]) {
           const rawText = sectionTexts[key];
           const cleanText = rawText.replace(/^---\s*(?:Início|Conteúdo)\s*d[eo]\s*(?:Arquivo|PDF):.*?---\s*/gi, '').trim();
-          bodyPages.push(`${label}\n\n${cleanText}`);
+          
+          // Quebra automática de páginas dentro da seção se o texto for longo (~2200 caracteres por folha A4)
+          const paragraphs = cleanText.split(/\n\n+/);
+          let currentSectionPage = `${label}\n\n`;
+          
+          for (const para of paragraphs) {
+            if ((currentSectionPage + "\n\n" + para).length > 2200 && currentSectionPage.trim().length > label.length) {
+              bodyPages.push(currentSectionPage.trim());
+              currentSectionPage = para;
+            } else {
+              currentSectionPage = currentSectionPage ? currentSectionPage + "\n\n" + para : para;
+            }
+          }
+          if (currentSectionPage.trim()) {
+            bodyPages.push(currentSectionPage.trim());
+          }
         }
       }
 
@@ -4433,6 +4448,34 @@ ${latexChapters}
                   {groupDocType === "estudo_caso" && "✨ Estrutura: 1 Introdução do Caso + 2 Diagnóstico e Teoria + 3 Proposições/Soluções + 4 Lições Aprendidas + Referências"}
                   {groupDocType === "resenha" && "✨ Estrutura: Cabeçalho Bibliográfico + 1 Síntese da Obra + 2 Apreciação Crítica + 3 Conclusão/Indicação"}
                   {groupDocType === "outro" && "✨ Estrutura Totalmente Livre: Você define os títulos das seções, a quantidade de partes e a ordem exata."}
+                </div>
+              </div>
+
+              {/* Título e Subtítulo do Trabalho em Grupo */}
+              <div className="space-y-3 bg-white p-4 rounded-2xl border border-gray-200">
+                <div>
+                  <label className="block text-sm font-bold text-gray-800 mb-1">
+                    📌 Título do Trabalho (Será impresso na Capa e Folha de Rosto)
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Ex: Impactos da Inteligência Artificial na Gestão Escolar Contemporânea"
+                    className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">
+                    Subtítulo do Trabalho (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={subtitle}
+                    onChange={(e) => setSubtitle(e.target.value)}
+                    placeholder="Ex: Um estudo de caso multisetorial"
+                    className="w-full px-3.5 py-1.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
                 </div>
               </div>
 
