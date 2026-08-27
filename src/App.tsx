@@ -6,7 +6,7 @@ import {
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
-  Undo2, Redo2
+  Undo2, Redo2, Maximize2
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -2327,6 +2327,10 @@ ${latexChapters}
   };
 
   const handleOpenSlidesStudio = () => {
+    if (activeTab === "slides") {
+      setActiveTab("editor");
+      return;
+    }
     const textToParse = generatedText && generatedText.trim() ? generatedText : "1 INTRODUÇÃO\n\nApresentação acadêmica estruturada.";
     const parsed = parseDocumentIntoSlides(textToParse);
     const enriched = parsed.map((s, idx) => ({
@@ -4008,8 +4012,24 @@ ${latexChapters}
                     ))}
                   </div>
 
-                  {/* Ações Rápidas: PPTX, Google Slides e Voltar */}
+                  {/* Ações Rápidas: PPTX, Google Slides, Tela Cheia e Voltar */}
                   <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => {
+                        const elem = document.getElementById("emia-slides-container") || document.documentElement;
+                        if (!document.fullscreenElement) {
+                          elem.requestFullscreen().catch(err => console.warn("Fullscreen error:", err));
+                        } else {
+                          document.exitFullscreen().catch(err => console.warn("Exit fullscreen error:", err));
+                        }
+                      }}
+                      size="sm"
+                      className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs h-8 px-3 font-bold flex items-center gap-1.5"
+                      title="Apresentar em Tela Cheia (F11)"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      Tela Cheia
+                    </Button>
                     <Button
                       onClick={exportPPTXSlides}
                       size="sm"
@@ -4039,7 +4059,7 @@ ${latexChapters}
                 </div>
 
                 {/* Workspace Central EMIA.SLIDES */}
-                <div className="flex-1 flex overflow-hidden">
+                <div id="emia-slides-container" className="flex-1 flex overflow-hidden">
                   {/* Navegador Lateral de Slides (Miniaturas) */}
                   <div className="w-60 bg-slate-950/50 border-r border-slate-800/80 p-3 overflow-y-auto space-y-2.5 flex-shrink-0">
                     <div className="flex items-center justify-between mb-1 px-1">
