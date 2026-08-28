@@ -3664,18 +3664,34 @@ ${latexChapters}
                         <div className="absolute -top-1 left-1/2 -translate-x-1/2 translate-y-0 opacity-0 group-hover/page:opacity-100 transition-all duration-200 z-30 flex items-center gap-1 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg rounded-xl px-2 py-1 print:hidden">
                           <span className="text-[10px] font-bold text-slate-500 px-1.5">Pág. {pageNum}</span>
                           <span className="h-3 w-px bg-slate-200" />
-                          {/* Apagar Página (qualquer uma, inclusive capa) */}
+                          {/* Apagar Página (remove a folha inteira preservando as outras intactas) */}
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
+                              // 1. Remove a página selecionada
                               const newPages = pages.filter((_, i) => i !== pIdx);
+                              
                               if (newPages.length === 0) {
-                                setGeneratedText("");
+                                updateGeneratedTextWithHistory("");
                               } else {
-                                setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
+                                // 2. Reconstrói o documento mantendo cada folha A4 estritamente isolada por Quebra de Página
+                                const joinedDoc = newPages
+                                  .map(p => {
+                                    if (p === "CAPA_AUTO") return generateCoverTextLocally().split("--- [QUEBRA DE PÁGINA] ---")[0].trim();
+                                    if (p === "FOLHA_ROSTO_AUTO") {
+                                      const fullCov = generateCoverTextLocally().split("--- [QUEBRA DE PÁGINA] ---");
+                                      return (fullCov[1] || "").trim();
+                                    }
+                                    return p.trim();
+                                  })
+                                  .filter(Boolean)
+                                  .join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+                                
+                                updateGeneratedTextWithHistory(joinedDoc);
                               }
-                              // Ajusta os índices de numeração oculta após remoção e renumera
+
+                              // 3. Ajusta os índices de numeração oculta após remoção da folha inteira
                               setHiddenPageNumbers(prev => {
                                 const next = new Set<number>();
                                 prev.forEach(idx => {
@@ -3684,8 +3700,11 @@ ${latexChapters}
                                 });
                                 return next;
                               });
+
+                              setErrorMessage(`🗑️ Página ${pageNum} removida. As páginas seguintes subiram intactas!`);
+                              setTimeout(() => setErrorMessage(""), 3500);
                             }}
-                            title="Apagar esta página inteira do documento"
+                            title="Apagar esta página inteira do documento (a folha seguinte sobre inteira)"
                             className="px-2 py-0.5 text-[10px] font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all flex items-center gap-1"
                           >
                             🗑️ Apagar Página
