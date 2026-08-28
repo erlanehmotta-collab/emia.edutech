@@ -3727,18 +3727,10 @@ ${textToParse.substring(0, 4500)}`;
                 <Button 
                   onClick={handleImproveText} 
                   disabled={isLoading || !generatedText} 
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 font-semibold mb-3"
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 font-semibold"
                 >
                   {isLoading && activeTab === 'editor' ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Wand2 className="w-5 h-5 mr-2" />}
                   Aprimorar Texto com IA
-                </Button>
-                <Button 
-                  onClick={handleFormatABNT} 
-                  disabled={isLoading || !generatedText} 
-                  className="w-full bg-gray-800 hover:bg-gray-900 text-white py-3 font-semibold"
-                >
-                  {isLoading && activeTab === 'editor' ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <CheckCircle className="w-5 h-5 mr-2" />}
-                  Adequar à ABNT
                 </Button>
               </div>
             </div>
@@ -3799,7 +3791,7 @@ ${textToParse.substring(0, 4500)}`;
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-[11px] h-7 px-2 font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap bg-emerald-50/50 border border-emerald-200/80"
+                  className="text-[11px] h-7 px-2.5 font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap bg-emerald-50/50 border border-emerald-200/80"
                   title="Corrigir Ortografia e Gramática com IA de Ponta"
                 >
                   {isLoading ? (
@@ -3814,15 +3806,15 @@ ${textToParse.substring(0, 4500)}`;
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-[11px] h-7 px-2 font-bold text-blue-800 hover:bg-blue-50 hover:text-blue-900 rounded-lg whitespace-nowrap bg-blue-50/60 border border-blue-200/80 cursor-pointer"
-                  title="Adequar e Normalizar Documento com IA e Regras Oficiais ABNT"
+                  className="text-[11px] h-7 px-2.5 font-bold text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg whitespace-nowrap bg-blue-50/50 border border-blue-200/80 cursor-pointer"
+                  title="Adequar e Normalizar Documento com IA e Regras Oficiais da ABNT"
                 >
                   {isLoading ? (
                     <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-600" />
                   ) : (
                     <ShieldCheck className="w-3.5 h-3.5 mr-1 text-blue-600" />
                   )}
-                  <span>Normas ABNT</span>
+                  <span>Normas ABNT IA</span>
                 </Button>
                 <Button 
                   size="sm" 
