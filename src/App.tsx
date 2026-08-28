@@ -3785,21 +3785,10 @@ ${textToParse.substring(0, 4500)}`;
                   onClick={() => setShowReferenceModal(true)} 
                   variant="ghost" 
                   className="text-[11px] h-7 px-1.5 font-semibold text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap"
-                  title="Gerar Referência por Link/DOI"
+                  title="Gerar ou Adequar Referência às Normas ABNT"
                 >
                   <Link className="w-3.5 h-3.5 mr-1 text-gray-500" />
                   Referências
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={() => attachmentRef.current?.click()} 
-                  disabled={isLoading} 
-                  variant="ghost" 
-                  className="text-[11px] h-7 px-1.5 font-semibold text-sky-700 hover:bg-sky-50 hover:text-sky-800 rounded-lg whitespace-nowrap cursor-pointer"
-                  title="Subir Documento (PDF, Word, TXT, CSV) ou Imagem diretamente para o Palco"
-                >
-                  <Upload className="w-3.5 h-3.5 mr-1 text-sky-600" />
-                  Subir Arquivo
                 </Button>
                 <Button 
                   size="sm" 
@@ -4404,6 +4393,28 @@ ${textToParse.substring(0, 4500)}`;
                                                 title="Redefinir formatação original"
                                               >
                                                 Redefinir
+                                              </button>
+
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setIsImageSelected(false);
+                                                  if (generatedText) {
+                                                    const targetSrc = imgMatch[1];
+                                                    const paragraphs = generatedText.split(/\n\n+/);
+                                                    const filtered = paragraphs.filter(para => !para.includes(targetSrc));
+                                                    const updated = filtered.join('\n\n');
+                                                    updateGeneratedTextWithHistory(updated);
+                                                    setErrorMessage("🗑️ Imagem apagada do documento com sucesso!");
+                                                    setTimeout(() => setErrorMessage(""), 3500);
+                                                  }
+                                                }}
+                                                className="px-2 py-1 text-[11px] font-bold text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all flex items-center gap-1 cursor-pointer border border-red-200/80"
+                                                title="Apagar esta imagem do documento"
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                                <span>Apagar Imagem</span>
                                               </button>
 
                                               <button
@@ -5746,7 +5757,7 @@ ${textToParse.substring(0, 4500)}`;
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Gerar Referência</h2>
+              <h2 className="text-xl font-bold text-gray-900">Gerar & Adequar Referência ABNT</h2>
               <button 
                 onClick={handleCloseReferenceModal} 
                 className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
@@ -5776,24 +5787,28 @@ ${textToParse.substring(0, 4500)}`;
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Link, DOI ou Dados do Livro/Artigo</label>
-                <input 
-                  type="text" 
+                <label className="block text-sm font-semibold text-gray-800 mb-1">
+                  Editar & Adequar Referência à Norma (Link, DOI ou Dados Brutos)
+                </label>
+                <textarea 
+                  rows={4}
                   value={referenceSource}
                   onChange={(e) => setReferenceSource(e.target.value)}
-                  placeholder="Ex: 10.1038/nrg3270 ou https://..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Exemplo 1 (Link/DOI): 10.1038/nrg3270 ou https://...&#10;Exemplo 2 (Dados brutos): Silva, Joao. Livro de metodologia. Sao paulo, editora atlas, 2021."
+                  className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-sans resize-y leading-relaxed mb-1"
                 />
+                <p className="text-[11.5px] text-gray-500 mb-4">
+                  💡 Já tem os dados da referência? Cole-os acima e clique no botão abaixo para colocar perfeitamente na norma ABNT NBR 6023:2025.
+                </p>
+                <Button 
+                  onClick={handleGenerateReference} 
+                  disabled={isLoading || !referenceSource.trim()}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold shadow-xs cursor-pointer rounded-xl flex items-center justify-center gap-2"
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
+                  <span>Editar & Adequar à Norma</span>
+                </Button>
               </div>
-
-              <Button 
-                onClick={handleGenerateReference} 
-                disabled={isLoading || !referenceSource}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Link className="w-5 h-5 mr-2" />}
-                Gerar Referência
-              </Button>
 
               {generatedReference && (
                 <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
