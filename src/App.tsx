@@ -3421,20 +3421,6 @@ ${latexChapters}
                   Documento
                 </Button>
                 <Button 
-                  onClick={() => setActiveTab("chat")} 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`text-xs h-7 px-3 font-extrabold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === "chat" 
-                      ? "bg-white text-indigo-700 shadow-xs border border-indigo-200/60" 
-                      : "text-indigo-800 hover:bg-indigo-50"
-                  }`}
-                  title="Conversar com a EMIA e Fazer Quiz"
-                >
-                  <UserCheck className="w-4 h-4 text-indigo-600" />
-                  Chat EMIA
-                </Button>
-                <Button 
                   onClick={handleUndo}
                   disabled={historyStack.length === 0}
                   variant="ghost"
