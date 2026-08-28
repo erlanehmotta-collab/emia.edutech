@@ -3517,9 +3517,11 @@ ${latexChapters}
                 </Button>
                 <Button 
                   size="sm" 
-                  onClick={() => setShowCitationModal(true)} 
+                  onClick={() => {
+                    setShowCitationModal(true);
+                  }} 
                   variant="ghost" 
-                  className="text-[11px] h-7 px-1.5 font-semibold text-purple-700 hover:bg-purple-50 hover:text-purple-800 rounded-lg whitespace-nowrap"
+                  className="text-[11px] h-7 px-1.5 font-semibold text-purple-700 hover:bg-purple-50 hover:text-purple-800 rounded-lg whitespace-nowrap cursor-pointer"
                   title="Inserir Citação Direta (Curta/Longa com Recuo de 4cm) ou Indireta ABNT NBR 10520:2023"
                 >
                   <Quote className="w-3.5 h-3.5 mr-1 text-purple-600" />
