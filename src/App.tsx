@@ -13,6 +13,7 @@ import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun, AlignmentType, convertMillimetersToTwip, Header, PageNumber } from "docx";
+import mammoth from "mammoth";
 import { saveAs } from "file-saver";
 import { useDropzone } from "react-dropzone";
 import { generateAcademicText, normalizeCitationsToABNT2023, callGeminiDirectly } from "./lib/academicEngine";
@@ -734,13 +735,30 @@ REQUISITOS MANDATÓRIOS:
             console.warn("Backend extract falhou, executando extração local:", e);
           }
 
-          // 2. Extração client-side caso necessário
+          // 2. Extração client-side caso necessário (DOCX, PDF, TXT, MD, CSV)
           if (!extracted) {
             const parts: string[] = [];
             for (const docFile of documentFiles) {
-              if (docFile.type.includes("text") || docFile.name.endsWith(".txt") || docFile.name.endsWith(".md") || docFile.name.endsWith(".csv")) {
+              const lowerName = docFile.name.toLowerCase();
+              if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc") || docFile.type.includes("word") || docFile.type.includes("officedocument")) {
+                try {
+                  const ab = await docFile.arrayBuffer();
+                  const mammothResult = await mammoth.extractRawText({ arrayBuffer: ab });
+                  if (mammothResult.value && mammothResult.value.trim()) {
+                    parts.push(mammothResult.value.trim());
+                  } else {
+                    const latin = new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(ab));
+                    const cleanChunks = latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 20);
+                    if (cleanChunks.length > 0) parts.push(cleanChunks.join("\n\n"));
+                  }
+                } catch (wordErr) {
+                  console.warn("Erro ao extrair Word:", wordErr);
+                  const txt = await docFile.text().catch(() => "");
+                  if (txt.trim()) parts.push(txt.trim());
+                }
+              } else if (docFile.type.includes("text") || lowerName.endsWith(".txt") || lowerName.endsWith(".md") || lowerName.endsWith(".csv")) {
                 parts.push(await docFile.text());
-              } else if (docFile.name.toLowerCase().endsWith(".pdf") || docFile.type === "application/pdf") {
+              } else if (lowerName.endsWith(".pdf") || docFile.type === "application/pdf") {
                 const ab = await docFile.arrayBuffer();
                 const latinText = new TextDecoder("latin1").decode(new Uint8Array(ab));
                 const matches = latinText.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
@@ -1343,9 +1361,25 @@ REQUISITOS MANDATÓRIOS:
 
         if (!text) {
           try {
-            if (file.type.includes("text") || file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".csv")) {
+            const lowerName = file.name.toLowerCase();
+            if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc") || file.type.includes("word") || file.type.includes("officedocument")) {
+              try {
+                const ab = await file.arrayBuffer();
+                const mammothResult = await mammoth.extractRawText({ arrayBuffer: ab });
+                if (mammothResult.value && mammothResult.value.trim()) {
+                  text = mammothResult.value.trim();
+                } else {
+                  const latin = new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(ab));
+                  const cleanChunks = latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 20);
+                  if (cleanChunks.length > 0) text = cleanChunks.join("\n\n");
+                }
+              } catch (wordErr) {
+                console.warn("Erro ao extrair Word no grupo:", wordErr);
+                text = await file.text().catch(() => `Conteúdo da seção ${label}`);
+              }
+            } else if (file.type.includes("text") || lowerName.endsWith(".txt") || lowerName.endsWith(".md") || lowerName.endsWith(".csv")) {
               text = await file.text();
-            } else if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") {
+            } else if (lowerName.endsWith(".pdf") || file.type === "application/pdf") {
               const ab = await file.arrayBuffer();
               const latin = new TextDecoder("latin1").decode(new Uint8Array(ab));
               const matches = latin.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
@@ -2063,11 +2097,27 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
             }
           } catch { /* fallback */ }
 
-          // 2. Extração client-side confiável
+          // 2. Extração client-side confiável (DOCX, PDF, TXT, CSV, MD)
           if (!extractedDocText) {
-            if (file.type.includes("text") || file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".csv")) {
+            const lowerName = file.name.toLowerCase();
+            if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc") || file.type.includes("word") || file.type.includes("officedocument")) {
+              try {
+                const ab = await file.arrayBuffer();
+                const mammothResult = await mammoth.extractRawText({ arrayBuffer: ab });
+                if (mammothResult.value && mammothResult.value.trim()) {
+                  extractedDocText = mammothResult.value.trim();
+                } else {
+                  const latin = new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(ab));
+                  const cleanChunks = latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 20);
+                  if (cleanChunks.length > 0) extractedDocText = cleanChunks.join("\n\n");
+                }
+              } catch (wordErr) {
+                console.warn("Erro ao extrair Word:", wordErr);
+                extractedDocText = await file.text().catch(() => `[Documento Word ${file.name} carregado]`);
+              }
+            } else if (file.type.includes("text") || lowerName.endsWith(".txt") || lowerName.endsWith(".md") || lowerName.endsWith(".csv")) {
               extractedDocText = await file.text();
-            } else if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") {
+            } else if (lowerName.endsWith(".pdf") || file.type === "application/pdf") {
               const ab = await file.arrayBuffer();
               const latinText = new TextDecoder("latin1").decode(new Uint8Array(ab));
               const matches = latinText.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
