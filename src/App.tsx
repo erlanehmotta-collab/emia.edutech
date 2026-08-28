@@ -6,7 +6,8 @@ import {
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check, Quote,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
-  Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight, Volume2, VolumeX, Mic, MicOff
+  Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight, Volume2, VolumeX, Mic, MicOff,
+  ArrowDownCircle, Trash2, Bot
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
