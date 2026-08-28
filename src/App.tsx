@@ -2967,14 +2967,14 @@ ${latexChapters}
           {/* Botão Chat Acadêmico */}
           <button 
             onClick={() => setActiveTab("chat")}
-            className={`h-7.5 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
+            className={`h-7.5 flex items-center gap-1.5 px-3 rounded-lg text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
               activeTab === "chat" 
                 ? "bg-indigo-600 text-white shadow-xs" 
-                : "bg-indigo-50/80 hover:bg-indigo-100/80 text-indigo-900 border border-indigo-200/80"
+                : "bg-white hover:bg-slate-100 text-gray-900 border border-gray-300"
             }`}
             title="Abrir Chat Acadêmico com IA"
           >
-            <UserCheck className={`w-3.5 h-3.5 stroke-[1.8] group-hover:scale-105 transition-transform ${activeTab === "chat" ? "text-white" : "text-indigo-600"}`} />
+            <UserCheck className={`w-3.5 h-3.5 stroke-[2] group-hover:scale-105 transition-transform ${activeTab === "chat" ? "text-white" : "text-gray-900"}`} />
             <span className="tracking-tight">Chat Acadêmico</span>
           </button>
 
@@ -3466,14 +3466,14 @@ ${latexChapters}
                   onClick={() => setActiveTab("chat")} 
                   variant="ghost" 
                   size="sm" 
-                  className={`text-xs h-7 px-2.5 font-extrabold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  className={`text-xs h-7 px-2.5 font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === "chat" 
                       ? "bg-indigo-600 text-white shadow-xs" 
-                      : "text-indigo-800 hover:bg-indigo-100/70"
+                      : "text-gray-900 hover:bg-slate-200/70"
                   }`}
                   title="Abrir Chat Acadêmico com a IA EMIA"
                 >
-                  <UserCheck className={`w-4 h-4 ${activeTab === "chat" ? "text-white" : "text-indigo-600"}`} />
+                  <UserCheck className={`w-4 h-4 ${activeTab === "chat" ? "text-white" : "text-gray-900"}`} />
                   Chat Acadêmico
                 </Button>
                 <Button 
