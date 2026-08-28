@@ -4755,6 +4755,14 @@ ${textToParse.substring(0, 4500)}`;
                           <span>🎙️</span>
                           <span>Criar Podcast / Música</span>
                         </button>
+
+                        <button
+                          onClick={() => handleSendMessage(undefined, "Elabore um MAPA MENTAL MODERNO, visual e estruturado sobre os conceitos centrais deste trabalho, com ramos principais, sub-ramos, palavras-chave e conexões estratégicas.")}
+                          className="p-3 bg-white hover:bg-teal-50 border border-gray-200 hover:border-teal-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-teal-800 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>🧠</span>
+                          <span>Criar Mapa Mental Moderno</span>
+                        </button>
                       </div>
                     </div>
                   ) : (
