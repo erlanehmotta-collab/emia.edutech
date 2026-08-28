@@ -3658,10 +3658,24 @@ ${textToParse.substring(0, 4500)}`;
                 <Button 
                   onClick={handleImproveText} 
                   disabled={isLoading || !generatedText} 
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 font-semibold"
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 font-semibold mb-3"
                 >
                   {isLoading && activeTab === 'editor' ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Wand2 className="w-5 h-5 mr-2" />}
                   Aprimorar Texto com IA
+                </Button>
+
+                <Button 
+                  onClick={handleFormatABNT} 
+                  disabled={isLoading || !generatedText} 
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3.5 font-bold shadow-md rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-700 active:scale-98"
+                  title="Adequar e Normalizar Documento com IA e Regras Oficiais da ABNT (NBR 14724, NBR 6023, NBR 10520)"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 mr-1 animate-spin text-blue-400" />
+                  ) : (
+                    <ShieldCheck className="w-5 h-5 mr-1 text-emerald-400" />
+                  )}
+                  <span>Adequar às Normas da ABNT</span>
                 </Button>
               </div>
             </div>
@@ -3731,21 +3745,6 @@ ${textToParse.substring(0, 4500)}`;
                     <Sparkles className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                   )}
                   <span>Ortografia IA</span>
-                </Button>
-                <Button 
-                  onClick={handleFormatABNT} 
-                  disabled={isLoading || !generatedText} 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-[11px] h-7 px-2.5 font-bold text-blue-700 hover:bg-blue-50 hover:text-blue-800 rounded-lg whitespace-nowrap bg-blue-50/50 border border-blue-200/80 cursor-pointer"
-                  title="Adequar e Normalizar Documento com IA e Regras Oficiais da ABNT"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-600" />
-                  ) : (
-                    <ShieldCheck className="w-3.5 h-3.5 mr-1 text-blue-600" />
-                  )}
-                  <span>Normas ABNT IA</span>
                 </Button>
                 <Button 
                   size="sm" 
@@ -3964,9 +3963,8 @@ ${textToParse.substring(0, 4500)}`;
                     const cleanT = text.trim();
                     const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
                     
-                    // Detecção Estrita e Completa de Capa (Página 1) e Folha de Rosto (Página 2)
-                    const isCover = requiresFormalCover && (pIdx === 0 || cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA"));
-                    const isTitlePage = requiresFormalCover && (pIdx === 1 || cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA DE ROSTO") || cleanT.includes("requisito") || cleanT.includes("apresentado") || cleanT.includes("Orientador"));
+                    const isCover = requiresFormalCover && (cleanT === "CAPA_AUTO" || (pIdx === 0 && (cleanT.startsWith("CAPA") || cleanT === "CAPA_AUTO")));
+                    const isTitlePage = requiresFormalCover && (cleanT === "FOLHA_ROSTO_AUTO" || (pIdx === 1 && (cleanT.startsWith("FOLHA DE ROSTO") || cleanT === "FOLHA_ROSTO_AUTO" || cleanT.includes("requisito parcial") || cleanT.includes("Trabalho de Conclusão"))));
                     const isBodyPage = !isCover && !isTitlePage;
                     const pageNum = pIdx + 1;
                     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
