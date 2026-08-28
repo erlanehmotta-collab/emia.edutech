@@ -5025,17 +5025,8 @@ ${textToParse.substring(0, 4500)}`;
                     </div>
                   </div>
 
-                  {/* Ações Rápidas: Recriar com IA, PPTX, Google Slides, Tela Cheia e Voltar */}
+                  {/* Ações Rápidas: PPTX, Google Slides, Tela Cheia e Voltar */}
                   <div className="flex items-center gap-2">
-                    <Button
-                      onClick={handleGenerateSlidesWithAI}
-                      size="sm"
-                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs h-8 px-3 font-bold flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
-                      title="Sintetizar novamente e diagramar slides inteligentes com a IA"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin duration-3000" />
-                      Recriar com IA
-                    </Button>
                     <Button
                       onClick={() => {
                         const elem = document.getElementById("emia-slides-container") || document.documentElement;
