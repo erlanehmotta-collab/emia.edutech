@@ -3418,8 +3418,8 @@ ${latexChapters}
           className="flex-1 w-full min-w-0 flex flex-col transition-all h-full min-h-[750px]"
         >
           
-          {/* Top Bar with Clean, Elegant Single Line Toolbar */}
-          <div className="flex items-center justify-between border-b border-gray-200/80 mb-3 pb-2 gap-1.5 bg-white/50 backdrop-blur-xs px-1 overflow-x-auto scrollbar-hide flex-nowrap">
+          {/* Top Bar Fixa e Flutuante com Barra de Rolagem (Sticky Toolbar) */}
+          <div className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200/90 mb-3 py-2 px-2 gap-1.5 bg-white/95 backdrop-blur-md rounded-xl shadow-xs overflow-x-auto scrollbar-hide flex-nowrap transition-all">
             
             {/* Grupo Harmônico e Elegante de Ações na Esquerda em Linha Única */}
             <div className="flex items-center gap-1 flex-nowrap flex-shrink-0">
