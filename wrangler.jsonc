@@ -9,5 +9,11 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "EMIA_KV",
+      "id": "2b7d2b314e0149ccb1446573515203b9"
+    }
+  ]
 }
