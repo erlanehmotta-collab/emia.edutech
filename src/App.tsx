@@ -1497,32 +1497,52 @@ REQUISITOS MANDATÓRIOS:
   };
 
   const handleFormatABNT = async () => {
-    if (!generatedText) {
+    if (!generatedText || !generatedText.trim()) {
       setErrorMessage("Por favor, gere ou cole um texto no editor primeiro para formatar.");
       return;
     }
     setIsLoading(true);
+    setErrorMessage("🤖 Aplicando Normas ABNT e Inteligência Acadêmica no documento...");
     try {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      // 1. Normaliza citações para o padrão ABNT NBR 10520:2023 (caixa mista)
+      // 1. Aplica normalizações determinísticas imediatas de regras ABNT
       let formattedText = normalizeCitationsToABNT2023(generatedText);
-      
-      // 2. Normaliza quebras de linha e espaçamentos
+      formattedText = organizeTextInABNTOrder(formattedText);
+
+      // 2. Tenta refinar a redação e estrutura com IA especializada em ABNT
+      try {
+        const abntPrompt = `Você é um especialista filológico e normalizador oficial da ABNT (NBR 14724, NBR 6023:2025, NBR 10520:2023, NBR 6024).
+Normalize e adeque o texto a seguir rigorosamente às normas acadêmicas brasileiras:
+- Garanta que as seções primárias estejam em CAIXA ALTA (ex: 1 INTRODUÇÃO, 2 DESENVOLVIMENTO, 3 CONCLUSÃO, REFERÊNCIAS).
+- Formate todas as citações no sistema autor-data em caixa mista: ex: (Silva, 2023, p. 15).
+- Mantenha parágrafos objetivos, claros e com linguagem formal acadêmica de alto nível.
+- Mantenha as quebras de página existentes "--- [QUEBRA DE PÁGINA] ---" se houver.
+- NÃO adicione saudações, introduções ou notas de IA. Retorne apenas o texto normalizado:
+
+${formattedText}`;
+
+        const aiNormalized = await callGeminiDirectly(abntPrompt, customGeminiKey, "gemini-2.5-flash");
+        if (aiNormalized && aiNormalized.trim().length > 30) {
+          formattedText = aiNormalized.trim();
+        }
+      } catch (aiErr) {
+        console.warn("Normalização por IA teve fallback, mantendo normalização local robusta:", aiErr);
+      }
+
+      // 3. Normaliza quebras de linha e espaçamentos
       formattedText = formattedText
         .replace(/\r\n/g, '\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/^[ \t]+/gm, '')
+        .replace(/\n{4,}/g, '\n\n\n')
+        .replace(/[ \t]+$/gm, '')
         .trim();
 
-      // 3. Garante seções primárias em CAIXA ALTA (NBR 6024)
+      // 4. Garante seções primárias em CAIXA ALTA (NBR 6024)
       formattedText = formattedText.replace(/^(#+\s*|\d+\s+)(introdução|desenvolvimento|fundamentação teórica|metodologia|resultados|conclusão|considerações finais|referências)/gmi, (match, prefix, t) => {
         return `${prefix}${t.toUpperCase()}`;
       });
 
-      // 4. Se for documento que exige capa e ainda não tiver, injeta Capa e Folha de Rosto
+      // 5. Se for documento que exige capa e ainda não tiver, injeta Capa e Folha de Rosto
       const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
-      if (requiresFormalCover && !formattedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
+      if (requiresFormalCover && !formattedText.includes("--- [QUEBRA DE PÁGINA] ---") && !formattedText.startsWith("CAPA")) {
         const inst = institution ? institution.toUpperCase() : "INSTITUIÇÃO DE ENSINO SUPERIOR";
         const crs = course ? course.toUpperCase() : "CURSO DE GRADUAÇÃO";
         const aut = studentName ? studentName.toUpperCase() : "NOME DO(A) AUTOR(A)";
@@ -1534,20 +1554,20 @@ REQUISITOS MANDATÓRIOS:
 
         const presentationNote = documentType.includes("artigo")
           ? `Artigo científico/acadêmico apresentado ao(à) ${inst}, como requisito de avaliação acadêmica.`
-          : `Trabalho de Conclusão de Curso apresentado ao(à) ${inst}, como requisito parcial para obtenção de grau.`;
+          : `Trabalho Acadêmico apresentado ao(à) ${inst}, como requisito parcial de avaliação para o curso de ${crs}.`;
 
         const coverHeader = `${inst}\n${crs}\n\n\n\n${aut}\n\n\n\n${tit}${sub}\n\n\n\n\n\n\n\n${cid}\n${an}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${aut}\n\n\n\n${tit}${sub}\n\n\n${presentationNote}\nOrientador(a): ${adv}\n\n\n\n\n\n${cid}\n${an}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
         formattedText = coverHeader + formattedText;
       }
       
-      setGeneratedText(formattedText);
+      updateGeneratedTextWithHistory(formattedText);
       setActiveTab("editor");
-      setErrorMessage("✅ Documento 100% adequado às normas ABNT (Capa, Contra-capa, NBR 10520:2023, NBR 6023)!");
-      setTimeout(() => setErrorMessage(""), 3500);
-      logAction("Formatação ABNT Completa Aplicada", formattedText);
+      setErrorMessage("✅ Documento 100% normalizado às normas ABNT com Inteligência Acadêmica!");
+      setTimeout(() => setErrorMessage(""), 4000);
+      logAction("Formatação e Normalização ABNT Aplicada", formattedText.substring(0, 500));
     } catch (error) {
       console.error(error);
-      setErrorMessage(error instanceof Error ? error.message : "Erro ao formatar.");
+      setErrorMessage(error instanceof Error ? error.message : "Erro ao formatar ABNT.");
     } finally {
       setIsLoading(false);
     }
@@ -3779,7 +3799,7 @@ ${textToParse.substring(0, 4500)}`;
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-[11px] h-7 px-2.5 font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap bg-emerald-50/50 border border-emerald-200/80"
+                  className="text-[11px] h-7 px-2 font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap bg-emerald-50/50 border border-emerald-200/80"
                   title="Corrigir Ortografia e Gramática com IA de Ponta"
                 >
                   {isLoading ? (
@@ -3788,6 +3808,21 @@ ${textToParse.substring(0, 4500)}`;
                     <Sparkles className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                   )}
                   <span>Ortografia IA</span>
+                </Button>
+                <Button 
+                  onClick={handleFormatABNT} 
+                  disabled={isLoading || !generatedText} 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-[11px] h-7 px-2 font-bold text-blue-800 hover:bg-blue-50 hover:text-blue-900 rounded-lg whitespace-nowrap bg-blue-50/60 border border-blue-200/80 cursor-pointer"
+                  title="Adequar e Normalizar Documento com IA e Regras Oficiais ABNT"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-600" />
+                  ) : (
+                    <ShieldCheck className="w-3.5 h-3.5 mr-1 text-blue-600" />
+                  )}
+                  <span>Normas ABNT</span>
                 </Button>
                 <Button 
                   size="sm" 
