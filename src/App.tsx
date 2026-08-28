@@ -2267,7 +2267,7 @@ ${chatHistory.slice(-5).map(h => `${h.role === 'user' ? 'Aluno' : 'EMIA'}: ${h.t
 Aluno: ${msgToSend}
 EMIA:`;
 
-        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-2.5-flash");
+        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-2.5-flash-lite");
       } catch (directErr) {
         console.warn("Tentativa direta falhou, tentando fallback ultrarrápido:", directErr);
         try {
@@ -3947,8 +3947,8 @@ ${textToParse.substring(0, 4500)}`;
                     const cleanT = text.trim();
                     const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
                     
-                    const isCover = requiresFormalCover && (cleanT === "CAPA_AUTO" || (pIdx === 0 && (cleanT.startsWith("CAPA") || cleanT === "CAPA_AUTO")));
-                    const isTitlePage = requiresFormalCover && (cleanT === "FOLHA_ROSTO_AUTO" || (pIdx === 1 && (cleanT.startsWith("FOLHA DE ROSTO") || cleanT === "FOLHA_ROSTO_AUTO" || cleanT.includes("requisito parcial") || cleanT.includes("Trabalho de Conclusão"))));
+                    const isCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA\n") || cleanT === "CAPA" || (pIdx === 0 && cleanT.includes("INSTITUIÇÃO") && cleanT.includes("CIDADE"));
+                    const isTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA DE ROSTO\n") || cleanT === "FOLHA DE ROSTO" || cleanT.includes("requisito parcial para obtenção") || cleanT.includes("Trabalho de Conclusão de Curso apresentado");
                     const isBodyPage = !isCover && !isTitlePage;
                     const pageNum = pIdx + 1;
                     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
@@ -4663,7 +4663,7 @@ ${textToParse.substring(0, 4500)}`;
                                   newPages[pIdx] = e.currentTarget.innerText;
                                   setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
                                 }}
-                                className="w-full focus:outline-none font-['Arial'] text-gray-900 leading-[1.5] text-justify text-[12pt] [text-indent:1.25cm] bg-transparent min-h-[600px] whitespace-pre-wrap focus:ring-1 focus:ring-blue-300 p-2 rounded selection:bg-blue-100"
+                                className="w-full focus:outline-none font-['Arial'] text-gray-900 leading-[1.5] text-justify text-[12pt] bg-transparent min-h-[600px] whitespace-pre-wrap focus:ring-1 focus:ring-blue-300 p-2 rounded selection:bg-blue-100"
                               >
                                 {text && text !== "CAPA_AUTO" && text !== "FOLHA_ROSTO_AUTO" ? text.trimStart() : ""}
                               </div>
@@ -6722,7 +6722,7 @@ ${textToParse.substring(0, 4500)}`;
                   
                   let formattedBlock = "";
                   if (citationType === "direta_longa") {
-                    formattedBlock = `\n\n> ${txt} (${auth}, ${yr}${pg}).\n\n`;
+                    formattedBlock = `\n\n[CITAÇÃO_LONGA] ${txt} (${auth}, ${yr}${pg}).\n\n`;
                   } else if (citationType === "direta_curta") {
                     formattedBlock = ` "${txt}" (${auth}, ${yr}${pg}) `;
                   } else {
