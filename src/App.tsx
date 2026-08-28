@@ -1697,7 +1697,6 @@ ${generatedText}`;
   };
 
   const handleInsertCover = async () => {
-    // 1. Verificação de Regra ABNT NBR 6028: Resumos e Redações ENEM NÃO levam capa avulsa
     if (documentType === "resumo" || documentType === "redacao") {
       setErrorMessage("ℹ️ Conforme a ABNT NBR 6028, Resumos, Fichamentos e Redações possuem fluxo contínuo e NÃO utilizam Capa nem Folha de Rosto.");
       setTimeout(() => setErrorMessage(""), 4500);
@@ -1706,7 +1705,7 @@ ${generatedText}`;
 
     setIsLoading(true);
     try {
-      const inst = (institution || "NOME DA INSTITUIÇÃO DE ENSINO").toUpperCase();
+      const inst = (institution || "INSTITUIÇÃO DE ENSINO SUPERIOR").toUpperCase();
       const crs = course ? course.toUpperCase() : "";
       const subMat = subject ? `DISCIPLINA: ${subject.toUpperCase()}` : "";
       const shiftClassInfo = [shift ? `Turno: ${shift}` : "", classroom ? `Sala/Turma: ${classroom}` : ""].filter(Boolean).join(" • ");
@@ -1723,38 +1722,34 @@ ${generatedText}`;
 
       // 1. CAPA OFICIAL ABNT NBR 14724
       const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
-      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${aut}\n\n\n\n\n\n\n\n${tit}${sub}\n\n\n\n\n\n\n\n\n\n${cid}\n${an}`;
+      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
 
-      // 2. FOLHA DE ROSTO OFICIAL ABNT NBR 14724 (Com Nota de Apresentação de 7,5cm)
-      const titlePage = `${aut}\n\n\n\n\n\n\n\n${tit}${sub}\n\n\n\n                                          ${presentationNote}\n\n\n\n\n\n\n\n${cid}\n${an}`;
+      // 2. FOLHA DE ROSTO OFICIAL ABNT NBR 14724
+      const titlePage = `${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
 
       const coverBlock = `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
 
-      // Remove capa e folha de rosto anteriores se já existirem no início do documento
+      // Remove capa e folha de rosto anteriores se já existirem
       let cleanBody = generatedText || "";
       if (cleanBody.includes("--- [QUEBRA DE PÁGINA] ---")) {
-        const parts = cleanBody.split("--- [QUEBRA DE PÁGINA] ---");
-        const filteredParts = parts.filter(p => {
-          const t = p.trim();
-          return !t.startsWith("CAPA") && !t.startsWith("FOLHA DE ROSTO") && t !== "CAPA_AUTO" && t !== "FOLHA_ROSTO_AUTO" && !t.includes("requisito parcial") && !t.includes("apresentado à");
+        const parts = cleanBody.split("--- [QUEBRA DE PÁGINA] ---").map(p => p.trim()).filter(Boolean);
+        // Se as duas primeiras forem capas anteriores, remove-as
+        const filteredParts = parts.filter((p, pIdx) => {
+          if (pIdx > 1) return true;
+          const t = p.toUpperCase();
+          return !t.startsWith("CAPA") && !t.startsWith("FOLHA DE ROSTO") && p !== "CAPA_AUTO" && p !== "FOLHA_ROSTO_AUTO" && !p.includes("requisito parcial") && !p.includes("apresentado à");
         });
         cleanBody = filteredParts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n").trim();
       } else {
-        const t = cleanBody.trim();
-        if (t.startsWith("CAPA") || t.startsWith("FOLHA DE ROSTO") || t === "CAPA_AUTO" || t === "FOLHA_ROSTO_AUTO") {
+        const t = cleanBody.trim().toUpperCase();
+        if (t.startsWith("CAPA") || t.startsWith("FOLHA DE ROSTO") || cleanBody.trim() === "CAPA_AUTO" || cleanBody.trim() === "FOLHA_ROSTO_AUTO") {
           cleanBody = "";
         }
       }
 
       let updatedFullText = coverBlock + (cleanBody.trim() ? cleanBody.trim() : "1 INTRODUÇÃO\n\nInsira ou continue seu trabalho acadêmico aqui...");
       
-      // Aplica normalizações ABNT
       updatedFullText = normalizeCitationsToABNT2023(updatedFullText);
-      updatedFullText = updatedFullText
-        .replace(/\r\n/g, '\n')
-        .replace(/\n{4,}/g, '\n\n\n')
-        .replace(/[ \t]+$/gm, '');
-
       updateGeneratedTextWithHistory(updatedFullText);
       setActiveTab("editor");
       setErrorMessage("✅ Capa e Folha de Rosto Oficiais ABNT NBR 14724 inseridas com sucesso!");
@@ -3972,28 +3967,27 @@ ${textToParse.substring(0, 4500)}`;
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              // 1. Remove apenas a folha selecionada
-                              const remainingSheets = pages
-                                .filter((_, i) => i !== pIdx)
-                                .map(p => {
-                                  if (p === "CAPA_AUTO") return generateCoverTextLocally().split("--- [QUEBRA DE PÁGINA] ---")[0].trim();
-                                  if (p === "FOLHA_ROSTO_AUTO") {
-                                    const fullCov = generateCoverTextLocally().split("--- [QUEBRA DE PÁGINA] ---");
-                                    return (fullCov[1] || "").trim();
-                                  }
-                                  return p.trim();
-                                })
-                                .filter(Boolean);
                               
-                              if (remainingSheets.length === 0) {
-                                setGeneratedText("");
+                              // 1. Obtém as páginas atuais reais
+                              let currentPages: string[] = [];
+                              if (generatedText && pageBreakRegex.test(generatedText)) {
+                                currentPages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
                               } else {
-                                // 2. Junta as folhas restantes com Quebra de Página inviolável
-                                const joined = remainingSheets.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
-                                setGeneratedText(joined);
+                                currentPages = [...pages];
                               }
 
-                              // 3. Reajusta numerações
+                              // Remove exatamente a página selecionada
+                              const remaining = currentPages.filter((_, i) => i !== pIdx);
+
+                              if (remaining.length === 0) {
+                                updateGeneratedTextWithHistory("");
+                              } else {
+                                // Junta com Quebra de Página oficial, preservando integralmente o formato
+                                const joined = remaining.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+                                updateGeneratedTextWithHistory(joined);
+                              }
+
+                              // 2. Reajusta numerações
                               setHiddenPageNumbers(prev => {
                                 const next = new Set<number>();
                                 prev.forEach(idx => {
@@ -4003,7 +3997,7 @@ ${textToParse.substring(0, 4500)}`;
                                 return next;
                               });
 
-                              setErrorMessage(`🗑️ Página ${pageNum} apagada por completo! As páginas seguintes subiram intactas.`);
+                              setErrorMessage(`🗑️ Página ${pageNum} apagada com sucesso! O documento manteve a formatação ABNT intacta.`);
                               setTimeout(() => setErrorMessage(""), 3500);
                             }}
                             title="Apagar esta página inteira do documento (a folha seguinte sobre inteira)"
