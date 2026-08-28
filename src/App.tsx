@@ -3452,7 +3452,7 @@ ${latexChapters}
                   onClick={() => setActiveTab("editor")} 
                   variant="ghost" 
                   size="sm" 
-                  className={`text-xs h-7 px-3 font-extrabold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  className={`text-xs h-7 px-2.5 font-extrabold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === "editor" || activeTab === "generator" 
                       ? "bg-white text-blue-700 shadow-xs border border-blue-200/60" 
                       : "text-gray-700 hover:bg-gray-200/60"
@@ -3461,6 +3461,20 @@ ${latexChapters}
                 >
                   <FileText className="w-4 h-4 text-blue-600" />
                   Documento
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab("chat")} 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`text-xs h-7 px-2.5 font-extrabold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === "chat" 
+                      ? "bg-indigo-600 text-white shadow-xs" 
+                      : "text-indigo-800 hover:bg-indigo-100/70"
+                  }`}
+                  title="Abrir Chat Acadêmico com a IA EMIA"
+                >
+                  <UserCheck className={`w-4 h-4 ${activeTab === "chat" ? "text-white" : "text-indigo-600"}`} />
+                  Chat Acadêmico
                 </Button>
                 <Button 
                   onClick={handleUndo}
