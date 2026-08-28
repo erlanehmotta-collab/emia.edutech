@@ -346,6 +346,18 @@ REQUISITOS MANDATÓRIOS:
   } | null>(null);
 
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
+  const [isDocAutoScrollEnabled, setIsDocAutoScrollEnabled] = useState(false);
+  const stageScrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Rolagem automática configurável para o Documento no Palco
+  useEffect(() => {
+    if (isDocAutoScrollEnabled && stageScrollContainerRef.current && generatedText) {
+      stageScrollContainerRef.current.scrollTo({
+        top: stageScrollContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  }, [generatedText, isDocAutoScrollEnabled]);
 
   // Rolagem automática configurável para a última mensagem no Chat Acadêmico
   useEffect(() => {
@@ -3797,31 +3809,48 @@ ${textToParse.substring(0, 4500)}`;
               </div>
             </div>
 
-            {/* Controle de Zoom Harmonioso e Delicado (À Direita) */}
-            <div className="flex items-center bg-gray-100/90 hover:bg-gray-200/60 border border-gray-300/70 rounded-lg p-0.5 gap-0.5 select-none shadow-2xs h-7 ml-auto flex-shrink-0 transition-colors">
+            {/* Controles da Direita: Auto-Scroll do Documento e Zoom */}
+            <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+              {/* Botão Liga/Desliga Rolagem Automática do Documento */}
               <button
-                onClick={() => setZoomScale(z => Math.max(30, z - 10))}
-                title="Diminuir Zoom (-10%)"
-                className="w-6 h-6 flex items-center justify-center hover:bg-white rounded-md text-gray-700 hover:text-blue-600 transition-all active:scale-90"
+                onClick={() => setIsDocAutoScrollEnabled(prev => !prev)}
+                title={isDocAutoScrollEnabled ? "Desativar Rolagem Automática do Palco" : "Ativar Rolagem Automática do Palco"}
+                className={`px-2 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all shadow-2xs h-7 ${
+                  isDocAutoScrollEnabled 
+                    ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" 
+                    : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
+                }`}
               >
-                <ZoomOut className="w-3.5 h-3.5 stroke-[2]" />
+                <ArrowDownCircle className={`w-3.5 h-3.5 ${isDocAutoScrollEnabled ? "text-blue-600 animate-bounce" : "text-slate-400"}`} />
+                <span>{isDocAutoScrollEnabled ? "Auto-Scroll: ON" : "Auto-Scroll: OFF"}</span>
               </button>
-              
-              <button
-                onClick={() => setZoomScale(65)}
-                title="Restaurar Zoom Padrão (65%)"
-                className="px-1.5 h-6 flex items-center justify-center text-[11px] font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-md min-w-[34px] text-center tracking-tight transition-all"
-              >
-                {zoomScale}%
-              </button>
-              
-              <button
-                onClick={() => setZoomScale(z => Math.min(150, z + 10))}
-                title="Aumentar Zoom (+10%)"
-                className="w-6 h-6 flex items-center justify-center hover:bg-white rounded-md text-gray-700 hover:text-blue-600 transition-all active:scale-90"
-              >
-                <ZoomIn className="w-3.5 h-3.5 stroke-[2]" />
-              </button>
+
+              {/* Controle de Zoom Harmonioso e Delicado */}
+              <div className="flex items-center bg-gray-100/90 hover:bg-gray-200/60 border border-gray-300/70 rounded-lg p-0.5 gap-0.5 select-none shadow-2xs h-7 transition-colors">
+                <button
+                  onClick={() => setZoomScale(z => Math.max(30, z - 10))}
+                  title="Diminuir Zoom (-10%)"
+                  className="w-6 h-6 flex items-center justify-center hover:bg-white rounded-md text-gray-700 hover:text-blue-600 transition-all active:scale-90"
+                >
+                  <ZoomOut className="w-3.5 h-3.5 stroke-[2]" />
+                </button>
+                
+                <button
+                  onClick={() => setZoomScale(65)}
+                  title="Restaurar Zoom Padrão (65%)"
+                  className="px-1.5 h-6 flex items-center justify-center text-[11px] font-bold text-gray-800 hover:text-blue-600 hover:bg-white rounded-md min-w-[34px] text-center tracking-tight transition-all"
+                >
+                  {zoomScale}%
+                </button>
+                
+                <button
+                  onClick={() => setZoomScale(z => Math.min(150, z + 10))}
+                  title="Aumentar Zoom (+10%)"
+                  className="w-6 h-6 flex items-center justify-center hover:bg-white rounded-md text-gray-700 hover:text-blue-600 transition-all active:scale-90"
+                >
+                  <ZoomIn className="w-3.5 h-3.5 stroke-[2]" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -4599,7 +4628,10 @@ ${textToParse.substring(0, 4500)}`;
                   };
 
                   return (
-                    <div className="flex-1 w-full h-full flex flex-col items-center justify-start py-6 px-3 md:px-8 pb-12 relative overflow-y-auto overflow-x-auto select-text">
+                    <div 
+                      ref={stageScrollContainerRef}
+                      className="flex-1 w-full h-full flex flex-col items-center justify-start py-6 px-3 md:px-8 pb-12 relative overflow-y-auto overflow-x-auto select-text scroll-smooth"
+                    >
                       
                       {/* DOCUMENTO CONTÍNUO COM TODAS AS PÁGINAS A4 EMPILHADAS COM ZOOM REAL */}
                       <div 
