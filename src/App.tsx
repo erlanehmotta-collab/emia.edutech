@@ -721,58 +721,13 @@ REQUISITOS MANDATÓRIOS:
         setErrorMessage("⏳ Processando e normalizando documento com a Skill Acadêmica ABNT...");
 
         try {
-          let extracted = "";
-          // 1. Tenta extração via backend
-          try {
-            const formData = new FormData();
-            documentFiles.forEach(f => formData.append("files", f));
-            const res = await fetch("/api/extract", { method: "POST", body: formData });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.success && data.text) extracted = data.text;
-            }
-          } catch (e) {
-            console.warn("Backend extract falhou, executando extração local:", e);
+          // Extração client-side direta e instantânea (DOCX, PDF, TXT, MD, CSV)
+          const parts: string[] = [];
+          for (const docFile of documentFiles) {
+            const text = await extractTextFromSingleFile(docFile);
+            if (text && text.trim()) parts.push(text.trim());
           }
-
-          // 2. Extração client-side caso necessário (DOCX, PDF, TXT, MD, CSV)
-          if (!extracted) {
-            const parts: string[] = [];
-            for (const docFile of documentFiles) {
-              const lowerName = docFile.name.toLowerCase();
-              if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc") || docFile.type.includes("word") || docFile.type.includes("officedocument")) {
-                try {
-                  const ab = await docFile.arrayBuffer();
-                  const mammothResult = await mammoth.extractRawText({ arrayBuffer: ab });
-                  if (mammothResult.value && mammothResult.value.trim()) {
-                    parts.push(mammothResult.value.trim());
-                  } else {
-                    const latin = new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(ab));
-                    const cleanChunks = latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 20);
-                    if (cleanChunks.length > 0) parts.push(cleanChunks.join("\n\n"));
-                  }
-                } catch (wordErr) {
-                  console.warn("Erro ao extrair Word:", wordErr);
-                  const txt = await docFile.text().catch(() => "");
-                  if (txt.trim()) parts.push(txt.trim());
-                }
-              } else if (docFile.type.includes("text") || lowerName.endsWith(".txt") || lowerName.endsWith(".md") || lowerName.endsWith(".csv")) {
-                parts.push(await docFile.text());
-              } else if (lowerName.endsWith(".pdf") || docFile.type === "application/pdf") {
-                const ab = await docFile.arrayBuffer();
-                const latinText = new TextDecoder("latin1").decode(new Uint8Array(ab));
-                const matches = latinText.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
-                let pdfTxt = "";
-                if (matches.length > 0) {
-                  pdfTxt = matches.map(m => m.replace(/^\(/, '').replace(/\)\s*(?:Tj|'|")$/, '')).join(' ').replace(/\\([()\\])/g, '$1').replace(/\s+/g, ' ');
-                } else {
-                  pdfTxt = latinText.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 15).join('\n\n');
-                }
-                if (pdfTxt.trim()) parts.push(pdfTxt.trim());
-              }
-            }
-            extracted = parts.join("\n\n");
-          }
+          extracted = parts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
 
           if (extracted && extracted.trim()) {
             // Normalização Local 100% Offline e Instantânea (Zero dependência de IA ou rede)
@@ -1343,59 +1298,17 @@ REQUISITOS MANDATÓRIOS:
     try {
       const activeSections = getGroupSectionsByDocType(groupDocType);
 
-      // Extrai texto de cada slot via backend ou extrator client-side
+      // Extrai texto de cada slot via extrator client-side robusto e offline
       const sectionTexts: Record<string, string> = {};
       for (const { key, label } of activeSections) {
         const file = sectionSlots[key];
         if (!file) continue;
-        let text = "";
         try {
-          const formData = new FormData();
-          formData.append("files", file);
-          const res = await fetch("/api/extract", { method: "POST", body: formData });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && data.text) text = data.text;
-          }
-        } catch { /* fallback abaixo */ }
-
-        if (!text) {
-          try {
-            const lowerName = file.name.toLowerCase();
-            if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc") || file.type.includes("word") || file.type.includes("officedocument")) {
-              try {
-                const ab = await file.arrayBuffer();
-                const mammothResult = await mammoth.extractRawText({ arrayBuffer: ab });
-                if (mammothResult.value && mammothResult.value.trim()) {
-                  text = mammothResult.value.trim();
-                } else {
-                  const latin = new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(ab));
-                  const cleanChunks = latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 20);
-                  if (cleanChunks.length > 0) text = cleanChunks.join("\n\n");
-                }
-              } catch (wordErr) {
-                console.warn("Erro ao extrair Word no grupo:", wordErr);
-                text = await file.text().catch(() => `Conteúdo da seção ${label}`);
-              }
-            } else if (file.type.includes("text") || lowerName.endsWith(".txt") || lowerName.endsWith(".md") || lowerName.endsWith(".csv")) {
-              text = await file.text();
-            } else if (lowerName.endsWith(".pdf") || file.type === "application/pdf") {
-              const ab = await file.arrayBuffer();
-              const latin = new TextDecoder("latin1").decode(new Uint8Array(ab));
-              const matches = latin.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
-              text = matches.length > 0
-                ? matches.map(m => m.replace(/^\(/, '').replace(/\)\s*(?:Tj|'|")$/, '')).join(' ').replace(/\\([()\\])/g, '$1').replace(/\s+/g, ' ')
-                : latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 15).join('\n\n');
-            } else {
-              // Fallback para documentos genéricos
-              text = await file.text().catch(() => `Conteúdo da seção ${label}`);
-            }
-          } catch (readErr) {
-            console.warn(`Erro ao ler arquivo da seção ${label}:`, readErr);
-            text = `Desenvolvimento estruturado da seção ${label}.`;
-          }
+          const text = await extractTextFromSingleFile(file);
+          if (text && text.trim()) sectionTexts[key] = text.trim();
+        } catch (readErr) {
+          console.warn(`Erro ao ler arquivo da seção ${label}:`, readErr);
         }
-        if (text && text.trim()) sectionTexts[key] = text.trim();
       }
 
       if (Object.keys(sectionTexts).length === 0) {
@@ -2063,6 +1976,58 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
 
 
 
+  const extractTextFromSingleFile = async (file: File): Promise<string> => {
+    const lowerName = file.name.toLowerCase();
+    
+    // 1. DOCX / DOC (Word)
+    if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc") || file.type.includes("word") || file.type.includes("officedocument")) {
+      try {
+        const ab = await file.arrayBuffer();
+        const mammothResult = await mammoth.extractRawText({ arrayBuffer: ab });
+        if (mammothResult.value && mammothResult.value.trim().length > 0) {
+          return mammothResult.value.trim();
+        }
+      } catch (err) {
+        console.warn("Mammoth extract falhou, tentando decodificação binária Word:", err);
+      }
+      try {
+        const ab = await file.arrayBuffer();
+        const latin = new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(ab));
+        const cleanChunks = latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 20);
+        if (cleanChunks.length > 0) return cleanChunks.join("\n\n");
+      } catch (binErr) {
+        console.warn("Decodificação binária falhou:", binErr);
+      }
+    }
+
+    // 2. PDF
+    if (lowerName.endsWith(".pdf") || file.type === "application/pdf") {
+      try {
+        const ab = await file.arrayBuffer();
+        const latinText = new TextDecoder("latin1").decode(new Uint8Array(ab));
+        const matches = latinText.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
+        if (matches.length > 0) {
+          const streamText = matches.map(m => m.replace(/^\(/, '').replace(/\)\s*(?:Tj|'|")$/, '')).join(' ').replace(/\\([()\\])/g, '$1').replace(/\s+/g, ' ');
+          if (streamText.trim().length > 30) return streamText.trim();
+        }
+        const textChunks = latinText.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 15);
+        if (textChunks.length > 0) return textChunks.join('\n\n');
+      } catch (pdfErr) {
+        console.warn("Erro ao extrair PDF localmente:", pdfErr);
+      }
+    }
+
+    // 3. TXT, MD, CSV, HTML, JSON ou texto simples
+    try {
+      const text = await file.text();
+      if (text && text.trim().length > 0) return text.trim();
+    } catch (txtErr) {
+      console.warn("Leitura direta text() falhou:", txtErr);
+    }
+
+    return `[Arquivo ${file.name} carregado com sucesso]`;
+  };
+
   const handleAttachmentFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
@@ -2100,75 +2065,41 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
     // Processa documentos PDF, Word, TXT ou CSV
     if (nonImageFiles.length > 0) {
       setIsLoading(true);
-      setErrorMessage("⏳ Inserindo conteúdo no palco...");
+      setErrorMessage("⏳ Inserindo e normalizando conteúdo no palco...");
       
+      const extractedList: string[] = [];
+
       for (const file of nonImageFiles) {
         try {
-          let extractedDocText = "";
-          
-          // 1. Tenta backend extract se disponível
-          try {
-            const formData = new FormData();
-            formData.append("files", file);
-            const res = await fetch("/api/extract", { method: "POST", body: formData });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.success && data.text) extractedDocText = data.text;
-            }
-          } catch { /* fallback */ }
-
-          // 2. Extração client-side confiável (DOCX, PDF, TXT, CSV, MD)
-          if (!extractedDocText) {
-            const lowerName = file.name.toLowerCase();
-            if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc") || file.type.includes("word") || file.type.includes("officedocument")) {
-              try {
-                const ab = await file.arrayBuffer();
-                const mammothResult = await mammoth.extractRawText({ arrayBuffer: ab });
-                if (mammothResult.value && mammothResult.value.trim()) {
-                  extractedDocText = mammothResult.value.trim();
-                } else {
-                  const latin = new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(ab));
-                  const cleanChunks = latin.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 20);
-                  if (cleanChunks.length > 0) extractedDocText = cleanChunks.join("\n\n");
-                }
-              } catch (wordErr) {
-                console.warn("Erro ao extrair Word:", wordErr);
-                extractedDocText = await file.text().catch(() => `[Documento Word ${file.name} carregado]`);
-              }
-            } else if (file.type.includes("text") || lowerName.endsWith(".txt") || lowerName.endsWith(".md") || lowerName.endsWith(".csv")) {
-              extractedDocText = await file.text();
-            } else if (lowerName.endsWith(".pdf") || file.type === "application/pdf") {
-              const ab = await file.arrayBuffer();
-              const latinText = new TextDecoder("latin1").decode(new Uint8Array(ab));
-              const matches = latinText.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
-              if (matches.length > 0) {
-                extractedDocText = matches.map(m => m.replace(/^\(/, '').replace(/\)\s*(?:Tj|'|")$/, '')).join(' ').replace(/\\([()\\])/g, '$1').replace(/\s+/g, ' ');
-              } else {
-                extractedDocText = latinText.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 15).join('\n\n');
-              }
-            } else {
-              extractedDocText = await file.text().catch(() => `[Arquivo ${file.name} carregado]`);
-            }
-          }
-
-          if (extractedDocText && extractedDocText.trim()) {
-            const normalized = normalizeCitationsToABNT2023(extractedDocText);
-            setGeneratedText(prev => {
-              const updated = prev ? prev + "\n\n--- [QUEBRA DE PÁGINA] ---\n\n" + normalized : normalized;
-              updateGeneratedTextWithHistory(updated);
-              return updated;
-            });
-            setActiveTab("editor");
-            setErrorMessage(`✅ Arquivo "${file.name}" inserido com sucesso no documento!`);
-            setTimeout(() => setErrorMessage(""), 3500);
+          const text = await extractTextFromSingleFile(file);
+          if (text && text.trim()) {
+            const normalized = normalizeCitationsToABNT2023(text);
+            extractedList.push(normalized);
           }
         } catch (fileErr) {
           console.error("Erro ao ler arquivo:", fileErr);
         }
       }
+
+      if (extractedList.length > 0) {
+        const combinedNewContent = extractedList.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+        setGeneratedText(prev => {
+          const updated = prev && prev.trim() 
+            ? prev + "\n\n--- [QUEBRA DE PÁGINA] ---\n\n" + combinedNewContent 
+            : combinedNewContent;
+          updateGeneratedTextWithHistory(updated);
+          return updated;
+        });
+        setActiveTab("editor");
+        setErrorMessage(`✅ ${nonImageFiles.length} ${nonImageFiles.length > 1 ? 'arquivos inseridos' : 'arquivo inserido'} com sucesso no palco ABNT!`);
+        setTimeout(() => setErrorMessage(""), 4000);
+      }
+
       setIsLoading(false);
     }
     
+    // Reseta o input para permitir selecionar o mesmo arquivo novamente se desejado
+    if (e.target) e.target.value = "";
     if (attachmentRef.current) attachmentRef.current.value = "";
   };
 
