@@ -2816,16 +2816,83 @@ ${latexChapters}
     return sections;
   };
 
+  // Geração e Organização Inteligente de Slides com Inteligência Artificial
+  const handleGenerateSlidesWithAI = async () => {
+    const textToParse = generatedText && generatedText.trim() ? generatedText : "1 INTRODUÇÃO\n\nApresentação acadêmica estruturada sobre o tema da pesquisa.";
+    setIsLoading(true);
+    setErrorMessage("✨ IA da EMIA sintetizando e diagramando slides inteligentes...");
+
+    try {
+      const slidesPrompt = `Você é um Diretor de Apresentações Acadêmicas e Designer de Slides de Alto Impacto (especialista em bancas examinadoras, TCC, congressos científicos e defesas de mestrado).
+Com base no documento acadêmico a seguir, elabore uma APRESENTAÇÃO COMPLETA, ELEGANTE, PROFISSIONAL E INTELIGENTE com exatamente 6 a 8 SLIDES.
+
+DIRETRIZES DE DESIGN E CONTEÚDO DOS SLIDES:
+1. SÍNTESE INTELIGENTE: Nunca jogue blocos longos de texto. Crie 3 a 4 tópicos (bullets) curtos, impactantes e objetivos por slide.
+2. ESTRUTURA CANÔNICA DE DEFESA:
+   - Slide 1: Capa (Título, Autor, Instituição, Ano, layout: "card", isCover: true)
+   - Slide 2: Problematização & Relevância (layout: "split", badge: "Contextualização")
+   - Slide 3: Objetivos Geral e Específicos (layout: "bullets", badge: "Objetivos")
+   - Slide 4: Fundamentação Teórica e Literatura (layout: "quote", badge: "Referencial")
+   - Slide 5: Procedimentos Metodológicos (layout: "timeline", badge: "Metodologia")
+   - Slide 6: Resultados Centrais e Análise de Dados (layout: "metrics", badge: "Resultados")
+   - Slide 7: Considerações Finais & Contribuições (layout: "card", badge: "Conclusão")
+3. NOTAS DO APRESENTADOR (notes): Inclua 1 a 2 frases com dicas do que o aluno deve falar em cada slide perante a banca.
+4. RETORNO OBRIGATÓRIO: Retorne EXCLUSIVAMENTE um JSON VÁLIDO puro (sem crases de markdown, sem texto antes ou depois):
+
+[
+  {
+    "title": "TÍTULO DO SLIDE EM CAIXA ALTA",
+    "subtitle": "Subtítulo elegante ou frase de apoio",
+    "bullets": ["Tópico 1 claro e objetivo", "Tópico 2 com métrica ou conceito", "Tópico 3 com síntese"],
+    "notes": "Dica de fala para a banca...",
+    "badge": "Fase 1",
+    "layout": "split",
+    "isCover": false
+  }
+]
+
+DOCUMENTO DO TRABALHO:
+${textToParse.substring(0, 4500)}`;
+
+      let rawJson = "";
+      try {
+        rawJson = await callGeminiDirectly(slidesPrompt, customGeminiKey, "gemini-3.6-flash");
+      } catch (err) {
+        rawJson = await callGeminiDirectly(slidesPrompt, customGeminiKey, "gemini-3.5-flash-lite");
+      }
+
+      const cleanJson = rawJson.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const parsedSlides = JSON.parse(cleanJson);
+
+      if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
+        setEditableSlides(parsedSlides as any);
+        setActiveSlideIndex(0);
+        setActiveTab("slides");
+        setErrorMessage("✨ Slides organizados e diagramados com sucesso pela IA!");
+        setTimeout(() => setErrorMessage(""), 3500);
+        logAction("Slides Inteligentes Gerados com IA", `Total de ${parsedSlides.length} slides`);
+      } else {
+        throw new Error("Formato de slides não reconhecido.");
+      }
+    } catch (error) {
+      console.warn("Falha na geração direta por IA, gerando estrutura estruturada local:", error);
+      const parsed = parseDocumentIntoSlides(textToParse);
+      setEditableSlides(parsed as any);
+      setActiveSlideIndex(0);
+      setActiveTab("slides");
+      setErrorMessage("✨ Slides organizados e gerados com sucesso!");
+      setTimeout(() => setErrorMessage(""), 3500);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleOpenSlidesStudio = () => {
     if (activeTab === "slides") {
       setActiveTab("editor");
       return;
     }
-    const textToParse = generatedText && generatedText.trim() ? generatedText : "1 INTRODUÇÃO\n\nApresentação acadêmica estruturada.";
-    const parsed = parseDocumentIntoSlides(textToParse);
-    setEditableSlides(parsed as any);
-    setActiveSlideIndex(0);
-    setActiveTab("slides");
+    handleGenerateSlidesWithAI();
   };
 
   // Exportação Direta em PowerPoint (.pptx) 100% compatível com Google Slides
@@ -4872,8 +4939,17 @@ ${latexChapters}
                     </div>
                   </div>
 
-                  {/* Ações Rápidas: PPTX, Google Slides, Tela Cheia e Voltar */}
+                  {/* Ações Rápidas: Recriar com IA, PPTX, Google Slides, Tela Cheia e Voltar */}
                   <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleGenerateSlidesWithAI}
+                      size="sm"
+                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs h-8 px-3 font-bold flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
+                      title="Sintetizar novamente e diagramar slides inteligentes com a IA"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin duration-3000" />
+                      Recriar com IA
+                    </Button>
                     <Button
                       onClick={() => {
                         const elem = document.getElementById("emia-slides-container") || document.documentElement;
