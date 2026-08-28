@@ -162,12 +162,26 @@ export default function App() {
   const [historyStack, setHistoryStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
 
-  // Atualizador seguro com histórico de Desfazer/Refazer
+  // Atualizador seguro e AUTOMÁTICO com histórico e Normalização ABNT Inviolável Contínua
   const updateGeneratedTextWithHistory = (newText: string) => {
-    if (newText === generatedText) return;
+    if (!newText || !newText.trim()) {
+      setGeneratedText("");
+      return;
+    }
+    
+    // Normalização ABNT Automática Instantânea:
+    // 1. Citações autor-data NBR 10520:2023 em caixa mista: (Silva, 2023, p. 15)
+    let abntCompliant = normalizeCitationsToABNT2023(newText);
+    
+    // 2. Seções canônicas em CAIXA ALTA (NBR 6024)
+    abntCompliant = abntCompliant.replace(/^(#+\s*|\d+\s+)(introdução|desenvolvimento|fundamentação teórica|metodologia|resultados|conclusão|considerações finais|referências)/gmi, (match, prefix, t) => {
+      return `${prefix}${t.toUpperCase()}`;
+    });
+
+    if (abntCompliant === generatedText) return;
     setHistoryStack(prev => [...prev.slice(-30), generatedText]); // guarda até 30 passos
     setRedoStack([]); // limpa refazer ao criar nova ação
-    setGeneratedText(newText);
+    setGeneratedText(abntCompliant);
   };
 
   const handleUndo = () => {
@@ -4345,7 +4359,7 @@ ${latexChapters}
                                   newPages[pIdx] = e.currentTarget.innerText;
                                   setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
                                 }}
-                                className="w-full focus:outline-none font-['Arial'] text-gray-900 leading-[1.6] text-justify text-sm sm:text-base indent-8 bg-transparent min-h-[500px] whitespace-pre-wrap focus:ring-1 focus:ring-blue-300 p-2 rounded"
+                                className="w-full focus:outline-none font-['Arial'] text-gray-900 leading-[1.5] text-justify text-[12pt] [text-indent:1.25cm] bg-transparent min-h-[600px] whitespace-pre-wrap focus:ring-1 focus:ring-blue-300 p-2 rounded selection:bg-blue-100"
                               >
                                 {text && text !== "CAPA_AUTO" && text !== "FOLHA_ROSTO_AUTO" ? text.trimStart() : ""}
                               </div>
