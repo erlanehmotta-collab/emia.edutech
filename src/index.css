@@ -10,18 +10,36 @@
   }
 }
 
-/* Garante contraste perfeito e nítido para todas as letras */
-.dark, [data-theme="dark"] {
-  color: #f8fafc !important;
-}
+/* Configuração Oficial de Impressão ABNT A4 (NBR 14724 / NBR 6022) */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 3cm 2cm 2cm 3cm; /* Margens ABNT: Superior 3cm, Esquerda 3cm, Inferior 2cm, Direita 2cm */
+  }
 
-.dark input, .dark textarea, .dark select {
-  color: #f8fafc !important;
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-}
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 
-.dark label, .dark h1, .dark h2, .dark h3, .dark h4, .dark p, .dark span {
-  color: inherit;
+  header, aside, .sticky, [role="toolbar"], button, .print\:hidden {
+    display: none !important;
+  }
+
+  .print-page-a4 {
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
 }
 

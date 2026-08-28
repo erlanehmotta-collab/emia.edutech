@@ -3672,7 +3672,7 @@ ${latexChapters}
                     return (
                       <div 
                         key={pIdx}
-                        className="w-full max-w-[760px] bg-white text-gray-900 shadow-md border border-gray-200 rounded-sm relative flex flex-col p-8 sm:p-12 md:p-16 my-4 select-text print:shadow-none print:border-none print:m-0 print:p-0 print:h-[297mm] print:w-[210mm] print:break-after-page min-h-[900px] group/page"
+                        className="print-page-a4 w-full max-w-[760px] bg-white text-gray-900 shadow-md border border-gray-200 rounded-sm relative flex flex-col p-8 sm:p-12 md:p-16 my-4 select-text print:shadow-none print:border-none print:m-0 print:p-0 print:h-[297mm] print:w-[210mm] print:break-after-page min-h-[900px] group/page"
                       >
                         {/* BARRA DE CONTROLE DA PÁGINA (aparece no hover) */}
                         <div className="absolute -top-1 left-1/2 -translate-x-1/2 translate-y-0 opacity-0 group-hover/page:opacity-100 transition-all duration-200 z-30 flex items-center gap-1 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg rounded-xl px-2 py-1 print:hidden">
