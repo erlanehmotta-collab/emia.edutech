@@ -4714,12 +4714,12 @@ ${latexChapters}
 
                   {isChatting && (
                     <div className="flex justify-start items-end gap-2">
-                      <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center text-xs shadow-xs shrink-0 animate-bounce">
-                        🤖
+                      <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-600 text-white flex items-center justify-center text-xs shadow-xs shrink-0 animate-bounce">
+                        👩‍🎓
                       </div>
-                      <div className="max-w-[80%] px-4 py-3 rounded-2xl text-[13px] font-sans bg-white border border-blue-100 text-slate-700 rounded-bl-xs shadow-xs flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                        <span className="font-medium text-slate-600">A EMIA tá preparando... ✨</span>
+                      <div className="max-w-[80%] px-4 py-3 rounded-2xl text-[13px] font-sans bg-white border border-pink-100 text-slate-700 rounded-bl-xs shadow-xs flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                        <span className="font-medium text-slate-600">A EMIA tá redigindo com dedicação... ✨</span>
                       </div>
                     </div>
                   )}
