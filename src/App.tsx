@@ -241,18 +241,16 @@ export default function App() {
   const [speechGender, setSpeechGender] = useState<"female" | "male">("female"); // Seleção de voz: Feminina (padrão) ou Masculina
 
   // Estado de controle de índice de leitura contínua (para troca de velocidade fluida sem recomeçar)
-  const currentSentenceIdxRef = useRef<number>(0);
-  const speechSentencesRef = useRef<string[]>([]);
-  const isSpeakingRef = useRef<boolean>(false);
+  // Referência de Áudio Neural HTML5 (Estúdio Gratuito Francisca & Antonio)
+  const neuralAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Função interna para disparar a fala da frase atual
-  const speakSentenceAtIndex = (index: number, rate?: number, vol?: number, gender?: "female" | "male") => {
-    if (!('speechSynthesis' in window)) return;
+  // Função interna para disparar a fala da frase atual com Áudio Neural de Estúdio Gratuito
+  const speakSentenceAtIndex = async (index: number, rate?: number, vol?: number, gender?: "female" | "male") => {
     const sentences = speechSentencesRef.current;
     if (index >= sentences.length) {
       setIsSpeaking(false);
       isSpeakingRef.current = false;
-      setErrorMessage("✅ Leitura em áudio concluída!");
+      setErrorMessage("✅ Leitura em áudio neural concluída!");
       setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
@@ -268,13 +266,63 @@ export default function App() {
     const currentVol = vol !== undefined ? vol : speechVolume;
     const currentGender = gender !== undefined ? gender : speechGender;
 
+    // 1. Tenta sintetizar a Voz Neural Ultra-Humana Gratuita (Francisca / Antonio)
+    const voiceName = currentGender === "female" ? "pt-BR-FranciscaNeural" : "pt-BR-AntonioNeural";
+    const ratePercent = currentRate === 1.0 ? "+0%" : currentRate > 1.0 ? `+${Math.round((currentRate - 1) * 100)}%` : `-${Math.round((1 - currentRate) * 100)}%`;
+
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: sentence.trim(),
+          voice: voiceName,
+          rate: ratePercent,
+          pitch: currentGender === "female" ? "+2Hz" : "-2Hz"
+        })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+
+        if (neuralAudioRef.current) {
+          neuralAudioRef.current.pause();
+        }
+
+        const audio = new Audio(audioUrl);
+        audio.volume = currentVol;
+        neuralAudioRef.current = audio;
+
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          if (isSpeakingRef.current) {
+            speakSentenceAtIndex(index + 1, rate, vol, gender);
+          }
+        };
+
+        audio.onerror = () => {
+          URL.revokeObjectURL(audioUrl);
+          if (isSpeakingRef.current) {
+            speakSentenceAtIndex(index + 1, rate, vol, gender);
+          }
+        };
+
+        await audio.play();
+        return;
+      }
+    } catch (neuralErr) {
+      console.warn("[Voz Neural] Falha de conexão, usando sintetizador nativo:", neuralErr);
+    }
+
+    // 2. Fallback de alta fidelidade: Web Speech Synthesis nativo
+    if (!('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(sentence.trim());
     utterance.lang = "pt-BR";
     utterance.rate = currentRate || 1.0;
     utterance.volume = currentVol || 1.0;
-    utterance.pitch = currentGender === "female" ? 1.08 : 0.95;
+    utterance.pitch = currentGender === "female" ? 1.05 : 0.95;
 
-    // Priorização das vozes neurais brasileiras mais humanas e naturais
     const voices = window.speechSynthesis.getVoices();
     const ptVoices = voices.filter(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.startsWith("pt"));
 
@@ -282,7 +330,7 @@ export default function App() {
     if (currentGender === "female") {
       selectedVoice = ptVoices.find(v => {
         const n = v.name.toLowerCase();
-        return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("francisca") || n.includes("thalita") || n.includes("luciana") || n.includes("leticia") || n.includes("maria") || (n.includes("google") && !n.includes("male"));
+        return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("francisca") || n.includes("thalita") || n.includes("luciana") || (n.includes("google") && !n.includes("male"));
       }) || ptVoices.find(v => !v.name.toLowerCase().includes("male") && !v.name.toLowerCase().includes("antonio"));
     } else {
       selectedVoice = ptVoices.find(v => {
@@ -291,24 +339,15 @@ export default function App() {
       }) || ptVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("antonio"));
     }
 
-    if (!selectedVoice && ptVoices.length > 0) {
-      selectedVoice = ptVoices[0];
-    }
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
+    if (!selectedVoice && ptVoices.length > 0) selectedVoice = ptVoices[0];
+    if (selectedVoice) utterance.voice = selectedVoice;
 
     utterance.onend = () => {
-      if (isSpeakingRef.current) {
-        speakSentenceAtIndex(index + 1);
-      }
+      if (isSpeakingRef.current) speakSentenceAtIndex(index + 1, rate, vol, gender);
     };
 
-    utterance.onerror = (e) => {
-      console.warn("Speech error:", e);
-      if (isSpeakingRef.current) {
-        speakSentenceAtIndex(index + 1);
-      }
+    utterance.onerror = () => {
+      if (isSpeakingRef.current) speakSentenceAtIndex(index + 1, rate, vol, gender);
     };
 
     window.speechSynthesis.speak(utterance);
@@ -316,14 +355,15 @@ export default function App() {
 
   // Leitura em Áudio do Texto Acadêmico com Fraseamento Natural
   const handleToggleSpeech = () => {
-    if (!('speechSynthesis' in window)) {
-      setErrorMessage("Leitura em áudio não suportada neste navegador.");
-      return;
-    }
-
     if (isSpeaking) {
       isSpeakingRef.current = false;
-      window.speechSynthesis.cancel();
+      if (neuralAudioRef.current) {
+        neuralAudioRef.current.pause();
+        neuralAudioRef.current = null;
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
       setIsSpeaking(false);
       setErrorMessage("⏹️ Leitura em áudio interrompida.");
       setTimeout(() => setErrorMessage(""), 2500);
@@ -375,8 +415,11 @@ export default function App() {
     isSpeakingRef.current = true;
     setIsSpeaking(true);
 
-    window.speechSynthesis.cancel();
-    setErrorMessage(`🔊 Reproduzindo leitura humana do documento (${speechRate}x)...`);
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    const voiceLabel = speechGender === "female" ? "Francisca Neural 👩" : "Antônio Neural 👨";
+    setErrorMessage(`🎙️ Reproduzindo com Voz Humana Neural (${voiceLabel} - ${speechRate}x)...`);
     speakSentenceAtIndex(0);
   };
 

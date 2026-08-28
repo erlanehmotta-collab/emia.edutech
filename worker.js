@@ -200,6 +200,65 @@ export default {
       }
     }
 
+    // Endpoint 100% Gratuito de Voz Neural de Estúdio (Edge Neural TTS: Francisca e Antonio)
+    if (url.pathname === "/api/tts" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const text = (body.text || "").trim();
+        const voice = body.voice || "pt-BR-FranciscaNeural"; // pt-BR-FranciscaNeural ou pt-BR-AntonioNeural
+        const rate = body.rate || "+0%";
+        const pitch = body.pitch || "+0Hz";
+
+        if (!text) {
+          return new Response(JSON.stringify({ error: "Texto vazio" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+
+        // Sanitização de SSML para áudio neural
+        const cleanText = text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+
+        const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="pt-BR"><voice name="${voice}"><prosody rate="${rate}" pitch="${pitch}">${cleanText}</prosody></voice></speak>`;
+
+        // Requisição para a API do Edge TTS Neural (100% Gratuita e Sem Chave Paga)
+        const ttsUrl = `https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4`;
+        const ttsRes = await fetch(ttsUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/ssml+xml",
+            "X-Timestamp": new Date().toISOString(),
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0"
+          },
+          body: ssml
+        });
+
+        if (ttsRes.ok) {
+          const audioBuffer = await ttsRes.arrayBuffer();
+          return new Response(audioBuffer, {
+            headers: {
+              "Content-Type": "audio/mpeg",
+              "Cache-Control": "public, max-age=86400",
+              ...corsHeaders
+            }
+          });
+        } else {
+          return new Response(JSON.stringify({ error: "Falha ao sintetizar áudio neural" }), {
+            status: 502,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+      } catch (ttsErr) {
+        return new Response(JSON.stringify({ error: ttsErr.message || "Erro TTS" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+    }
+
     // Serve Static Assets (Vite React app in dist/)
     if (env.ASSETS) {
       try {
