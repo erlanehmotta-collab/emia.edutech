@@ -158,6 +158,14 @@ export default function App() {
   const [referenceStyle, setReferenceStyle] = useState<"ABNT" | "APA">("ABNT");
   const [generatedReference, setGeneratedReference] = useState("");
 
+  // Citation State (Citação Direta Curta/Longa e Indireta ABNT NBR 10520:2023)
+  const [showCitationModal, setShowCitationModal] = useState(false);
+  const [citationType, setCitationType] = useState<"direta_curta" | "direta_longa" | "indireta">("direta_longa");
+  const [citationAuthor, setCitationAuthor] = useState("");
+  const [citationYear, setCitationYear] = useState(new Date().getFullYear().toString());
+  const [citationPage, setCitationPage] = useState("");
+  const [citationContent, setCitationContent] = useState("");
+
   const [generatedText, setGeneratedText] = useState("");
   const [historyStack, setHistoryStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -3509,6 +3517,16 @@ ${latexChapters}
                 </Button>
                 <Button 
                   size="sm" 
+                  onClick={() => setShowCitationModal(true)} 
+                  variant="ghost" 
+                  className="text-[11px] h-7 px-1.5 font-semibold text-purple-700 hover:bg-purple-50 hover:text-purple-800 rounded-lg whitespace-nowrap"
+                  title="Inserir Citação Direta (Curta/Longa com Recuo de 4cm) ou Indireta ABNT NBR 10520:2023"
+                >
+                  <Quote className="w-3.5 h-3.5 mr-1 text-purple-600" />
+                  Citação
+                </Button>
+                <Button 
+                  size="sm" 
                   onClick={() => setShowReferenceModal(true)} 
                   variant="ghost" 
                   className="text-[11px] h-7 px-1.5 font-semibold text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap"
@@ -5994,6 +6012,207 @@ ${latexChapters}
               </Button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Citação Direta e Indireta (ABNT NBR 10520:2023) */}
+      {showCitationModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Quote className="w-5 h-5" />
+                <h3 className="font-bold text-base">Gerador de Citação ABNT (NBR 10520:2023)</h3>
+              </div>
+              <button 
+                onClick={() => setShowCitationModal(false)}
+                className="w-7 h-7 rounded-lg hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4 text-xs font-sans overflow-y-auto max-h-[75vh]">
+              {/* Tipo de Citação */}
+              <div>
+                <label className="block font-bold text-gray-700 mb-1.5">Tipo de Citação:</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCitationType("direta_longa")}
+                    className={`p-2.5 rounded-xl border text-center font-bold transition-all ${
+                      citationType === "direta_longa"
+                        ? "bg-purple-50 border-purple-500 text-purple-700 ring-2 ring-purple-200 shadow-xs"
+                        : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <div className="text-xs">📜 Direta Longa</div>
+                    <div className="text-[10px] font-normal text-gray-500 mt-0.5">+3 linhas (Recuo 4cm, 10pt)</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCitationType("direta_curta")}
+                    className={`p-2.5 rounded-xl border text-center font-bold transition-all ${
+                      citationType === "direta_curta"
+                        ? "bg-purple-50 border-purple-500 text-purple-700 ring-2 ring-purple-200 shadow-xs"
+                        : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <div className="text-xs">💬 Direta Curta</div>
+                    <div className="text-[10px] font-normal text-gray-500 mt-0.5">Até 3 linhas (Com Aspas)</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCitationType("indireta")}
+                    className={`p-2.5 rounded-xl border text-center font-bold transition-all ${
+                      citationType === "indireta"
+                        ? "bg-purple-50 border-purple-500 text-purple-700 ring-2 ring-purple-200 shadow-xs"
+                        : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <div className="text-xs">💡 Indireta</div>
+                    <div className="text-[10px] font-normal text-gray-500 mt-0.5">Paráfrase (Autor-Data)</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Campos Autor, Ano, Página */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-1">
+                  <label className="block font-bold text-gray-700 mb-1">Autor / Sobrenome:</label>
+                  <input
+                    type="text"
+                    value={citationAuthor}
+                    onChange={(e) => setCitationAuthor(e.target.value)}
+                    placeholder="Ex: Silva"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Ano da Obra:</label>
+                  <input
+                    type="text"
+                    value={citationYear}
+                    onChange={(e) => setCitationYear(e.target.value)}
+                    placeholder="Ex: 2023"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Página ({citationType === "indireta" ? "Opcional" : "Obrigatória"}):</label>
+                  <input
+                    type="text"
+                    value={citationPage}
+                    onChange={(e) => setCitationPage(e.target.value)}
+                    placeholder="Ex: 45"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Texto da Citação */}
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">
+                  {citationType === "indireta" ? "Texto da Paráfrase (Suas palavras baseadas na ideia do autor):" : "Trecho Citado Exatamente da Obra Original:"}
+                </label>
+                <textarea
+                  rows={4}
+                  value={citationContent}
+                  onChange={(e) => setCitationContent(e.target.value)}
+                  placeholder={
+                    citationType === "direta_longa"
+                      ? "Cole aqui o trecho com mais de 3 linhas transcrito fielmente do texto original..."
+                      : citationType === "direta_curta"
+                      ? "Cole aqui a frase curta (até 3 linhas)..."
+                      : "Escreva com suas próprias palavras a ideia apresentada pelo autor..."
+                  }
+                  className="w-full p-2.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none font-serif leading-relaxed"
+                />
+              </div>
+
+              {/* Prévia Formatada em Tempo Real */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center justify-between">
+                  <span>Prévia Formatada (Padrão ABNT NBR 10520:2023)</span>
+                  <span className="text-purple-600 font-extrabold">Caixa Mista Oficial</span>
+                </div>
+                <div className="p-3 bg-white border border-slate-100 rounded-lg text-xs text-gray-900 leading-relaxed">
+                  {(() => {
+                    const auth = citationAuthor.trim() || "Autor";
+                    const yr = citationYear.trim() || "2023";
+                    const pg = citationPage.trim() ? `, p. ${citationPage.trim()}` : "";
+                    const txt = citationContent.trim() || (citationType === "indireta" ? "ideia expressa pelo pesquisador em seu estudo" : "texto citado textualmente da obra original");
+                    
+                    if (citationType === "direta_longa") {
+                      return (
+                        <div className="pl-8 text-[10pt] leading-[1.2] text-gray-800 border-l-2 border-purple-400 italic">
+                          {txt} ({auth}, {yr}{pg}).
+                        </div>
+                      );
+                    }
+                    if (citationType === "direta_curta") {
+                      return (
+                        <div>
+                          De acordo com {auth} ({yr}{pg}), &ldquo;{txt}&rdquo;.
+                        </div>
+                      );
+                    }
+                    return (
+                      <div>
+                        Segundo {auth} ({yr}), {txt}.
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer com Ações */}
+            <div className="p-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCitationModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  const auth = citationAuthor.trim() || "Autor";
+                  const yr = citationYear.trim() || "2023";
+                  const pg = citationPage.trim() ? `, p. ${citationPage.trim()}` : "";
+                  const txt = citationContent.trim() || "texto da citação";
+                  
+                  let formattedBlock = "";
+                  if (citationType === "direta_longa") {
+                    formattedBlock = `\n\n> ${txt} (${auth}, ${yr}${pg}).\n\n`;
+                  } else if (citationType === "direta_curta") {
+                    formattedBlock = ` "${txt}" (${auth}, ${yr}${pg}) `;
+                  } else {
+                    formattedBlock = ` Conforme aponta ${auth} (${yr}), ${txt}. `;
+                  }
+
+                  const updatedDoc = (generatedText || "") + formattedBlock;
+                  updateGeneratedTextWithHistory(updatedDoc);
+                  setShowCitationModal(false);
+                  setCitationContent("");
+                  setCitationAuthor("");
+                  setCitationPage("");
+                  setErrorMessage("✨ Citação inserida com sucesso no documento com rigor ABNT NBR 10520:2023!");
+                  setTimeout(() => setErrorMessage(""), 3500);
+                  logAction("Citação ABNT Inserida", formattedBlock);
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+              >
+                📥 Inserir no Documento
+              </Button>
+            </div>
           </div>
         </div>
       )}
