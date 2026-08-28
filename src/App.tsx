@@ -3583,7 +3583,7 @@ ${latexChapters}
           </div>
 
           {/* Canvas Area with Progress Bar */}
-          <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col relative">
+          <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col relative h-full min-h-[680px]">
             <div className="relative z-10">
               {isLoading && (
                 <div className="w-full bg-blue-100 h-1.5 overflow-hidden">
