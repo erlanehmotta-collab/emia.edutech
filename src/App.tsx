@@ -1988,10 +1988,10 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
     if (!fileList || fileList.length === 0) return;
     
     const filesArray = Array.from(fileList);
-    const imageFiles = filesArray.filter(f => f.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(f.name));
+    const imageFiles = filesArray.filter(f => f.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(f.name));
     const nonImageFiles = filesArray.filter(f => !imageFiles.includes(f));
 
-    // Processa múltiplas imagens ao mesmo tempo
+    // Processa múltiplas imagens ao mesmo tempo e insere no palco
     if (imageFiles.length > 0) {
       let loadedCount = 0;
       imageFiles.forEach((file, idx) => {
@@ -2000,7 +2000,12 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
           const base64 = event.target?.result as string;
           const figNum = idx + 1;
           const figureBlock = `\n\n![Figura inserida](${base64})\nFigura ${figNum} – Representação Ilustrativa do Objeto de Estudo\nFonte: Elaborado pelos autores (${new Date().getFullYear()}).\n\n`;
-          setGeneratedText(prev => prev ? prev + figureBlock : figureBlock);
+          
+          setGeneratedText(prev => {
+            const updated = prev ? prev + figureBlock : figureBlock;
+            updateGeneratedTextWithHistory(updated);
+            return updated;
+          });
           loadedCount++;
           if (loadedCount === imageFiles.length) {
             setActiveTab("editor");
@@ -2012,34 +2017,60 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
       });
     }
 
-    // Processa tabelas CSV ou TXT
-    for (const file of nonImageFiles) {
-      if (file.name.endsWith(".csv") || file.name.endsWith(".txt")) {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const content = event.target?.result as string;
-          setIsLoading(true);
+    // Processa documentos PDF, Word, TXT ou CSV
+    if (nonImageFiles.length > 0) {
+      setIsLoading(true);
+      setErrorMessage("⏳ Inserindo conteúdo no palco...");
+      
+      for (const file of nonImageFiles) {
+        try {
+          let extractedDocText = "";
+          
+          // 1. Tenta backend extract se disponível
           try {
-            const res = await fetch("/api/csv-to-table", {
-              method: "POST",
-              headers: getApiHeaders(),
-              body: JSON.stringify({ csvData: content }),
-            });
-            const textData = await res.text(); let data; try { data = JSON.parse(textData); } catch (e) { throw new Error(`Erro no servidor (${res.status}). Aguarde e tente novamente.`); }
-            if (data.success) {
-              setGeneratedText(prev => prev + "\n\n" + data.text + "\n\n");
-            } else {
-              setErrorMessage(data.error);
+            const formData = new FormData();
+            formData.append("files", file);
+            const res = await fetch("/api/extract", { method: "POST", body: formData });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && data.text) extractedDocText = data.text;
             }
-          } catch (error) {
-            console.error(error);
-            setErrorMessage(error instanceof Error ? error.message : "Erro ao processar tabela.");
-          } finally {
-            setIsLoading(false);
+          } catch { /* fallback */ }
+
+          // 2. Extração client-side confiável
+          if (!extractedDocText) {
+            if (file.type.includes("text") || file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".csv")) {
+              extractedDocText = await file.text();
+            } else if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") {
+              const ab = await file.arrayBuffer();
+              const latinText = new TextDecoder("latin1").decode(new Uint8Array(ab));
+              const matches = latinText.match(/\(([^()]{2,})\)\s*(?:Tj|'|")/g) || [];
+              if (matches.length > 0) {
+                extractedDocText = matches.map(m => m.replace(/^\(/, '').replace(/\)\s*(?:Tj|'|")$/, '')).join(' ').replace(/\\([()\\])/g, '$1').replace(/\s+/g, ' ');
+              } else {
+                extractedDocText = latinText.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, ' ').split(/\s{3,}/).filter(c => c.trim().length > 15).join('\n\n');
+              }
+            } else {
+              extractedDocText = await file.text().catch(() => `[Arquivo ${file.name} carregado]`);
+            }
           }
-        };
-        reader.readAsText(file);
+
+          if (extractedDocText && extractedDocText.trim()) {
+            const normalized = normalizeCitationsToABNT2023(extractedDocText);
+            setGeneratedText(prev => {
+              const updated = prev ? prev + "\n\n--- [QUEBRA DE PÁGINA] ---\n\n" + normalized : normalized;
+              updateGeneratedTextWithHistory(updated);
+              return updated;
+            });
+            setActiveTab("editor");
+            setErrorMessage(`✅ Arquivo "${file.name}" inserido com sucesso no documento!`);
+            setTimeout(() => setErrorMessage(""), 3500);
+          }
+        } catch (fileErr) {
+          console.error("Erro ao ler arquivo:", fileErr);
+        }
       }
+      setIsLoading(false);
     }
     
     if (attachmentRef.current) attachmentRef.current.value = "";
