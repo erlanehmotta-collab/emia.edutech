@@ -1370,44 +1370,58 @@ REQUISITOS MANDATÓRIOS:
         return;
       }
 
-      // Monta dados da capa
+      // Monta dados canônicos
       const currentYear = new Date().getFullYear().toString();
-      const instName = (institution || "INSTITUIÇÃO DE ENSINO SUPERIOR").toUpperCase();
-      const courseName = course ? course.toUpperCase() : "CURSO DE GRADUAÇÃO";
-      const membersText = groupMembers.filter(m => m && m.trim()).map(m => m.trim().toUpperCase()).join("\n");
-      const authorNames = membersText || (studentName || "NOME DOS INTEGRANTES DO GRUPO").toUpperCase();
-      const docTitle = (title || "TÍTULO DO TRABALHO ACADÊMICO").toUpperCase();
-      const docSubtitle = subtitle ? ` - ${subtitle}` : "";
-      const docCity = (city || "CIDADE - UF").toUpperCase();
+      const instName = (institution || "INSTITUIÇÃO DE ENSINO SUPERIOR").trim();
+      const courseName = (course || "CURSO DE GRADUAÇÃO").trim();
+      const membersText = groupMembers.filter(m => m && m.trim()).map(m => m.trim()).join("\n");
+      const authorNames = membersText || (studentName || "NOME DOS INTEGRANTES DO GRUPO").trim();
+      const docTitle = (title || "TÍTULO DO TRABALHO ACADÊMICO").trim();
+      const docSubtitle = subtitle ? subtitle.trim() : "";
+      const docCity = (city || "CIDADE - UF").trim();
       const docYear = year || currentYear;
-      const advText = advisor ? `Orientador(a): ${advisor}` : "";
+      const advText = advisor ? advisor.trim() : "";
       const typeLabel = groupDocType === "custom" || groupDocType === "outro"
         ? (customGroupDocName || "Trabalho Acadêmico")
         : groupDocType === "projeto" ? "Projeto de Pesquisa" : groupDocType === "relatorio" ? "Relatório Técnico" : groupDocType === "estudo_caso" ? "Estudo de Caso" : groupDocType === "resenha" ? "Resenha Crítica" : groupDocType === "artigo" || groupDocType === "artigo_cientifico" ? "Artigo Científico" : "Trabalho de Conclusão de Curso (TCC)";
 
-      // Capa ABNT Oficial com todos os membros
-      const coverPage = `${instName}\n${courseName}\n\n\n\n${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+      // Sincroniza o estado geral do documento para alimentar a Capa e Folha de Rosto nativas do palco
+      if (instName) setInstitution(instName);
+      if (courseName) setCourse(courseName);
+      if (authorNames) setStudentName(authorNames);
+      if (docTitle) setTitle(docTitle);
+      if (docSubtitle) setSubtitle(docSubtitle);
+      if (docCity) setCity(docCity);
+      if (docYear) setYear(docYear);
+      if (advText) setAdvisor(advText);
 
-      // Folha de Rosto Oficial
-      const titlePage = `${authorNames}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n                                          ${typeLabel} apresentado à ${instName}${courseName ? ` como requisito parcial de avaliação para o curso de ${courseName}` : ""}.\n${advText ? `\n                                          ${advText}` : ""}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
-
-      // Monta seções dinamicamente conforme o tipo escolhido
+      // Monta seções dinamicamente conforme o tipo escolhido - Cada seção em sua própria página A4
       const bodyPages: string[] = [];
       for (const { key, label } of activeSections) {
         if (sectionTexts[key]) {
           const rawText = sectionTexts[key];
           const cleanText = rawText.replace(/^---\s*(?:Início|Conteúdo)\s*d[eo]\s*(?:Arquivo|PDF):.*?---\s*/gi, '').trim();
           
-          // Quebra automática de páginas dentro da seção se o texto for longo (~2200 caracteres por folha A4)
-          const paragraphs = cleanText.split(/\n\n+/);
-          let currentSectionPage = `${label}\n\n`;
-          
+          // Formata os parágrafos com recuo de primeira linha e alinhamento ABNT
+          const paragraphs = cleanText
+            .split(/\n\n+/)
+            .map(p => p.replace(/^[ \t]+/gm, '').trim())
+            .filter(Boolean);
+
+          let currentSectionPage = `${label.toUpperCase()}\n\n`;
+          let isFirst = true;
+
           for (const para of paragraphs) {
-            if ((currentSectionPage + "\n\n" + para).length > 2200 && currentSectionPage.trim().length > label.length) {
+            // Se já contém o próprio título no início do arquivo, ignora duplicação
+            if (para.toUpperCase() === label.toUpperCase() || para.toUpperCase().startsWith(label.toUpperCase())) {
+              continue;
+            }
+            if (!isFirst && (currentSectionPage + "\n\n" + para).length > 2200 && currentSectionPage.trim().length > label.length) {
               bodyPages.push(currentSectionPage.trim());
               currentSectionPage = para;
             } else {
               currentSectionPage = currentSectionPage ? currentSectionPage + "\n\n" + para : para;
+              isFirst = false;
             }
           }
           if (currentSectionPage.trim()) {
@@ -1416,10 +1430,10 @@ REQUISITOS MANDATÓRIOS:
         }
       }
 
-      // Aplica a Normalização Acadêmica ABNT diretamente no texto montado
-      let formattedFullDoc = [coverPage, titlePage, ...bodyPages].join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+      // Aplica a Normalização Acadêmica ABNT diretamente no texto montado com Quebras de Página oficiais
+      let formattedFullDoc = ["CAPA_AUTO", "FOLHA_ROSTO_AUTO", ...bodyPages].join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
       
-      // 1. Normalização de citações ABNT NBR 10520:2023 (caixa mista)
+      // 1. Normalização de citações ABNT NBR 10520:2023 (caixa mista: Silva, 2023, p. 15)
       formattedFullDoc = normalizeCitationsToABNT2023(formattedFullDoc);
 
       // 2. Normalização de espaçamentos e pontuações
@@ -1428,7 +1442,7 @@ REQUISITOS MANDATÓRIOS:
         .replace(/\n{4,}/g, '\n\n\n')
         .replace(/[ \t]+$/gm, '');
 
-      // 3. Garante seções em CAIXA ALTA (NBR 6024)
+      // 3. Garante seções canônicas em CAIXA ALTA (NBR 6024)
       formattedFullDoc = formattedFullDoc.replace(/^(#+\s*|\d+\s+)(introdução|materiais e métodos|desenvolvimento|fundamentação teórica|metodologia|resultados e discussão|conclusão|considerações finais|referências)/gmi, (match, prefix, t) => {
         return `${prefix}${t.toUpperCase()}`;
       });
@@ -1437,7 +1451,7 @@ REQUISITOS MANDATÓRIOS:
       updateGeneratedTextWithHistory(formattedFullDoc);
       setActiveTab("editor");
       setIsGroupMode(false);
-      setErrorMessage("✅ Trabalho em grupo montado e 100% inserido no palco de acordo com a ABNT!");
+      setErrorMessage("✅ Trabalho em grupo montado e formatado 100% no padrão ABNT!");
       setTimeout(() => setErrorMessage(""), 5000);
       logAction("Montagem e Normalização ABNT de Trabalho em Grupo", formattedFullDoc.substring(0, 500));
     } catch (error) {
