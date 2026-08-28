@@ -3060,7 +3060,7 @@ ${latexChapters}
         </div>
       </header>
 
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 items-start relative">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 items-stretch relative">
         
         {/* Botão flutuante para reabrir a barra lateral quando recolhida (Setinhas de Tela Cheia / Expandir) */}
         {isSidebarCollapsed && (
@@ -3077,7 +3077,7 @@ ${latexChapters}
         {/* Sidebar Controls (Recolhível com ícone de setinhas para tela cheia) */}
         {!isSidebarCollapsed && (
           <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col gap-6 transition-all">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col h-full">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Novo Trabalho</h2>
                 <div className="flex items-center gap-1">
@@ -3096,7 +3096,7 @@ ${latexChapters}
                 </div>
               </div>
             
-            <div className="space-y-4">
+            <div className="space-y-4 flex-1 flex flex-col">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Documento</label>
                 <select 
@@ -3393,10 +3393,9 @@ ${latexChapters}
         </div>
       )}
 
-        {/* Editor Area (Palco Padrão com +150px de altura e visualização completa A4 estilo Word e PDF) */}
+        {/* Editor Area (Palco Padrão alinhado perfeitamente com a linha do botão ABNT da barra lateral) */}
         <div 
-          className="flex-1 w-full min-w-0 flex flex-col transition-all"
-          style={{ height: 'calc(100vh - 4.5rem + 150px)', minHeight: '830px' }}
+          className="flex-1 w-full min-w-0 flex flex-col transition-all h-full min-h-[750px]"
         >
           
           {/* Top Bar with Clean, Elegant Single Line Toolbar */}
