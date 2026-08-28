@@ -3061,15 +3061,15 @@ ${latexChapters}
           {/* Botão Chat Acadêmico */}
           <button 
             onClick={() => setActiveTab("chat")}
-            className={`h-7.5 flex items-center gap-1.5 px-3 rounded-lg text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
+            className={`h-7.5 flex items-center gap-1.5 px-3 rounded-lg text-xs font-medium shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
               activeTab === "chat" 
                 ? "bg-indigo-600 text-white shadow-xs" 
                 : "bg-white hover:bg-slate-100 text-gray-900 border border-gray-300"
             }`}
             title="Abrir Chat Acadêmico com IA"
           >
-            <UserCheck className={`w-3.5 h-3.5 stroke-[2] group-hover:scale-105 transition-transform ${activeTab === "chat" ? "text-white" : "text-gray-900"}`} />
-            <span className="tracking-tight">Chat Acadêmico</span>
+            <UserCheck className={`w-3.5 h-3.5 stroke-[1.5] group-hover:scale-105 transition-transform ${activeTab === "chat" ? "text-white" : "text-gray-900"}`} />
+            <span className="tracking-tight font-normal">Chat Acadêmico</span>
           </button>
 
           {/* Grupo de Áudio: Ouvir Texto + Controles Compactos Elegantes */}
@@ -3546,15 +3546,15 @@ ${latexChapters}
                   onClick={() => setActiveTab("editor")} 
                   variant="ghost" 
                   size="sm" 
-                  className={`text-xs h-7 px-3 font-extrabold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  className={`text-xs h-7 px-3 font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === "editor" || activeTab === "generator" 
-                      ? "bg-white text-blue-700 shadow-xs border border-blue-200/60" 
+                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-xs" 
                       : "text-gray-700 hover:bg-gray-200/60"
                   }`}
                   title="Exibir Documento Acadêmico no Palco"
                 >
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  Documento
+                  <FileText className={`w-4 h-4 ${activeTab === "editor" || activeTab === "generator" ? "text-white" : "text-blue-600"}`} />
+                  <span className={activeTab === "editor" || activeTab === "generator" ? "text-white font-bold" : "text-gray-700"}>Documento</span>
                 </Button>
                 <Button 
                   onClick={handleUndo}
@@ -3581,11 +3581,15 @@ ${latexChapters}
                   disabled={isLoading || !generatedText} 
                   variant="ghost" 
                   size="sm" 
-                  className="text-[11px] h-7 px-2 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap"
-                  title="Corrigir Ortografia e Gramática"
+                  className="text-[11px] h-7 px-2.5 font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg whitespace-nowrap bg-emerald-50/50 border border-emerald-200/80"
+                  title="Corrigir Ortografia e Gramática com IA de Ponta"
                 >
-                  {isLoading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />}
-                  Ortografia
+                  {isLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-emerald-600" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                  )}
+                  <span>Ortografia IA</span>
                 </Button>
                 <Button 
                   size="sm" 
