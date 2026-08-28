@@ -3043,7 +3043,7 @@ ${latexChapters}
           {/* Botão de Créditos / PIX (Visível para todos os usuários) */}
           <button 
             onClick={() => setShowPixModal(true)}
-            className="h-7.5 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white px-3 rounded-lg text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+            className="h-8 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white px-3 rounded-lg text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
             title="Recarregar créditos via PIX"
           >
             <Coins className="w-3.5 h-3.5 text-white animate-bounce" />
@@ -3055,7 +3055,7 @@ ${latexChapters}
 
           {/* Indicador de Cota Própria para Chave Própria */}
           {(customGeminiKey || customOpenaiKey) && !isMaster ? (
-            <div className="h-7.5 flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 font-semibold text-[11px] px-2.5 rounded-lg shadow-2xs">
+            <div className="h-8 flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 font-semibold text-[11px] px-2.5 rounded-lg shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Cota Conectada</span>
             </div>
@@ -3064,22 +3064,22 @@ ${latexChapters}
           {/* Botão Chat Acadêmico */}
           <button 
             onClick={() => setActiveTab("chat")}
-            className={`h-7.5 flex items-center gap-1.5 px-3 rounded-lg text-xs font-medium shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
+            className={`h-8 flex items-center gap-1.5 px-3 rounded-lg text-xs shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
               activeTab === "chat" 
-                ? "bg-indigo-600 text-white shadow-xs" 
-                : "bg-white hover:bg-slate-100 text-gray-900 border border-gray-300"
+                ? "bg-indigo-600 text-white shadow-xs font-medium" 
+                : "bg-white hover:bg-slate-100 text-gray-900 border border-gray-300 font-normal"
             }`}
             title="Abrir Chat Acadêmico com IA"
           >
             <UserCheck className={`w-3.5 h-3.5 stroke-[1.5] group-hover:scale-105 transition-transform ${activeTab === "chat" ? "text-white" : "text-gray-900"}`} />
-            <span className="tracking-tight font-normal">Chat Acadêmico</span>
+            <span className="tracking-tight">Chat Acadêmico</span>
           </button>
 
           {/* Grupo de Áudio: Ouvir Texto + Controles Compactos Elegantes */}
-          <div className="flex items-center bg-amber-50/70 border border-amber-200/80 rounded-lg p-0.5 shadow-2xs gap-0.5">
+          <div className="h-8 flex items-center bg-amber-50/70 border border-amber-200/80 rounded-lg p-0.5 shadow-2xs gap-0.5">
             <button 
               onClick={handleToggleSpeech}
-              className={`h-6.5 flex items-center gap-1 px-2.5 rounded-md text-[11px] font-semibold transition-all active:scale-95 group ${
+              className={`h-7 flex items-center gap-1 px-2.5 rounded-md text-[11px] font-semibold transition-all active:scale-95 group ${
                 isSpeaking 
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs animate-pulse" 
                   : "hover:bg-amber-100/70 text-amber-900"
@@ -3112,7 +3112,7 @@ ${latexChapters}
                   setTimeout(() => setErrorMessage(""), 2000);
                 }
               }}
-              className="h-6.5 px-1.5 flex items-center gap-0.5 text-[10px] font-semibold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 rounded transition-all active:scale-90 select-none"
+              className="h-7 px-1.5 flex items-center gap-0.5 text-[10px] font-semibold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 rounded transition-all active:scale-90 select-none"
               title={`Alternar Gênero da Voz (Atual: ${speechGender === "female" ? "Feminina 👩" : "Masculina 👨"})`}
             >
               <span>{speechGender === "female" ? "👩" : "👨"}</span>
@@ -3129,7 +3129,7 @@ ${latexChapters}
                   speakSentenceAtIndex(currentSentenceIdxRef.current, nextRate, speechVolume, speechGender);
                 }
               }}
-              className="h-6.5 px-1.5 flex items-center justify-center text-[10.5px] font-bold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 rounded transition-all active:scale-90 select-none"
+              className="h-7 px-1.5 flex items-center justify-center text-[10.5px] font-bold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 rounded transition-all active:scale-90 select-none"
               title="Alternar Velocidade (1x, 1.25x, 1.5x, 2x)"
             >
               {speechRate}x
@@ -3146,7 +3146,7 @@ ${latexChapters}
                   setTimeout(() => handleToggleSpeech(), 100);
                 }
               }}
-              className="h-6.5 px-1 flex items-center justify-center text-[9.5px] font-medium text-amber-850 hover:bg-amber-100/80 rounded transition-all active:scale-90 select-none"
+              className="h-7 px-1.5 flex items-center justify-center text-[9.5px] font-medium text-amber-850 hover:bg-amber-100/80 rounded transition-all active:scale-90 select-none"
               title="Alternar Volume (100%, 75%, 50%)"
             >
               {Math.round(speechVolume * 100)}%
@@ -3156,7 +3156,7 @@ ${latexChapters}
           {/* Botão Slides (EMIA.SLIDES - Amarelo Pastel com Texto Branco) */}
           <button 
             onClick={handleOpenSlidesStudio} 
-            className={`h-7.5 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
+            className={`h-8 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group ${
               activeTab === "slides" 
                 ? "bg-amber-500 text-white shadow-xs ring-1 ring-amber-300" 
                 : "bg-amber-400/90 hover:bg-amber-500/90 text-white shadow-2xs border border-amber-300/40"
@@ -3170,7 +3170,7 @@ ${latexChapters}
           {/* Botão Trabalho em Grupo (Verde Claro Suave e Harmonioso) */}
           <button 
             onClick={() => setIsGroupMode(true)} 
-            className="h-7.5 flex items-center gap-1.5 bg-emerald-50/80 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-300/70 px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+            className="h-8 flex items-center gap-1.5 bg-emerald-50/80 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-300/70 px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
             title="Montar trabalho acadêmico feito em grupo com múltiplos alunos"
           >
             <Users className="w-3.5 h-3.5 text-emerald-700 stroke-[1.8] group-hover:scale-105 transition-transform" />
@@ -3180,7 +3180,7 @@ ${latexChapters}
           {/* Botão Perfil e Histórico (Índigo/Lavanda Elegante) */}
           <button 
             onClick={() => setShowProfileModal(true)}
-            className="h-7.5 flex items-center gap-1.5 bg-indigo-50/80 hover:bg-indigo-100/80 text-indigo-900 border border-indigo-200/80 px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
+            className="h-8 flex items-center gap-1.5 bg-indigo-50/80 hover:bg-indigo-100/80 text-indigo-900 border border-indigo-200/80 px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group"
             title="Ver perfil e histórico de trabalhos acadêmicos"
           >
             <User className="w-3.5 h-3.5 text-indigo-600 stroke-[1.8] group-hover:scale-105 transition-transform" />
@@ -3190,7 +3190,7 @@ ${latexChapters}
           {/* Botão Sair */}
           <button 
             onClick={handleLogout}
-            className="h-7.5 flex items-center gap-1 text-gray-500 hover:text-red-600 hover:bg-red-50/80 px-2 rounded-lg text-xs font-medium transition-all"
+            className="h-8 flex items-center gap-1 text-gray-500 hover:text-red-600 hover:bg-red-50/80 px-2.5 rounded-lg text-xs font-medium transition-all"
             title="Encerrar sessão"
           >
             <LogOut className="w-3.5 h-3.5 stroke-[1.8]" />
