@@ -4646,7 +4646,7 @@ ${latexChapters}
                             👧
                           </div>
                         )}
-                        <div className={`max-w-[85%] sm:max-w-[78%] px-4 py-3 rounded-2xl text-[13.5px] leading-relaxed font-sans shadow-xs transition-all ${
+                        <div className={`relative max-w-[85%] sm:max-w-[78%] px-4 py-3 rounded-2xl text-[13.5px] leading-relaxed font-sans shadow-xs transition-all group/bubble ${
                           msg.role === 'user' 
                             ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-br-xs font-medium' 
                             : 'bg-white border border-blue-100/80 text-slate-800 rounded-bl-xs shadow-sm font-normal'
@@ -4654,6 +4654,54 @@ ${latexChapters}
                           <div className={msg.role === 'user' ? '' : 'prose prose-sm max-w-none text-slate-800 font-sans'}>
                             <ReactMarkdown>{msg.text}</ReactMarkdown>
                           </div>
+
+                          {/* Botão Discreto no Cantinho: Inserir Resposta no Documento (Palco) */}
+                          {msg.role === 'assistant' && (
+                            <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] gap-2">
+                              <span className="text-[10px] text-slate-400 font-medium select-none">EMIA</span>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(msg.text);
+                                    setErrorMessage("📋 Resposta copiada!");
+                                    setTimeout(() => setErrorMessage(""), 2500);
+                                  }}
+                                  title="Copiar resposta"
+                                  className="px-2 py-0.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-1 text-[10px] font-medium"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copiar</span>
+                                </button>
+                                
+                                <button
+                                  onClick={() => {
+                                    // Limpa anotações ou avisos automáticos
+                                    let cleanContent = msg.text
+                                      .replace(/\*\(\✨ Esta seção foi adicionada ao seu documento no palco!\)\*/gi, '')
+                                      .trim();
+                                    
+                                    if (!cleanContent) return;
+
+                                    if (generatedText && generatedText.trim()) {
+                                      const updatedDoc = generatedText + "\n\n--- [QUEBRA DE PÁGINA] ---\n\n" + cleanContent;
+                                      updateGeneratedTextWithHistory(updatedDoc);
+                                    } else {
+                                      updateGeneratedTextWithHistory(cleanContent);
+                                    }
+
+                                    setErrorMessage("✅ Resposta inserida no seu documento (palco)!");
+                                    setTimeout(() => setErrorMessage(""), 3500);
+                                    logAction("Resposta do chat inserida no documento", cleanContent.substring(0, 200));
+                                  }}
+                                  title="Inserir esta resposta diretamente nas páginas do documento no palco"
+                                  className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 hover:border-blue-600 transition-all flex items-center gap-1 text-[10px] font-bold shadow-2xs active:scale-95"
+                                >
+                                  <FileText className="w-3 h-3" />
+                                  <span>Inserir no documento</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
