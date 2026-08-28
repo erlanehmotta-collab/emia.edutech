@@ -4161,13 +4161,35 @@ ${latexChapters}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {chatHistory.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-8">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center mb-3 shadow-md shadow-blue-500/25 text-2xl animate-bounce">
-                        🤖
+                      {/* Avatar Futurista & Amigável da EMIA */}
+                      <div className="relative mb-4 group cursor-pointer">
+                        {/* Efeito Glow / Aura Futurista */}
+                        <div className="absolute -inset-1.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 rounded-3xl blur-md opacity-70 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
+                        
+                        {/* Card do Mascote */}
+                        <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-blue-900 border border-cyan-400/40 flex items-center justify-center shadow-xl shadow-blue-500/20">
+                          {/* Ícone Futurista com Faíscas Inteligentes */}
+                          <div className="relative flex items-center justify-center">
+                            <Bot className="w-8 h-8 text-cyan-300 stroke-[1.8] drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse" />
+                            <Sparkles className="w-4 h-4 text-amber-300 absolute -top-2 -right-2 animate-spin duration-3000 drop-shadow-[0_0_6px_rgba(252,211,77,0.9)]" />
+                          </div>
+                        </div>
+
+                        {/* Badge de Status Online Futurista */}
+                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white shadow-xs"></span>
+                        </span>
                       </div>
-                      <h3 className="text-lg font-black text-gray-900 tracking-tight">Oi, eu sou a EMIA! 🎓✨</h3>
-                      <p className="text-xs font-semibold text-blue-600 mb-1">Mascote e Assistente Inteligente da EDUTECH</p>
-                      <p className="text-xs text-gray-500 mt-1 mb-6">
-                        Tô aqui pra conversar sobre o seu trabalho. O que você quer fazer agora?
+
+                      <h3 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-1.5 justify-center">
+                        Oi, eu sou a EMIA! <span className="text-xl">✨</span>
+                      </h3>
+                      <p className="text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1">
+                        Mascote & IA Acadêmica da EDUTECH
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 mb-6 max-w-sm">
+                        Tô pronta pra trocar uma ideia sobre o seu trabalho! O que você quer fazer agora?
                       </p>
 
                       {/* Botões informais de ação rápida */}
