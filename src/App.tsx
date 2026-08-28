@@ -5547,18 +5547,54 @@ ${latexChapters}
               {generatedReference && (
                 <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                   <p className="text-sm text-gray-800 font-serif mb-3 select-all">{generatedReference}</p>
-                  <Button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(generatedReference);
-                      setErrorMessage("Referência copiada para a área de transferência!");
-                      setTimeout(() => setErrorMessage(""), 3000);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                  >
-                    <Copy className="w-4 h-4 mr-2" /> Copiar Referência
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedReference);
+                        setErrorMessage("Referência copiada para a área de transferência!");
+                        setTimeout(() => setErrorMessage(""), 3000);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="w-full font-semibold text-xs text-slate-700"
+                    >
+                      <Copy className="w-4 h-4 mr-2" /> Copiar Referência
+                    </Button>
+
+                    <Button
+                      onClick={() => {
+                        if (!generatedReference) return;
+                        
+                        let currentDoc = generatedText || "";
+                        
+                        // Verifica se o documento já possui uma seção de referências
+                        const refHeaderRegex = /(#+\s*REFERÊNCIAS|REFERÊNCIAS|REFERENCIAS)/i;
+                        if (refHeaderRegex.test(currentDoc)) {
+                          // Se já possui a seção REFERÊNCIAS, anexa a referência formatada ao final dessa seção
+                          const updated = currentDoc.replace(refHeaderRegex, (match) => {
+                            return `${match}\n\n${generatedReference}`;
+                          });
+                          updateGeneratedTextWithHistory(updated);
+                        } else {
+                          // Se não possui, cria a seção REFERÊNCIAS com quebra de página
+                          const updated = currentDoc.trim() 
+                            ? `${currentDoc.trim()}\n\n--- [QUEBRA DE PÁGINA] ---\n\nREFERÊNCIAS\n\n${generatedReference}`
+                            : `REFERÊNCIAS\n\n${generatedReference}`;
+                          updateGeneratedTextWithHistory(updated);
+                        }
+
+                        setShowReferenceModal(false);
+                        setActiveTab("editor");
+                        setErrorMessage("✅ Referência inserida no documento com sucesso!");
+                        setTimeout(() => setErrorMessage(""), 3500);
+                        logAction("Referência inserida no documento ABNT", generatedReference);
+                      }}
+                      size="sm"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5"
+                    >
+                      <Plus className="w-4 h-4 mr-1" /> Inserir no Texto (Palco)
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
