@@ -197,12 +197,27 @@ export default function App() {
   const [chatMessage, setChatMessage] = useState("");
   const [isChatting, setIsChatting] = useState(false);
 
+  // Estado do Quiz Interativo Passo a Passo com Gabarito e Explicação
+  const [activeQuiz, setActiveQuiz] = useState<{
+    isActive: boolean;
+    questions: Array<{
+      id: number;
+      question: string;
+      options: Array<{ letter: string; text: string }>;
+      correctAnswer: string;
+      explanation: string;
+    }>;
+    currentIndex: number;
+    userAnswers: Array<{ selected: string; isCorrect: boolean; explanation: string; question: string }>;
+    isFinished: boolean;
+  } | null>(null);
+
   // Rolagem automática para a última mensagem no Chat Acadêmico
   useEffect(() => {
     if (chatMessagesEndRef.current) {
       chatMessagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chatHistory, isChatting]);
+  }, [chatHistory, isChatting, activeQuiz]);
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -1819,6 +1834,128 @@ Gere a referência bibliográfica COMPLETA e FORMAL a partir da fonte abaixo:
     if (attachmentRef.current) attachmentRef.current.value = "";
   };
 
+  // Inicia o Quiz Interativo estruturado com IA a partir do texto do palco
+  const handleStartInteractiveQuiz = async () => {
+    setIsChatting(true);
+    setActiveQuiz(null);
+    const userMsg = "🎯 Preparar um Quiz interativo sobre este trabalho!";
+    setChatHistory(prev => [...prev, { role: 'user' as const, text: userMsg }]);
+
+    try {
+      const quizGenPrompt = `Você é a EMIA, assistente e tutora da EDUTECH.
+Com base no trabalho acadêmico fornecido, elabore um QUIZ INTERATIVO com exatamente 4 perguntas de múltipla escolha para testar a compreensão do aluno sobre os conceitos centrais do texto.
+
+Responda OBRIGATORIAMENTE em formato JSON VÁLIDO puro (sem crases de markdown no início ou no fim, apenas o JSON):
+[
+  {
+    "id": 1,
+    "question": "Texto claro e objetivo da pergunta 1?",
+    "options": [
+      { "letter": "A", "text": "Texto da alternativa A" },
+      { "letter": "B", "text": "Texto da alternativa B" },
+      { "letter": "C", "text": "Texto da alternativa C" },
+      { "letter": "D", "text": "Texto da alternativa D" }
+    ],
+    "correctAnswer": "A",
+    "explanation": "Explicação pedagógica e clara do porquê a alternativa A é a correta com base no texto."
+  }
+]
+
+DOCUMENTO ACADÊMICO:
+${generatedText ? generatedText.substring(0, 4000) : "Metodologia científica, normas ABNT e estruturação acadêmica."}`;
+
+      let rawJson = "";
+      try {
+        rawJson = await callGeminiDirectly(quizGenPrompt, customGeminiKey, "gemini-3.6-flash");
+      } catch (e) {
+        rawJson = await callGeminiDirectly(quizGenPrompt, customGeminiKey, "gemini-3.5-flash-lite");
+      }
+
+      const cleanJson = rawJson.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const parsedQuestions = JSON.parse(cleanJson);
+
+      if (Array.isArray(parsedQuestions) && parsedQuestions.length > 0) {
+        setActiveQuiz({
+          isActive: true,
+          questions: parsedQuestions,
+          currentIndex: 0,
+          userAnswers: [],
+          isFinished: false
+        });
+
+        setChatHistory(prev => [...prev, { 
+          role: 'assistant' as const, 
+          text: `🎉 **Oba! Preparei um Quiz especial com ${parsedQuestions.length} perguntas sobre o seu trabalho!**\n\nResponda clicando nas alternativas abaixo. Conforme você clica, a pergunta muda automaticamente e no final eu te mostro seu gabarito com a nota e as explicações detalhadas! Vamos lá? 👇` 
+        }]);
+      } else {
+        throw new Error("Formato inválido retornado pela IA.");
+      }
+    } catch (err) {
+      console.error("Erro ao gerar quiz estruturado:", err);
+      // Fallback
+      handleSendMessage(undefined, "Cria um quiz com perguntas de múltipla escolha sobre o meu trabalho.");
+    } finally {
+      setIsChatting(false);
+    }
+  };
+
+  // Processa a resposta do clique na alternativa do Quiz
+  const handleQuizOptionSelect = (selectedLetter: string) => {
+    if (!activeQuiz || activeQuiz.isFinished) return;
+
+    const currentQ = activeQuiz.questions[activeQuiz.currentIndex];
+    const isCorrect = selectedLetter.toUpperCase() === currentQ.correctAnswer.toUpperCase();
+    const newAnswers = [
+      ...activeQuiz.userAnswers,
+      {
+        selected: selectedLetter,
+        isCorrect,
+        explanation: currentQ.explanation,
+        question: currentQ.question
+      }
+    ];
+
+    const nextIndex = activeQuiz.currentIndex + 1;
+    const isLastQuestion = nextIndex >= activeQuiz.questions.length;
+
+    if (isLastQuestion) {
+      // Finaliza o Quiz e calcula a pontuação
+      const correctCount = newAnswers.filter(a => a.isCorrect).length;
+      const totalCount = activeQuiz.questions.length;
+      const percentage = Math.round((correctCount / totalCount) * 100);
+
+      setActiveQuiz({
+        ...activeQuiz,
+        currentIndex: nextIndex,
+        userAnswers: newAnswers,
+        isFinished: true
+      });
+
+      // Mensagem explicativa no chat
+      const feedbackEmoji = percentage >= 75 ? "🏆 Mandou muito bem!" : percentage >= 50 ? "👏 Bom resultado!" : "📚 Vale a pena revisar!";
+      const explanationReport = activeQuiz.questions.map((q, idx) => {
+        const ans = newAnswers[idx];
+        return `**Questão ${idx + 1}: ${q.question}**\n- Sua resposta: **Alternativa ${ans.selected}** ${ans.isCorrect ? '✅ (Correta!)' : `❌ (Incorreta - Gabarito: **${q.correctAnswer}**)`}\n- 💡 *Explicação*: ${q.explanation}\n`;
+      }).join('\n');
+
+      setChatHistory(prev => [
+        ...prev,
+        {
+          role: 'assistant' as const,
+          text: `### 🎯 Resultado do seu Quiz:\n\n${feedbackEmoji}\nVocê acertou **${correctCount} de ${totalCount} questões** (${percentage}% de aproveitamento)!\n\n---\n\n### 📝 Gabarito & Explicação Completa:\n\n${explanationReport}\n\n*Quer fazer outro quiz ou tem alguma dúvida sobre os pontos explicados? É só me falar!* ✨`
+        }
+      ]);
+    } else {
+      // Passa para a próxima pergunta
+      setActiveQuiz({
+        ...activeQuiz,
+        currentIndex: nextIndex,
+        userAnswers: newAnswers,
+        isFinished: false
+      });
+    }
+  };
+
   const handleSendMessage = async (e?: React.FormEvent, customMsg?: string) => {
     if (e) e.preventDefault();
     const msgToSend = (customMsg !== undefined ? customMsg : chatMessage).trim();
@@ -1873,6 +2010,7 @@ GUIA RÁPIDO DO APP:
 - Inserir Capa & Sumário Dinâmico: Criação instantânea de elementos pré-textuais.
 
 4. HABILIDADES ESPECIAIS DO CHAT (CRIATIVAS E DIDÁTICAS):
+- 🎯 QUIZ INTERATIVO CLICÁVEL: Quando o aluno pedir um Quiz, gere 3 a 5 perguntas de múltipla escolha com 4 alternativas cada (A, B, C, D). Formate as alternativas claramente iniciando com "A) ", "B) ", "C) " e "D) ". Não revele o gabarito logo de cara, incentive o aluno a responder!
 - 🎙️ Roteiro de PODCAST: Se solicitado, crie um roteiro de podcast dinâmico com 2 apresentadores (Host e Especialista), linguagem leve, descontraída e didática explicando todo o conteúdo acadêmico.
 - 🎵 MÚSICA CHICLETE: Se solicitado, componha uma letra de música chiclete (estilo pop/refrão marcante ou paródia) com rimas fáceis para memorizar todos os conceitos e fórmulas do tema!
 - 🎨 HISTÓRIA EM QUADRINHOS (HQ): Se solicitado, crie um roteiro em quadrinhos com descrição visual de cada quadro (painel), personagens acadêmicos carismáticos, balões de fala e onomatopeias.
@@ -4211,6 +4349,14 @@ ${latexChapters}
                         </button>
 
                         <button
+                          onClick={handleStartInteractiveQuiz}
+                          className="p-3 bg-white hover:bg-amber-50 border border-gray-200 hover:border-amber-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-amber-800 transition-all flex items-center gap-2 shadow-2xs group"
+                        >
+                          <span>🎯</span>
+                          <span>Fazer um Quiz Interativo</span>
+                        </button>
+
+                        <button
                           onClick={() => handleSendMessage(undefined, "Como uso os campos do app e o botão de Trabalho em Grupo?")}
                           className="p-3 bg-white hover:bg-emerald-50 border border-gray-200 hover:border-emerald-300 rounded-xl text-xs font-semibold text-gray-700 hover:text-emerald-800 transition-all flex items-center gap-2 shadow-2xs group"
                         >
@@ -4245,19 +4391,75 @@ ${latexChapters}
                     </div>
                   ) : (
                     chatHistory.map((msg, idx) => (
-                      <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-4 rounded-xl text-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm'}`}>
-                          <div className={msg.role === 'user' ? '' : 'prose prose-sm'}>
+                      <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+                        {msg.role === 'assistant' && (
+                          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center text-xs shadow-xs shrink-0 mb-1">
+                            🤖
+                          </div>
+                        )}
+                        <div className={`max-w-[85%] sm:max-w-[78%] px-4 py-3 rounded-2xl text-[13.5px] leading-relaxed font-sans shadow-xs transition-all ${
+                          msg.role === 'user' 
+                            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-br-xs font-medium' 
+                            : 'bg-white border border-blue-100/80 text-slate-800 rounded-bl-xs shadow-sm font-normal'
+                        }`}>
+                          <div className={msg.role === 'user' ? '' : 'prose prose-sm max-w-none text-slate-800 font-sans'}>
                             <ReactMarkdown>{msg.text}</ReactMarkdown>
                           </div>
                         </div>
                       </div>
                     ))
                   )}
+
+                  {/* Card do Quiz Ativo com Perguntas Dinâmicas e Botões Clicáveis */}
+                  {activeQuiz && activeQuiz.isActive && !activeQuiz.isFinished && activeQuiz.questions[activeQuiz.currentIndex] && (
+                    <div className="my-3 p-5 bg-gradient-to-br from-blue-50 via-indigo-50/50 to-white border-2 border-blue-300/80 rounded-3xl shadow-md animate-fadeIn font-sans">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="px-3 py-1 bg-blue-600 text-white font-extrabold text-xs rounded-full shadow-xs">
+                          Pergunta {activeQuiz.currentIndex + 1} de {activeQuiz.questions.length}
+                        </span>
+                        <span className="text-xs font-bold text-blue-600">
+                          {Math.round(((activeQuiz.currentIndex) / activeQuiz.questions.length) * 100)}% concluído
+                        </span>
+                      </div>
+
+                      {/* Barra de Progresso do Quiz */}
+                      <div className="w-full bg-blue-100 h-2 rounded-full overflow-hidden mb-4">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full transition-all duration-300"
+                          style={{ width: `${((activeQuiz.currentIndex) / activeQuiz.questions.length) * 100}%` }}
+                        />
+                      </div>
+
+                      <h4 className="text-sm font-bold text-slate-900 mb-4 leading-snug">
+                        {activeQuiz.questions[activeQuiz.currentIndex].question}
+                      </h4>
+
+                      {/* Alternativas Clicáveis */}
+                      <div className="space-y-2">
+                        {activeQuiz.questions[activeQuiz.currentIndex].options.map((opt, oIdx) => (
+                          <button
+                            key={oIdx}
+                            onClick={() => handleQuizOptionSelect(opt.letter)}
+                            className="w-full p-3 bg-white hover:bg-blue-600 text-slate-800 hover:text-white border border-slate-200 hover:border-blue-600 rounded-2xl text-xs font-semibold text-left transition-all active:scale-98 shadow-xs flex items-center gap-3 group"
+                          >
+                            <span className="w-7 h-7 rounded-xl bg-blue-100 group-hover:bg-white text-blue-700 group-hover:text-blue-700 font-extrabold flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                              {opt.letter}
+                            </span>
+                            <span className="flex-1 leading-snug">{opt.text}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {isChatting && (
-                    <div className="flex justify-start">
-                      <div className="max-w-[80%] p-4 rounded-xl text-sm bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm flex items-center">
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-600 mr-2" /> Gerando resposta...
+                    <div className="flex justify-start items-end gap-2">
+                      <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center text-xs shadow-xs shrink-0 animate-bounce">
+                        🤖
+                      </div>
+                      <div className="max-w-[80%] px-4 py-3 rounded-2xl text-[13px] font-sans bg-white border border-blue-100 text-slate-700 rounded-bl-xs shadow-xs flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                        <span className="font-medium text-slate-600">A EMIA tá preparando... ✨</span>
                       </div>
                     </div>
                   )}
