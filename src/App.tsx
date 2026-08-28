@@ -212,12 +212,14 @@ export default function App() {
     isFinished: boolean;
   } | null>(null);
 
-  // Rolagem automática para a última mensagem no Chat Acadêmico
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
+
+  // Rolagem automática configurável para a última mensagem no Chat Acadêmico
   useEffect(() => {
-    if (chatMessagesEndRef.current) {
+    if (isAutoScrollEnabled && chatMessagesEndRef.current) {
       chatMessagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chatHistory, isChatting, activeQuiz]);
+  }, [chatHistory, isChatting, activeQuiz, isAutoScrollEnabled]);
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -4295,7 +4297,53 @@ ${latexChapters}
             )}
             
             {activeTab === "chat" && (
-              <div className="flex flex-col h-full bg-gray-50/30">
+              <div className="flex flex-col h-full bg-slate-50/50">
+                {/* Barra de Controles Superiores do Chat: Limpar e Alternar Rolagem Automática */}
+                <div className="px-4 py-2 bg-white border-b border-slate-200/80 flex items-center justify-between gap-2 shadow-2xs font-sans">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center text-xs shadow-2xs">
+                      🤖
+                    </div>
+                    <span className="text-xs font-bold text-slate-800">Chat com a EMIA</span>
+                    {activeQuiz && activeQuiz.isActive && !activeQuiz.isFinished && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                        Quiz em andamento
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Botão Liga/Desliga Rolagem Automática */}
+                    <button
+                      onClick={() => setIsAutoScrollEnabled(prev => !prev)}
+                      title={isAutoScrollEnabled ? "Desativar Rolagem Automática" : "Ativar Rolagem Automática"}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-2xs ${
+                        isAutoScrollEnabled 
+                          ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" 
+                          : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
+                      }`}
+                    >
+                      <ArrowDownCircle className={`w-3.5 h-3.5 ${isAutoScrollEnabled ? "text-blue-600 animate-bounce" : "text-slate-400"}`} />
+                      <span>{isAutoScrollEnabled ? "Auto-Scroll: ON" : "Auto-Scroll: OFF"}</span>
+                    </button>
+
+                    {/* Botão Limpar Conversa */}
+                    <button
+                      onClick={() => {
+                        setChatHistory([]);
+                        setActiveQuiz(null);
+                        setChatMessage("");
+                        logAction("Conversa do Chat Limpa");
+                      }}
+                      title="Limpar toda a conversa e reiniciar com a EMIA"
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-600 hover:text-red-600 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition-all flex items-center gap-1 shadow-2xs group"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-500 transition-colors" />
+                      <span>Limpar Conversa</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {chatHistory.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-8">
