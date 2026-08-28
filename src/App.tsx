@@ -7,7 +7,7 @@ import {
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check, Quote,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
   Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight, Volume2, VolumeX, Mic, MicOff,
-  ArrowDownCircle, Trash2, Bot
+  ArrowDownCircle, Trash2, Bot, Paperclip, FileUp
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -309,10 +309,26 @@ REQUISITOS MANDATÓRIOS:
   const attachmentRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', text: string}[]>([]);
+  const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', text: string}[]>(() => {
+    try {
+      const saved = localStorage.getItem("emia_chat_history");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [chatMessage, setChatMessage] = useState("");
   const [isChatting, setIsChatting] = useState(false);
+  const [chatAttachment, setChatAttachment] = useState<{ name: string; content: string } | null>(null);
+  const chatFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("emia_chat_history", JSON.stringify(chatHistory));
+    } catch (e) {
+      console.warn("Erro ao salvar histórico do chat:", e);
+    }
+  }, [chatHistory]);
 
   // Estado do Quiz Interativo Passo a Passo com Gabarito e Explicação
   const [activeQuiz, setActiveQuiz] = useState<{
@@ -2144,95 +2160,79 @@ ${generatedText ? generatedText.substring(0, 4000) : "Metodologia científica, n
   const handleSendMessage = async (e?: React.FormEvent, customMsg?: string) => {
     if (e) e.preventDefault();
     const msgToSend = (customMsg !== undefined ? customMsg : chatMessage).trim();
-    if (!msgToSend) return;
+    if (!msgToSend && !chatAttachment) return;
+
+    const attachmentInfo = chatAttachment ? `\n\n[DOCUMENTO ANEXADO: ${chatAttachment.name}]\n${chatAttachment.content.substring(0, 4000)}\n[/DOCUMENTO ANEXADO]` : "";
+    const fullUserText = msgToSend + (chatAttachment ? ` (📎 Arquivo: ${chatAttachment.name})` : "");
 
     setChatMessage("");
-    const updatedHistory = [...chatHistory, { role: 'user' as const, text: msgToSend }];
+    setChatAttachment(null);
+    const updatedHistory = [...chatHistory, { role: 'user' as const, text: fullUserText }];
     setChatHistory(updatedHistory);
     setIsChatting(true);
-    logAction("Envio de instrução/mensagem no Chat de Edição");
+    logAction("Envio de instrução/mensagem no Chat com a EMIA");
 
     try {
       let assistantResponse = "";
 
       // Chamada direta rápida ao Gemini
       try {
-        const chatPrompt = `Você é a EMIA, a mascote e assistente inteligente da EDUTECH! 🤖🎓
-Seu tom de voz com o aluno é super amigável, informal, acolhedor, prestativo e direto ao ponto (sem enrolação e sem respostas gigantescas, a menos que o aluno peça um conteúdo detalhado).
+        const chatPrompt = `Você é a EMIA, a mentora e assistente acadêmica inteligente da EDUTECH! 👩‍🎓✨
+Seu tom de voz com o aluno é super amigável, informal, acolhedor, objetivo e DIRETO AO PONTO.
 
-Sua missão é:
-- Trocar uma ideia sobre o trabalho acadêmico gerado na tela.
-- Responder dúvidas sobre o texto ou sobre normas ABNT.
-- Criar quizzes divertidos, podcasts, músicas chicletes, quadrinhos ou mapas mentais quando solicitado.
-- Orientar como usar os botões e ferramentas do app de forma simples e prática.
+🚨 DIRETRIZES FUNDAMENTAIS DO CHAT:
+1. RESPOSTAS CURTAS, DIRETAS E NÃO CANSATIVAS: Mantenha suas explicações em 2 a 4 parágrafos curtos e dinâmicos, usando tópicos claros. Não gere blocos de texto cansativos de ler no chat.
+2. CONSTRUÇÃO DO DOCUMENTO ETAPA POR ETAPA PARA O PALCO:
+   - Se o aluno estiver desenvolvendo, gerando, continuando ou corrigindo o trabalho acadêmico ou uma seção (ex: "escreva a introdução", "faça a metodologia", "adicione os resultados", "crie a conclusão"):
+   - Explique brevemente o que foi feito no chat e inclua o texto acadêmico formatado dentro do bloco especial:
+\`\`\`documento
+[TEXTO ACADÊMICO COMPLETO DA SEÇÃO OU DO TRABALHO FORMATADO ABNT]
+\`\`\`
+   - O sistema irá automaticamente enviar esse texto para o palco de folhas A4 e mantê-lo aguardando as próximas etapas!
+3. ZERO ALUCINAÇÃO: Nunca invente fatos ou dados falsos. Use referências sólidas da literatura acadêmica e normas ABNT (NBR 14724, NBR 6023:2025, NBR 10520:2023).
+4. AUXÍLIO COM ARQUIVOS: Se o usuário anexou um arquivo ou material de apoio, use-o como base para aprofundar e redigir a etapa solicitada.
 
-🚨 REGRA MESTRE INVIOLÁVEL DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
-- Você está TERMINANTEMENTE PROIBIDA de inventar informações, criar dados fictícios, alucinar fontes ou responder com achismos infundados.
-- Use SOMENTE informações oriundas de artigos científicos consolidados, periódicos indexados (SciELO, Scopus, Google Scholar, Capes) e fontes conceituadas (IBGE, OMS, IPEA, Universidades).
-
-GUIA RÁPIDO DO APP:
-
-1. BOTÃO "TRABALHO EM GRUPO" (Topo):
-- Finalidade: Permite que equipes de alunos reúnam e montem automaticamente um trabalho completo em conformidade com a ABNT.
-- Como funciona:
-  a) Nome dos Integrantes: Insira o nome de cada membro da equipe (o app adiciona automaticamente todos na Capa e Folha de Rosto).
-  b) Tipo de Documento: Escolha entre TCC, Artigo Científico, Relatório Técnico, Projeto de Pesquisa ou Personalizado.
-  c) Slots de Seções: Cada integrante envia o arquivo (PDF, Word, TXT) correspondente à sua parte (ex: Introdução, Metodologia, Resultados, Conclusão).
-  d) Botão "Montar Trabalho Completo": O sistema extrai os textos, gera a Capa Oficial com todos os autores, organiza na ordem canônica da ABNT, aplica quebras de página automáticas e normaliza citações e referências.
-
-2. CAMPOS DO FORMULÁRIO PRINCIPAL ("Novo Trabalho"):
-- Título e Subtítulo: Definem o tema central da pesquisa.
-- Tipo de Documento: Ajusta a estrutura ABNT (Artigo, TCC, Monografia, Relatório, Resumo NBR 6028, Redação ENEM).
-- Instruções Personalizadas (Prompt): Onde o usuário detalha objetivos, tópicos obrigatórios ou dados específicos. Tem prioridade máxima!
-- Base de Conhecimento: Permite anexar PDFs, imagens ou documentos de referência.
-- Dados do Trabalho (Perfil): Instituição, Curso, Autor, Orientador, Cidade e Ano (usados para Capa e Folha de Rosto).
-
-3. FERRAMENTAS DO TOPO E EDITOR:
-- 🔊 Ouvir Texto: Player com voz humana neural (Feminina 👩 / Masculina 👨), controle de velocidade (1x, 1.5x, 2x) e volume. Pula a capa e lê o conteúdo.
-- 📽️ Slides (EMIA.SLIDES): Cria cartões de apresentação dinâmicos, exporta para PowerPoint (.pptx) e Google Slides.
-- ✍️ Ortografia & Humanizar: Corrige a gramática e remove clichês de IA para Turnitin.
-- PDF A4, Word (.docx) e LaTeX: Exportação em alta fidelidade com paginação ABNT.
-- Inserir Capa & Sumário Dinâmico: Criação instantânea de elementos pré-textuais.
-
-4. HABILIDADES ESPECIAIS DO CHAT (CRIATIVAS E DIDÁTICAS):
-- 🎯 QUIZ INTERATIVO CLICÁVEL: Quando o aluno pedir um Quiz, gere 3 a 5 perguntas de múltipla escolha com 4 alternativas cada (A, B, C, D). Formate as alternativas claramente iniciando com "A) ", "B) ", "C) " e "D) ". Não revele o gabarito logo de cara, incentive o aluno a responder!
-- 🎙️ Roteiro de PODCAST: Se solicitado, crie um roteiro de podcast dinâmico com 2 apresentadores (Host e Especialista), linguagem leve, descontraída e didática explicando todo o conteúdo acadêmico.
-- 🎵 MÚSICA CHICLETE: Se solicitado, componha uma letra de música chiclete (estilo pop/refrão marcante ou paródia) com rimas fáceis para memorizar todos os conceitos e fórmulas do tema!
-- 🎨 HISTÓRIA EM QUADRINHOS (HQ): Se solicitado, crie um roteiro em quadrinhos com descrição visual de cada quadro (painel), personagens acadêmicos carismáticos, balões de fala e onomatopeias.
-- 🧠 MAPA MENTAL: Se solicitado, gere a estrutura hierárquica completa de Mapa Mental, incluindo diagrama formatado em Markdown ou código Mermaid (ex: \`\`\`mermaid graph TD ... \`\`\`).
-
-${generatedText ? `[DOCUMENTO ATUAL DO USUÁRIO]\n${generatedText.substring(0, 3500)}\n[/DOCUMENTO ATUAL]\n` : ""}
+${generatedText ? `[DOCUMENTO ATUAL NO PALCO]\n${generatedText.substring(0, 4000)}\n[/DOCUMENTO ATUAL NO PALCO]\n` : ""}
+${attachmentInfo}
 [HISTÓRICO RECENTE]
-${chatHistory.slice(-4).map(h => `${h.role === 'user' ? 'Aluno' : 'Assistente'}: ${h.text}`).join('\n')}
+${chatHistory.slice(-5).map(h => `${h.role === 'user' ? 'Aluno' : 'EMIA'}: ${h.text}`).join('\n')}
 Aluno: ${msgToSend}
-Assistente:`;
+EMIA:`;
 
         assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.6-flash");
       } catch (directErr) {
-        console.warn("Tentativa direta falhou, tentando rota /api/chat:", directErr);
+        console.warn("Tentativa direta falhou, tentando fallback gemini-3.5-flash-lite:", directErr);
         try {
-          const res = await fetch("/api/chat", {
-            method: "POST",
-            headers: getApiHeaders(),
-            body: JSON.stringify({ 
-              message: userMessage, 
-              history: chatHistory.slice(-4),
-              context: generatedText ? generatedText.substring(0, 3500) : ""
-            }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && data.text) {
-              assistantResponse = data.text;
-            }
-          }
+          assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.5-flash-lite");
         } catch (serverErr) {
           console.error("Falha em todas as vias do chat:", serverErr);
         }
       }
 
       if (assistantResponse) {
-        setChatHistory([...updatedHistory, { role: 'assistant', text: assistantResponse }]);
+        // Detecta se a EMIA gerou conteúdo para o palco do documento
+        const docBlockMatch = assistantResponse.match(/```(?:documento|texto|artigo|abnt)?\n([\s\S]*?)```/i);
+        if (docBlockMatch && docBlockMatch[1].trim().length > 40) {
+          const newDocSection = docBlockMatch[1].trim();
+          const cleanAssistantChat = assistantResponse.replace(/```(?:documento|texto|artigo|abnt)?\n[\s\S]*?```/i, '').trim() + "\n\n*(✨ Esta seção foi adicionada ao seu documento no palco!)*";
+          
+          // Se já existe texto no palco, anexa a nova etapa com quebra de página ou concatenação inteligente
+          if (generatedText && generatedText.trim()) {
+            // Verifica se é uma continuação ou nova seção
+            if (generatedText.includes(newDocSection)) {
+              // Já contém
+            } else {
+              const updatedDoc = generatedText + "\n\n--- [QUEBRA DE PÁGINA] ---\n\n" + newDocSection;
+              updateGeneratedTextWithHistory(updatedDoc);
+            }
+          } else {
+            updateGeneratedTextWithHistory(newDocSection);
+          }
+
+          setChatHistory([...updatedHistory, { role: 'assistant', text: cleanAssistantChat || assistantResponse }]);
+        } else {
+          setChatHistory([...updatedHistory, { role: 'assistant', text: assistantResponse }]);
+        }
       } else {
         setErrorMessage("Erro ao gerar resposta do chat. Tente novamente.");
       }
@@ -4726,22 +4726,78 @@ ${latexChapters}
                   {/* Elemento de rolagem automática para a última mensagem */}
                   <div ref={chatMessagesEndRef} />
                 </div>
-                <div className="p-4 bg-white border-t border-gray-200">
-                  <form onSubmit={handleSendMessage} className="flex gap-2 mb-2">
+                <div className="p-3 bg-white border-t border-gray-200">
+                  {/* Badge de Documento Anexado no Chat */}
+                  {chatAttachment && (
+                    <div className="mb-2 flex items-center justify-between bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-xs text-blue-800">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Paperclip className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span className="font-bold">Anexo:</span>
+                        <span className="truncate max-w-[280px]">{chatAttachment.name}</span>
+                      </div>
+                      <button 
+                        onClick={() => setChatAttachment(null)}
+                        className="text-slate-400 hover:text-red-600 text-xs font-bold px-1"
+                        title="Remover anexo"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSendMessage} className="flex gap-2 mb-2 items-center">
+                    {/* Input Oculto de Upload para o Chat */}
+                    <input 
+                      type="file" 
+                      ref={chatFileRef}
+                      className="hidden"
+                      accept=".pdf,.docx,.txt,.doc,.md"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          let textContent = "";
+                          if (file.name.endsWith(".txt") || file.name.endsWith(".md")) {
+                            textContent = await file.text();
+                          } else {
+                            textContent = `[Arquivo ${file.name} recebido para auxiliar na redação do trabalho acadêmico]`;
+                          }
+                          setChatAttachment({ name: file.name, content: textContent });
+                          setErrorMessage(`📎 Arquivo "${file.name}" anexado ao chat com a EMIA!`);
+                          setTimeout(() => setErrorMessage(""), 3000);
+                        } catch (err) {
+                          console.error("Erro ao ler anexo do chat:", err);
+                        }
+                        if (chatFileRef.current) chatFileRef.current.value = "";
+                      }}
+                    />
+
+                    {/* Botão Anexar Arquivo para auxiliar a EMIA */}
+                    <button
+                      type="button"
+                      onClick={() => chatFileRef.current?.click()}
+                      title="Subir documento (PDF, Word, TXT) para auxiliar a EMIA etapa por etapa"
+                      className="h-10 px-3 flex items-center gap-1.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-300 rounded-lg text-xs font-semibold transition-all active:scale-95 shrink-0"
+                    >
+                      <Paperclip className="w-4 h-4 text-blue-600" />
+                      <span className="hidden sm:inline">Anexar</span>
+                    </button>
+
                     <input 
                       type="text" 
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
-                      placeholder="Faça uma pergunta, peça um podcast ou música..."
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      placeholder="Peça para escrever uma seção, corrigir, ou tire dúvidas..."
+                      className="flex-1 h-10 px-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                     />
-                    <Button type="submit" disabled={isChatting || !chatMessage.trim()} className="bg-blue-600">
+                    
+                    <Button type="submit" disabled={isChatting || (!chatMessage.trim() && !chatAttachment)} className="bg-blue-600 h-10 px-4 text-xs font-bold shrink-0">
                       Enviar
                     </Button>
                   </form>
-                  <p className="text-xs text-center text-gray-400 flex items-center justify-center">
-                    <Lock className="w-3 h-3 mr-1" />
-                    Criptografia de ponta a ponta: apenas o remetente e o destinatário autorizado acessam as mensagens.
+                  <p className="text-[11px] text-center text-gray-400 flex items-center justify-center gap-1">
+                    <Lock className="w-3 h-3 text-slate-400" />
+                    <span>Construção assistida etapa por etapa • O texto gerado vai direto para o seu documento no palco</span>
                   </p>
                 </div>
               </div>
