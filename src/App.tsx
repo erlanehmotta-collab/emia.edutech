@@ -4562,14 +4562,14 @@ ${latexChapters}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {chatHistory.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-8">
-                      {/* Avatar Menina do Futuro / Cyber Girl Acadêmica */}
+                      {/* Avatar Menina Moderna & Futurista */}
                       <div className="relative mb-4 group cursor-pointer">
                         {/* Efeito Glow / Aura Futurista Rosa e Ciano */}
                         <div className="absolute -inset-1.5 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 rounded-3xl blur-md opacity-75 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
                         
-                        {/* Card do Mascote Menina do Futuro */}
+                        {/* Card do Mascote Menina Futurista */}
                         <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-950 via-purple-950 to-indigo-900 border border-pink-400/40 flex items-center justify-center shadow-xl shadow-purple-500/20 text-3xl select-none">
-                          <span className="drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]">👩‍🎓</span>
+                          <span className="drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]">👧</span>
                           <Sparkles className="w-4 h-4 text-amber-300 absolute -top-1.5 -right-1.5 animate-spin duration-3000 drop-shadow-[0_0_6px_rgba(252,211,77,0.9)]" />
                         </div>
 
@@ -4654,7 +4654,7 @@ ${latexChapters}
                       <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
                         {msg.role === 'assistant' && (
                           <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-600 text-white flex items-center justify-center text-xs shadow-xs shrink-0 mb-1">
-                            👩‍🎓
+                            👧
                           </div>
                         )}
                         <div className={`max-w-[85%] sm:max-w-[78%] px-4 py-3 rounded-2xl text-[13.5px] leading-relaxed font-sans shadow-xs transition-all ${
@@ -4715,7 +4715,7 @@ ${latexChapters}
                   {isChatting && (
                     <div className="flex justify-start items-end gap-2">
                       <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-600 text-white flex items-center justify-center text-xs shadow-xs shrink-0 animate-bounce">
-                        👩‍🎓
+                        👧
                       </div>
                       <div className="max-w-[80%] px-4 py-3 rounded-2xl text-[13px] font-sans bg-white border border-pink-100 text-slate-700 rounded-bl-xs shadow-xs flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
