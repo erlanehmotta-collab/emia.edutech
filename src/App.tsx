@@ -2950,7 +2950,12 @@ ${textToParse.substring(0, 4500)}`;
       setActiveTab("editor");
       return;
     }
-    handleGenerateSlidesWithAI();
+    const textToParse = generatedText && generatedText.trim() ? generatedText : "1 INTRODUÇÃO\n\nApresentação acadêmica estruturada sobre o tema da pesquisa.";
+    const parsed = parseDocumentIntoSlides(textToParse);
+    setEditableSlides(parsed as any);
+    setActiveSlideIndex(0);
+    setActiveTab("slides");
+    logAction("Estúdio de Slides Aberto", `Total de ${parsed.length} slides organizados`);
   };
 
   // Exportação Direta em PowerPoint (.pptx) 100% compatível com Google Slides
@@ -3617,9 +3622,10 @@ ${textToParse.substring(0, 4500)}`;
                 </Button>
                 <input 
                   type="file" 
+                  multiple
                   className="hidden" 
                   ref={attachmentRef} 
-                  accept="image/*,.csv,.txt" 
+                  accept="image/*,.pdf,.doc,.docx,.txt,.csv,.md" 
                   onChange={handleAttachmentFile} 
                 />
               </div>
@@ -3762,6 +3768,17 @@ ${textToParse.substring(0, 4500)}`;
                 >
                   <Link className="w-3.5 h-3.5 mr-1 text-gray-500" />
                   Referências
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => attachmentRef.current?.click()} 
+                  disabled={isLoading} 
+                  variant="ghost" 
+                  className="text-[11px] h-7 px-1.5 font-semibold text-sky-700 hover:bg-sky-50 hover:text-sky-800 rounded-lg whitespace-nowrap cursor-pointer"
+                  title="Subir Documento (PDF, Word, TXT, CSV) ou Imagem diretamente para o Palco"
+                >
+                  <Upload className="w-3.5 h-3.5 mr-1 text-sky-600" />
+                  Subir Arquivo
                 </Button>
                 <Button 
                   size="sm" 
