@@ -371,7 +371,8 @@ export default function App() {
     }
 
     if (!generatedText || !generatedText.trim()) {
-      setErrorMessage("Nenhum texto para ler em áudio.");
+      setErrorMessage("✍️ Gere um trabalho ou escreva um texto no editor para ouvir a leitura!");
+      setTimeout(() => setErrorMessage(""), 3500);
       return;
     }
 
@@ -2939,8 +2940,7 @@ ${latexChapters}
           <div className="flex items-center bg-amber-50/70 border border-amber-200/80 rounded-lg p-0.5 shadow-2xs gap-0.5">
             <button 
               onClick={handleToggleSpeech}
-              disabled={!generatedText || !generatedText.trim()}
-              className={`h-6.5 flex items-center gap-1 px-2.5 rounded-md text-[11px] font-semibold transition-all active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`h-6.5 flex items-center gap-1 px-2.5 rounded-md text-[11px] font-semibold transition-all active:scale-95 group ${
                 isSpeaking 
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs animate-pulse" 
                   : "hover:bg-amber-100/70 text-amber-900"
@@ -4339,7 +4339,7 @@ ${latexChapters}
             )}
             
             {activeTab === "chat" && (
-              <div className="flex flex-col h-full bg-slate-50/50">
+              <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-slate-50/50">
                 {/* Barra de Controles Superiores do Chat: Limpar e Alternar Rolagem Automática */}
                 <div className="px-4 py-2 bg-white border-b border-slate-200/80 flex items-center justify-between gap-2 shadow-2xs font-sans">
                   <div className="flex items-center gap-2">
