@@ -383,7 +383,7 @@ REQUISITOS MANDATÓRIOS:
     if (index >= sentences.length) {
       setIsSpeaking(false);
       isSpeakingRef.current = false;
-      setErrorMessage("✅ Leitura em áudio neural concluída!");
+      setErrorMessage("✅ Leitura em áudio concluída!");
       setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
@@ -399,14 +399,58 @@ REQUISITOS MANDATÓRIOS:
     const currentVol = vol !== undefined ? vol : speechVolume;
     const currentGender = gender !== undefined ? gender : speechGender;
 
-    // 1. Tenta sintetizar a Voz Neural Ultra-Humana Gratuita (Francisca / Antonio)
+    // 1. Fallback Web Speech Synthesis nativo imediato e super confiável
+    const speakViaBrowserNative = () => {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(sentence.trim());
+      utterance.lang = "pt-BR";
+      utterance.rate = currentRate || 1.0;
+      utterance.volume = currentVol || 1.0;
+      utterance.pitch = currentGender === "female" ? 1.05 : 0.95;
+
+      const voices = window.speechSynthesis.getVoices();
+      const ptVoices = voices.filter(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.startsWith("pt"));
+
+      let selectedVoice = null;
+      if (currentGender === "female") {
+        selectedVoice = ptVoices.find(v => {
+          const n = v.name.toLowerCase();
+          return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("francisca") || n.includes("thalita") || n.includes("luciana") || (n.includes("google") && !n.includes("male"));
+        }) || ptVoices.find(v => !v.name.toLowerCase().includes("male") && !v.name.toLowerCase().includes("antonio"));
+      } else {
+        selectedVoice = ptVoices.find(v => {
+          const n = v.name.toLowerCase();
+          return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("antonio") || n.includes("felipe") || n.includes("ricardo") || n.includes("daniel") || n.includes("male");
+        }) || ptVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("antonio"));
+      }
+
+      if (!selectedVoice && ptVoices.length > 0) selectedVoice = ptVoices[0];
+      if (selectedVoice) utterance.voice = selectedVoice;
+
+      utterance.onend = () => {
+        if (isSpeakingRef.current) speakSentenceAtIndex(index + 1, rate, vol, gender);
+      };
+
+      utterance.onerror = () => {
+        if (isSpeakingRef.current) speakSentenceAtIndex(index + 1, rate, vol, gender);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // Tenta voz neural se disponível, com timeout de 1.8s para não deixar o usuário esperando
     const voiceName = currentGender === "female" ? "pt-BR-FranciscaNeural" : "pt-BR-AntonioNeural";
     const ratePercent = currentRate === 1.0 ? "+0%" : currentRate > 1.0 ? `+${Math.round((currentRate - 1) * 100)}%` : `-${Math.round((1 - currentRate) * 100)}%`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1800);
 
     try {
       const response = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           text: sentence.trim(),
           voice: voiceName,
@@ -414,6 +458,7 @@ REQUISITOS MANDATÓRIOS:
           pitch: currentGender === "female" ? "+2Hz" : "-2Hz"
         })
       });
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const blob = await response.blob();
@@ -437,53 +482,19 @@ REQUISITOS MANDATÓRIOS:
         audio.onerror = () => {
           URL.revokeObjectURL(audioUrl);
           if (isSpeakingRef.current) {
-            speakSentenceAtIndex(index + 1, rate, vol, gender);
+            speakViaBrowserNative();
           }
         };
 
         await audio.play();
         return;
+      } else {
+        speakViaBrowserNative();
       }
     } catch (neuralErr) {
-      console.warn("[Voz Neural] Falha de conexão, usando sintetizador nativo:", neuralErr);
+      clearTimeout(timeoutId);
+      speakViaBrowserNative();
     }
-
-    // 2. Fallback de alta fidelidade: Web Speech Synthesis nativo
-    if (!('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(sentence.trim());
-    utterance.lang = "pt-BR";
-    utterance.rate = currentRate || 1.0;
-    utterance.volume = currentVol || 1.0;
-    utterance.pitch = currentGender === "female" ? 1.05 : 0.95;
-
-    const voices = window.speechSynthesis.getVoices();
-    const ptVoices = voices.filter(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR") || v.lang.startsWith("pt"));
-
-    let selectedVoice = null;
-    if (currentGender === "female") {
-      selectedVoice = ptVoices.find(v => {
-        const n = v.name.toLowerCase();
-        return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("francisca") || n.includes("thalita") || n.includes("luciana") || (n.includes("google") && !n.includes("male"));
-      }) || ptVoices.find(v => !v.name.toLowerCase().includes("male") && !v.name.toLowerCase().includes("antonio"));
-    } else {
-      selectedVoice = ptVoices.find(v => {
-        const n = v.name.toLowerCase();
-        return n.includes("natural") || n.includes("neural") || n.includes("online") || n.includes("antonio") || n.includes("felipe") || n.includes("ricardo") || n.includes("daniel") || n.includes("male");
-      }) || ptVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("antonio"));
-    }
-
-    if (!selectedVoice && ptVoices.length > 0) selectedVoice = ptVoices[0];
-    if (selectedVoice) utterance.voice = selectedVoice;
-
-    utterance.onend = () => {
-      if (isSpeakingRef.current) speakSentenceAtIndex(index + 1, rate, vol, gender);
-    };
-
-    utterance.onerror = () => {
-      if (isSpeakingRef.current) speakSentenceAtIndex(index + 1, rate, vol, gender);
-    };
-
-    window.speechSynthesis.speak(utterance);
   };
 
   // Leitura em Áudio do Texto Acadêmico com Fraseamento Natural
