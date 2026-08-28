@@ -1757,56 +1757,45 @@ ${generatedText}`;
   const handlePaginate = () => {
     if (!generatedText || !generatedText.trim()) {
       setErrorMessage("Por favor, gere ou insira um texto para paginar.");
+      setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
 
-    // Limpa números ocultos para permitir repaginar tudo de novo
+    // 1. Limpa numerações ocultas e força a recontagem da paginação de todas as folhas
     setHiddenPageNumbers(new Set());
     
-    // Separa a Capa/Folha de Rosto (elementos pré-textuais não numerados) do corpo do trabalho
-    let coverBlocks: string[] = [];
-    let bodyText = generatedText;
-
+    // 2. Se o documento já está com Quebras de Página, apenas limpa espaços em branco e garante o formato
     if (generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
-      const parts = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
-      const coverParts: string[] = [];
-      const bodyParts: string[] = [];
-      parts.forEach(p => {
-        const t = p.trim();
-        if (t.startsWith("CAPA") || t.startsWith("FOLHA DE ROSTO") || t === "CAPA_AUTO" || t === "FOLHA_ROSTO_AUTO" || t.includes("requisito parcial")) {
-          coverParts.push(t);
-        } else if (t.length > 0) {
-          bodyParts.push(t);
+      const cleanPages = generatedText
+        .split("--- [QUEBRA DE PÁGINA] ---")
+        .map(p => p.trim())
+        .filter(Boolean);
+      
+      const refreshed = cleanPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+      setGeneratedText(refreshed);
+    } else {
+      // 3. Caso seja texto contínuo, calcula as quebras A4 (~2200 caracteres por página)
+      const paragraphs = generatedText.split(/\n\n+/);
+      const pages: string[] = [];
+      let cur = "";
+
+      for (const p of paragraphs) {
+        if ((cur + "\n\n" + p).length > 2200 && cur.trim().length > 0) {
+          pages.push(cur.trim());
+          cur = p;
+        } else {
+          cur = cur ? cur + "\n\n" + p : p;
         }
-      });
-      coverBlocks = coverParts;
-      bodyText = bodyParts.join("\n\n");
-    }
-
-    // Divide em páginas A4 (~2200 caracteres com espaçamento 1.5)
-    const paragraphs = bodyText.split(/\n\n+/);
-    let pages: string[] = [];
-    let currentChunk = "";
-
-    paragraphs.forEach((p) => {
-      if ((currentChunk + "\n\n" + p).length > 2200 && currentChunk.length > 0) {
-        pages.push(currentChunk.trim());
-        currentChunk = p;
-      } else {
-        currentChunk = currentChunk ? currentChunk + "\n\n" + p : p;
       }
-    });
-    if (currentChunk.trim()) {
-      pages.push(currentChunk.trim());
+      if (cur.trim()) pages.push(cur.trim());
+
+      const refreshed = pages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+      updateGeneratedTextWithHistory(refreshed);
     }
 
-    const allPages = [...coverBlocks, ...pages];
-    const fullResult = allPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
-
-    updateGeneratedTextWithHistory(fullResult);
     setActiveTab("editor");
-    logAction("Paginação e Repaginação A4 ABNT aplicada com sucesso");
-    setErrorMessage("✅ Documento paginado e repaginado conforme as normas da ABNT!");
+    logAction("Paginação e Repaginação A4 ABNT recalculada");
+    setErrorMessage("🔢 Documento repaginado com sucesso!");
     setTimeout(() => setErrorMessage(""), 3500);
   };
 
