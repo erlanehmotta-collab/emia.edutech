@@ -4,7 +4,7 @@ import {
   FileText, Upload, Plus, CheckCircle, FileDown, 
   Settings, Loader2, LogOut, ShieldCheck, Download, Copy,
   UserCheck, BookOpen, Hash, Wand2, ImagePlus, Lock,
-  User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check,
+  User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check, Quote,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
   Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight, Volume2, VolumeX, Mic, MicOff
 } from "lucide-react";
