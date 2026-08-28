@@ -2321,11 +2321,11 @@ ${chatHistory.slice(-5).map(h => `${h.role === 'user' ? 'Aluno' : 'EMIA'}: ${h.t
 Aluno: ${msgToSend}
 EMIA:`;
 
-        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.6-flash");
+        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-2.5-flash");
       } catch (directErr) {
-        console.warn("Tentativa direta falhou, tentando fallback gemini-3.5-flash-lite:", directErr);
+        console.warn("Tentativa direta falhou, tentando fallback ultrarrápido:", directErr);
         try {
-          assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.5-flash-lite");
+          assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-2.5-flash-lite");
         } catch (serverErr) {
           console.error("Falha em todas as vias do chat:", serverErr);
         }

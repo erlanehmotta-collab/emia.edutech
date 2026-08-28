@@ -45,25 +45,27 @@ export function getActiveGeminiKey(customKey?: string): string {
   return "";
 }
 
-export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-3.6-flash"): Promise<string> {
+export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-2.5-flash"): Promise<string> {
   const apiKey = getActiveGeminiKey(customKey);
   if (!apiKey) {
     throw new Error("Chave de API Gemini não configurada.");
   }
 
+  // Modelos ordenados por velocidade e eficiência imediata
   const fallbackModels = [
+    model,
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
     "gemini-3.6-flash",
-    "gemini-3.5-flash-lite",
     "gemini-3.5-flash",
-    "gemini-3.7-flash",
     "gemini-flash-latest"
-  ];
+  ].filter((v, i, a) => a.indexOf(v) === i);
 
   for (const m of fallbackModels) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 9000);
 
       const res = await fetch(url, {
         method: "POST",
@@ -72,8 +74,9 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.75,
-            topP: 0.95
+            temperature: 0.7,
+            topP: 0.9,
+            maxOutputTokens: 2048
           }
         })
       });
