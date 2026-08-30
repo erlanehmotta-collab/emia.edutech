@@ -39,29 +39,32 @@ export function getActiveGeminiKey(customKey?: string): string {
 export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-3.6-flash"): Promise<string> {
   const apiKey = getActiveGeminiKey(customKey);
 
-  // 1. Tenta prioritariamente via Backend Seguro (/api/generate)
-  try {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (apiKey) {
-      headers["x-gemini-api-key"] = apiKey;
-    }
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ prompt, model, temperature: 0.7 })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.text && typeof data.text === "string" && data.text.trim().length > 10) {
-        return data.text.trim();
+  // 1. Tenta prioritariamente via Backend Seguro (/api/generate e URL de producao)
+  const endpoints = ["/api/generate", "https://edutech.emia.workers.dev/api/generate"];
+  for (const endpoint of endpoints) {
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (apiKey) {
+        headers["x-gemini-api-key"] = apiKey;
       }
-      const candText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (candText && candText.trim().length > 10) {
-        return candText.trim();
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ prompt, model, temperature: 0.7 })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.text && typeof data.text === "string" && data.text.trim().length > 10) {
+          return data.text.trim();
+        }
+        const candText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (candText && candText.trim().length > 10) {
+          return candText.trim();
+        }
       }
+    } catch (backendErr) {
+      console.warn(`Proxy ${endpoint} não respondeu:`, backendErr);
     }
-  } catch (backendErr) {
-    console.warn("Proxy /api/generate não respondeu, tentando chamada direta:", backendErr);
   }
 
   // 2. Chamada direta ao Google com Exponential Backoff
