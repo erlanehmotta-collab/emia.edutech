@@ -22,25 +22,16 @@ export interface GenerateOptions {
 }
 
 export function getActiveGeminiKey(customKey?: string): string {
-  // 1. Chave customizada inserida pelo usuário
+  // 1. Chave customizada inserida pelo usuário no modal
   if (customKey && customKey.trim().length > 10) return customKey.trim();
 
   // 2. Chave do ambiente Vite (se configurada)
   const envKey = typeof import.meta !== "undefined" && (import.meta as any).env ? (import.meta as any).env.VITE_GEMINI_API_KEY : "";
   if (envKey && envKey.trim().length > 10) return envKey.trim();
 
-  // 3. Chave do LocalStorage
+  // 3. Chave do LocalStorage do navegador
   const localKey = typeof localStorage !== "undefined" ? localStorage.getItem("emia_custom_gemini_key") : null;
   if (localKey && localKey.trim().length > 10) return localKey.trim();
-
-  // 4. Chave Mestre Criptografada e Ofuscada em Memória (Decodificação Dinâmica Segura)
-  try {
-    const _c1 = "QVEuQWI4Uk42S0oxQVRTYUR4X3pCMnc4cFY1TEVfbzJwYVp2Qk0tbVY2MnkwYWhVakxmOFE=";
-    const _k = typeof atob === "function" ? atob(_c1) : Buffer.from(_c1, 'base64').toString('binary');
-    if (_k && _k.length > 10) return _k;
-  } catch (e) {
-    // Silencioso
-  }
 
   return "";
 }

@@ -173,16 +173,9 @@ export default {
                      env.GOOGLE_API_KEY;
 
         if (!apiKey) {
-          try {
-            const _enc = "QVEuQWI4Uk42S0oxQVRTYUR4X3pCMnc4cFY1TEVfbzJwYVp2Qk0tbVY2MnkwYWhVakxmOFE=";
-            apiKey = atob(_enc);
-          } catch (_) {}
-        }
-
-        if (!apiKey) {
           return new Response(JSON.stringify({ 
             success: false, 
-            error: "Chave Gemini não configurada. Forneça uma chave de API válida." 
+            error: "Chave Gemini não configurada no servidor. Configure a variável GEMINI_API_KEY ou insira sua chave no app." 
           }), {
             status: 400,
             headers: { "Content-Type": "application/json", ...corsHeaders }
