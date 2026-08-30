@@ -198,11 +198,15 @@ export default {
         }
 
         const candidateModels = [
-          model || "gemini-3.6-flash",
+          model,
           "gemini-3.6-flash",
+          "gemini-3.5-flash",
           "gemini-3-flash-preview",
-          "gemini-3.7-flash"
-        ].filter((v, i, a) => a.indexOf(v) === i);
+          "gemini-3.7-flash",
+          "gemini-2.5-flash",
+          "gemini-2.0-flash",
+          "gemini-1.5-flash"
+        ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
 
         let generatedText = "";
         let lastError = null;
