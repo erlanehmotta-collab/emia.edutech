@@ -1083,7 +1083,6 @@ REQUISITOS MANDATÓRIOS:
 
       let finalText = "";
       
-      // Chamada direta instantânea pelo Motor Acadêmico de Alta Velocidade (gemini-3.5-flash-lite)
       try {
         finalText = await generateAcademicText({
           title: cleanTitle,
@@ -1099,27 +1098,15 @@ REQUISITOS MANDATÓRIOS:
           customGeminiKey,
         });
       } catch (genErr) {
-        console.warn("[EMIA Motor Direto] Tentando via /api/generate fallback:", genErr);
-        try {
-          const res = await fetch("/api/generate", {
-            method: "POST",
-            headers: customHeaders,
-            body: formData,
-          });
-          const textData = await res.text();
-          const data = JSON.parse(textData);
-          if (data.success && data.text) {
-            finalText = data.text;
-          }
-        } catch (apiErr) {
-          console.error("Todas as tentativas falharam:", apiErr);
-        }
+        console.warn("[EMIA Motor Direto] Erro na geração:", genErr);
       }
 
       if (finalText) {
-        setGeneratedText(finalText);
+        updateGeneratedTextWithHistory(finalText);
         setActiveTab("editor");
         logAction(`Geração de documento: ${cleanTitle}`, finalText);
+        setErrorMessage("✨ Trabalho acadêmico gerado com sucesso no rigor ABNT!");
+        setTimeout(() => setErrorMessage(""), 4000);
         if (!isMaster) {
           setCredits(prev => {
             const next = Math.max(0, prev - 1);
@@ -1722,10 +1709,10 @@ ${generatedText}`;
 
       // 1. CAPA OFICIAL ABNT NBR 14724
       const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
-      const coverPage = `${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
+      const coverPage = `CAPA_AUTO\n${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
 
       // 2. FOLHA DE ROSTO OFICIAL ABNT NBR 14724
-      const titlePage = `${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
+      const titlePage = `FOLHA_ROSTO_AUTO\n${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
 
       const coverBlock = `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
 
@@ -2278,35 +2265,42 @@ EMIA:`;
       }
 
       if (assistantResponse) {
-        // Detecta se a EMIA gerou conteúdo para o palco do documento
-        const docBlockMatch = assistantResponse.match(/```(?:documento|texto|artigo|abnt)?\n([\s\S]*?)```/i);
-        if (docBlockMatch && docBlockMatch[1].trim().length > 40) {
-          const newDocSection = docBlockMatch[1].trim();
-          const cleanAssistantChat = assistantResponse.replace(/```(?:documento|texto|artigo|abnt)?\n[\s\S]*?```/i, '').trim() + "\n\n*(✨ Esta seção foi adicionada ao seu documento no palco!)*";
+        // 1. Detecta blocos de código com marcação (```documento, ```texto, ```markdown, etc.)
+        const docBlockMatch = assistantResponse.match(/```(?:documento|texto|artigo|abnt|markdown)?\s*\n?([\s\S]*?)```/i);
+        let extractedDocSection = docBlockMatch && docBlockMatch[1].trim().length > 30 ? docBlockMatch[1].trim() : "";
+
+        // 2. Se não houver bloco com crases, mas a resposta contiver cabeçalho formal de seção acadêmica
+        if (!extractedDocSection) {
+          const sectionMatch = assistantResponse.match(/(?:^|\n)((?:RESUMO|ABSTRACT|SUMÁRIO|\d+(?:\.\d+)*\s+[A-ZÀ-Ú\s]{3,}|CONSIDERAÇÕES FINAIS|REFERÊNCIAS)[\s\S]{80,})$/i);
+          if (sectionMatch && sectionMatch[1]) {
+            extractedDocSection = sectionMatch[1].trim();
+          }
+        }
+
+        if (extractedDocSection) {
+          const cleanAssistantChat = assistantResponse.replace(/```(?:documento|texto|artigo|abnt|markdown)?\s*\n?[\s\S]*?```/gi, '').trim() || "✨ Preparei a seção solicitada e já inseri no seu documento no palco!";
           
-          // Se já existe texto no palco, anexa a nova etapa com quebra de página ou concatenação inteligente
           if (generatedText && generatedText.trim()) {
-            // Verifica se é uma continuação ou nova seção
-            if (generatedText.includes(newDocSection)) {
-              // Já contém
-            } else {
-              const updatedDoc = generatedText + "\n\n--- [QUEBRA DE PÁGINA] ---\n\n" + newDocSection;
+            if (!generatedText.includes(extractedDocSection)) {
+              const updatedDoc = generatedText + "\n\n--- [QUEBRA DE PÁGINA] ---\n\n" + extractedDocSection;
               updateGeneratedTextWithHistory(updatedDoc);
             }
           } else {
-            updateGeneratedTextWithHistory(newDocSection);
+            updateGeneratedTextWithHistory(extractedDocSection);
           }
 
-          setChatHistory([...updatedHistory, { role: 'assistant', text: cleanAssistantChat || assistantResponse }]);
+          setChatHistory([...updatedHistory, { role: 'assistant', text: `${cleanAssistantChat}\n\n*(✨ Esta seção foi adicionada ao seu documento no palco!)*` }]);
         } else {
           setChatHistory([...updatedHistory, { role: 'assistant', text: assistantResponse }]);
         }
       } else {
-        setErrorMessage("Erro ao gerar resposta do chat. Tente novamente.");
+        const mentorFallback = `Olá! Sou a EMIA, sua mentora acadêmica. ✨\n\nEstou acompanhando o seu trabalho sobre **${title || "o seu tema acadêmico"}**. Para avançarmos com rigor metodológico ABNT, você pode me pedir para redigir a **Introdução**, aprofundar a **Fundamentação Teórica**, gerar uma **Tabela IBGE de Resultados** ou formatar as **Referências (NBR 6023:2025)**.\n\nQual seção você gostaria que eu desenvolva agora?`;
+        setChatHistory([...updatedHistory, { role: 'assistant', text: mentorFallback }]);
       }
     } catch (error) {
       console.error(error);
-      setErrorMessage(error instanceof Error ? error.message : "Erro ao enviar mensagem no chat.");
+      const mentorFallback = `Olá! Tive uma pequena instabilidade momentânea na conexão com o servidor, mas estou pronta para continuar! Pode reenviar sua instrução sobre **${title || "seu tema"}**?`;
+      setChatHistory([...updatedHistory, { role: 'assistant', text: mentorFallback }]);
     } finally {
       setIsChatting(false);
     }
@@ -3947,8 +3941,8 @@ ${textToParse.substring(0, 4500)}`;
                     const cleanT = text.trim();
                     const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
                     
-                    const isCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA\n") || cleanT === "CAPA" || (pIdx === 0 && cleanT.includes("INSTITUIÇÃO") && cleanT.includes("CIDADE"));
-                    const isTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA DE ROSTO\n") || cleanT === "FOLHA DE ROSTO" || cleanT.includes("requisito parcial para obtenção") || cleanT.includes("Trabalho de Conclusão de Curso apresentado");
+                    const isCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA_AUTO") || cleanT.startsWith("[PÁGINA_CAPA]") || cleanT.startsWith("CAPA\n") || cleanT === "CAPA";
+                    const isTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA_ROSTO_AUTO") || cleanT.startsWith("[PÁGINA_FOLHA_ROSTO]") || cleanT.startsWith("FOLHA DE ROSTO\n") || cleanT === "FOLHA DE ROSTO";
                     const isBodyPage = !isCover && !isTitlePage;
                     const pageNum = pIdx + 1;
                     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);

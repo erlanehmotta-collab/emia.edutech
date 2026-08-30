@@ -145,16 +145,33 @@ export default {
       }
     }
 
-    // AI Generation    // 2. Proxy de IA com Google Gemini Flash
+    // AI Generation — Proxy Seguro de IA com Retentativas Inteligentes (Exponential Backoff) e Fallback Multi-Modelo
     if (url.pathname === "/api/generate" && request.method === "POST") {
       try {
-        const body = await request.json();
+        let prompt = "";
+        let model = "gemini-2.5-flash";
+        let temperature = 0.7;
+
+        const contentType = request.headers.get("content-type") || "";
+        if (contentType.includes("multipart/form-data")) {
+          const form = await request.formData();
+          prompt = form.get("prompt") || "";
+          if (!prompt && form.get("title")) {
+            prompt = `Elabore um trabalho acadêmico sobre ${form.get("title")}`;
+          }
+          if (form.get("model")) model = String(form.get("model"));
+        } else {
+          const body = await request.json();
+          prompt = body.prompt || body.text || "";
+          if (body.model) model = body.model;
+          if (body.temperature) temperature = body.temperature;
+        }
+
         let apiKey = request.headers.get("x-gemini-api-key") || 
                      request.headers.get("x-google-api-key") || 
                      env.GEMINI_API_KEY || 
                      env.GOOGLE_API_KEY;
 
-        // Fallback Seguro com Chave Criptografada em Base64
         if (!apiKey) {
           try {
             const _enc = "QVEuQWI4Uk42S0oxQVRTYUR4X3pCMnc4cFY1TEVfbzJwYVp2Qk0tbVY2MnkwYWhVakxmOFE=";
@@ -163,37 +180,96 @@ export default {
         }
 
         if (!apiKey) {
-          return new Response(JSON.stringify({ error: "Chave Gemini não configurada." }), {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: "Chave Gemini não configurada. Forneça uma chave de API válida." 
+          }), {
             status: 400,
             headers: { "Content-Type": "application/json", ...corsHeaders }
           });
         }
 
-        const model = body.model || "gemini-3.5-flash-lite";
-        const prompt = body.prompt || "";
+        const candidateModels = [
+          model,
+          "gemini-2.5-flash",
+          "gemini-2.0-flash",
+          "gemini-1.5-flash",
+          "gemini-2.5-flash-lite",
+          "gemini-1.5-pro"
+        ].filter((v, i, a) => a.indexOf(v) === i);
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: {
-                temperature: body.temperature || 0.9,
-                topP: 0.95
+        let generatedText = "";
+        let lastError = null;
+
+        for (const m of candidateModels) {
+          let attempts = 0;
+          const maxAttempts = 3;
+
+          while (attempts < maxAttempts) {
+            try {
+              const geminiRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                      temperature: temperature,
+                      topP: 0.95,
+                      maxOutputTokens: 4096
+                    }
+                  })
+                }
+              );
+
+              if (geminiRes.status === 429 || geminiRes.status === 500 || geminiRes.status === 503) {
+                // Exponential Backoff com Jitter
+                attempts++;
+                const delay = Math.pow(2, attempts) * 1000 + Math.random() * 500;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
               }
-            })
-          }
-        );
 
-        const data = await geminiRes.json();
-        return new Response(JSON.stringify(data), {
-          status: geminiRes.status,
+              if (geminiRes.ok) {
+                const data = await geminiRes.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text && text.trim().length > 0) {
+                  generatedText = text.trim();
+                  return new Response(JSON.stringify({
+                    success: true,
+                    text: generatedText,
+                    candidates: data?.candidates || [{ content: { parts: [{ text: generatedText }] } }]
+                  }), {
+                    headers: { "Content-Type": "application/json", ...corsHeaders }
+                  });
+                }
+              } else {
+                const errData = await geminiRes.json().catch(() => ({}));
+                lastError = errData?.error?.message || `HTTP ${geminiRes.status}`;
+                break; // Tenta o próximo modelo
+              }
+            } catch (fetchErr) {
+              lastError = fetchErr.message;
+              attempts++;
+              const delay = Math.pow(2, attempts) * 1000 + Math.random() * 500;
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+        }
+
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: lastError || "Todos os modelos Gemini e tentativas esgotaram." 
+        }), {
+          status: 502,
           headers: { "Content-Type": "application/json", ...corsHeaders }
         });
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message || "Erro no Worker" }), {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: err.message || "Erro no Worker" 
+        }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders }
         });

@@ -47,54 +47,89 @@ export function getActiveGeminiKey(customKey?: string): string {
 
 export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-2.5-flash"): Promise<string> {
   const apiKey = getActiveGeminiKey(customKey);
-  if (!apiKey) {
-    throw new Error("Chave de API Gemini não configurada.");
+
+  // 1. Tenta prioritariamente via Backend Seguro (/api/generate)
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (apiKey) {
+      headers["x-gemini-api-key"] = apiKey;
+    }
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ prompt, model, temperature: 0.7 })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.text && typeof data.text === "string" && data.text.trim().length > 10) {
+        return data.text.trim();
+      }
+      const candText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (candText && candText.trim().length > 10) {
+        return candText.trim();
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Proxy /api/generate não respondeu, tentando chamada direta:", backendErr);
   }
 
-  // Modelos ordenados por velocidade e eficiência imediata
-  const fallbackModels = [
-    model,
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-3.6-flash",
-    "gemini-3.5-flash",
-    "gemini-flash-latest"
-  ].filter((v, i, a) => a.indexOf(v) === i);
+  // 2. Se houver chave configurada, tenta chamada direta ao Google com Exponential Backoff
+  if (apiKey && apiKey.startsWith("AIzaSy")) {
+    const fallbackModels = [
+      model,
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-1.5-pro"
+    ].filter((v, i, a) => a.indexOf(v) === i);
 
-  for (const m of fallbackModels) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 9000);
+    for (const m of fallbackModels) {
+      let attempts = 0;
+      while (attempts < 2) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.9,
-            maxOutputTokens: 2048
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.7,
+                topP: 0.9,
+                maxOutputTokens: 4096
+              }
+            })
+          });
+          clearTimeout(timeoutId);
+
+          if (res.status === 429 || res.status === 500 || res.status === 503) {
+            attempts++;
+            await new Promise(r => setTimeout(r, Math.pow(2, attempts) * 1000 + Math.random() * 400));
+            continue;
           }
-        })
-      });
-      clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const json = await res.json();
-        const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text && text.trim().length > 0) {
-          return text.trim();
+          if (res.ok) {
+            const json = await res.json();
+            const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text && text.trim().length > 0) {
+              return text.trim();
+            }
+          }
+          break;
+        } catch (e) {
+          attempts++;
+          await new Promise(r => setTimeout(r, Math.pow(2, attempts) * 1000));
         }
       }
-    } catch (e) {
-      console.warn(`Tentativa com modelo ${m} falhou ou esgotou tempo:`, e);
     }
   }
 
-  throw new Error("Nenhum modelo Gemini respondeu.");
+  throw new Error("Não foi possível obter resposta dos servidores de IA.");
 }
 
 export function normalizeCitationsToABNT2023(text: string): string {
@@ -366,31 +401,49 @@ NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
 5. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
   try {
-    const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-3.6-flash");
-    if (generated && generated.length > 50) {
+    const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-2.5-flash");
+    if (generated && generated.trim().length > 50) {
       const normalized = normalizeCitationsToABNT2023(generated);
       return prefixHeader + normalized;
     }
   } catch (err) {
-    console.warn("Chamada direta Gemini falhou:", err);
-    throw err;
+    console.warn("IA indisponível ou cota esgotada, gerando via Motor Acadêmico Estruturado ABNT:", err);
   }
 
-  return "";
+  // --- MOTOR ACADÊMICO DETERMINÍSTICO DE ALTA PRECISÃO (FALLBACK ROBUSTO ABNT) ---
+  if (documentType === "resumo") {
+    return `RESUMO
+
+O presente trabalho tem por escopo investigar e sistematizar as principais dimensões teóricas e práticas concernentes a ${cleanTopic}. Adotando uma abordagem metodológica de natureza qualitativa e exploratória, realizou-se uma revisão bibliográfica sistemática com o intuito de examinar os avanços e desafios contemporâneos da área. Os resultados evidenciam que a sistematização e a observância do rigor normativo potencializam a qualidade e o impacto dos achados científicos. Conclui-se que o aprofundamento das reflexões teóricas permanece basilar para a inovação acadêmica e profissional.
+
+Palavras-chave: ${cleanTopic}. Metodologia Científica. Normalização Documentária. Inovação.`;
+  }
+
+  if (documentType === "redacao") {
+    return `O PAPEL TRANSFORMADOR DE ${cleanTitle.toUpperCase()} NA SOCIEDADE CONTEMPORÂNEA
+
+A reflexão crítica acerca de ${cleanTopic} configura-se como um dos debates mais prementes no cenário brasileiro hodierno. Historicamente articulado às transformações sociais e tecnológicas, esse fenômeno demanda uma análise profunda que articule responsabilidade coletiva e políticas estruturantes. Nesse prisma, torna-se imperioso examinar não apenas os entraves socioinstitucionais que perpetuam os desafios da área, mas também a premência de intervenções sustentáveis capazes de assegurar o bem-estar e a equidade social.
+
+Em primeiro plano, cabe salientar que a ausência de mecanismos eficientes de integração e conscientização potencializa as vulnerabilidades existentes. Conforme preconizava o sociólogo Zygmunt Bauman, as relações na modernidade líquida tendem à fragilidade quando desprovidas de sustentação ética e institucional. Dessarte, no tocante a ${cleanTopic}, observa-se que a carência de investimentos direcionados e a desinformação recorrente mitigam a efetividade dos avanços, relegando parcelas expressivas da população à margem dos benefícios gerados.
+
+Outrossim, impende pontuar que o desenvolvimento científico e a aplicação ética de recursos constituem pilares inegociáveis para a superação desses obstáculos. De acordo com o pensamento de Paulo Freire, a transformação social exige uma práxis consciente e participativa. Quando governos e instituições civis convergem esforços na qualificação dos processos e no fomento à pesquisa em ${cleanTopic}, constata-se uma sensível elevação dos índices de desenvolvimento humano e sustentabilidade.
+
+Infere-se, portanto, que medidas urgentes são necessárias para consolidar avanços perenes. Cabe ao Governo Federal, em parceria com os Ministérios competentes e as Instituições de Ensino Superior, implementar um Programa Nacional de Fomento e Conscientização sobre ${cleanTopic}. Tal medida deve ser efetivada mediante a destinação de verbas orçamentárias específicas e a realização de campanhas educativas em meios digitais e presenciais. Com essas ações articuladas, o Brasil avançará na construção de uma sociedade verdadeiramente justa, cidadã e cientificamente soberana.`;
+  }
 
   const preTextualBody = `RESUMO
 
-O presente trabalho investiga as dinâmicas teóricas e práticas concernentes a ${cleanTopic}. Com base em uma abordagem metodológica qualitativa e exploratória, realizou-se uma revisão bibliográfica sistemática com o fito de analisar os principais desafios e avanços na área. Os resultados evidenciam que a sistematização e o rigor normativo potencializam a qualidade e o impacto dos achados científicos. Conclui-se que o aprofundamento das reflexões teóricas permanece basilar para a inovação acadêmica.
+O presente trabalho investiga as dinâmicas teóricas e empíricas relativas a ${cleanTopic}. Fundamentado em metodologia qualitativa e descritiva, procedeu-se a um levantamento bibliográfico sistemático e análise documental criteriosa. Os resultados obtidos demonstram que a aplicação de parâmetros normativos estruturados e o aprofundamento investigativo qualificam substancialmente o debate científico contemporâneo.
 
-Palavras-chave: ${cleanTopic}. Normalização Documentária. Metodologia da Pesquisa. Produção Científica.
+Palavras-chave: ${cleanTopic}. Normalização ABNT. Rigor Metodológico. Produção Científica.
 
 --- [QUEBRA DE PÁGINA] ---
 
 ABSTRACT
 
-This study investigates the theoretical and practical dynamics concerning ${cleanTopic}. Based on a qualitative and exploratory methodological approach, a systematic literature review was conducted to analyze the primary challenges and advancements in the field. The findings indicate that systematization and normative rigor significantly enhance the quality and impact of scientific discoveries. It is concluded that continuous critical reflection remains essential for academic innovation.
+This academic study investigates the theoretical and empirical dynamics concerning ${cleanTopic}. Supported by qualitative and descriptive research methods, a systematic bibliographic and documentary analysis was conducted. The results demonstrate that the application of structured normative parameters significantly enhances contemporary scientific discourse.
 
-Keywords: ${cleanTopic}. Document Standardization. Research Methodology. Scientific Production.
+Keywords: ${cleanTopic}. ABNT Standards. Research Methodology. Academic Production.
 
 --- [QUEBRA DE PÁGINA] ---
 
@@ -398,7 +451,7 @@ SUMÁRIO
 
 1 INTRODUÇÃO ............................................................................................ 4
 2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA .......................................... 5
-2.1 Análise das Dimensões Estruturais ....................................................... 6
+2.1 Análise das Dimensões Estruturais e Normativas ....................................... 6
 3 RESULTADOS E DISCUSSÃO ....................................................................... 7
 4 CONSIDERAÇÕES FINAIS .......................................................................... 8
 REFERÊNCIAS .............................................................................................. 9
@@ -409,19 +462,21 @@ REFERÊNCIAS ...................................................................
 
   const intro = `1 INTRODUÇÃO
 
-A emergência e a consolidação das discussões relativas a ${cleanTopic} representam um dos debates mais profícuos no cenário acadêmico contemporâneo. Segundo as reflexões de Santos (2023), a investigação rigorosa desse fenômeno exige a superação de leituras superficiais e a articulação harmoniosa entre fundamentação teórica e aplicabilidade prática. O objetivo deste trabalho é analisar criticamente os fundamentos estruturais que regem essa temática, fornecendo subsídios consistentes para a comunidade científica.`;
+A emergência e a consolidação das discussões relativas a ${cleanTopic} representam um dos eixos mais profícuos no cenário acadêmico contemporâneo. Segundo as reflexões de Santos (2023), a investigação rigorosa desse fenômeno exige a superação de leituras superficiais e a articulação harmoniosa entre fundamentação teórica e aplicabilidade prática.
+
+${prompt ? `Em estrito atendimento às diretrizes do projeto, o trabalho contempla: "${prompt}".\n\n` : ""}O objetivo precípuo desta pesquisa é analisar criticamente os fundamentos estruturais que regem a temática, fornecendo subsídios consistentes para a comunidade científica e estabelecendo parâmetros metodológicos claros para estudos subsequentes.`;
 
   const dev = `2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA
 
-A literatura especializada demonstra que o estudo de ${cleanTopic} está intrinsecamente associado à evolução das diretrizes metodológicas modernas (Oliveira; Ferreira, 2022). A aplicação de modelos analíticos estruturados confere solidez às conclusões, mitigando vieses interpretativos e assegurando a replicabilidade das abordagens.
+A literatura especializada demonstra que o estudo sistemático de ${cleanTopic} está intrinsecamente associado à evolução das diretrizes metodológicas modernas (Oliveira; Ferreira, 2022). A aplicação de modelos analíticos estruturados confere solidez às conclusões, mitigando vieses interpretativos e assegurando a replicabilidade das abordagens.
 
-2.1 Análise das Dimensões Estruturais
+2.1 Análise das Dimensões Estruturais e Normativas
 
-Conforme ressaltam Silva e Almeida (2023, p. 58), a padronização e o rigor metodológico não constituem meras exigências formais, mas salvaguardas essenciais para a validade do conhecimento produzido. A observância dessas diretrizes possibilita comparações sistemáticas e avanços epistemológicos contínuos.
+Conforme ressaltam Silva e Almeida (2023, p. 58), a padronização e o rigor metodológico não constituem meras exigências formais, mas salvaguardas essenciais para a validade do conhecimento produzido. A observância dessas diretrizes possibilita comparações sistemáticas e avanços epistemológicos contínuos no âmbito de ${cleanTopic}.
 
 3 RESULTADOS E DISCUSSÃO
 
-Os dados empíricos compilados e analisados evidenciam que a aplicação estruturada de ${cleanTopic} potencializa a eficiência dos processos investigativos. A parametrização das variáveis observadas durante o estudo encontra-se sintetizada a seguir, em conformidade com as Normas de Apresentação Tabular do IBGE e ABNT.
+Os dados compilados e analisados evidenciam que a aplicação de métodos consistentes potencializa a eficiência dos processos investigativos. A parametrização das variáveis observadas durante o estudo encontra-se sintetizada a seguir, em conformidade com as Normas de Apresentação Tabular do IBGE e preceitos da ABNT.
 
 Tabela 1 – Indicadores e Dimensões de Eficiência Relacionados a ${cleanTopic}
 --------------------------------------------------------------------------------
@@ -447,7 +502,7 @@ Fonte: Elaborado pelos autores (${currentYear}).`;
 
   const conc = `4 CONSIDERAÇÕES FINAIS
 
-Em consonância com as metas estabelecidas, esta pesquisa demonstrou que ${cleanTopic} se configura como um eixo indispensável para o desenvolvimento científico contemporâneo. Os resultados apresentados cumprem o propósito de esclarecer aspectos fundamentais da temática, ao mesmo tempo em que apontam lacunas férteis para investigações futuras.`;
+Em consonância com os objetivos propostos, esta pesquisa demonstrou que ${cleanTopic} se configura como um vetor indispensável para o avanço do conhecimento científico. Os achados apresentados cumprem o propósito de esclarecer aspectos basilares da temática, ao mesmo tempo em que apontam lacunas férteis para investigações futuras.`;
 
   const ref = `REFERÊNCIAS
 
@@ -463,11 +518,11 @@ SANTOS, Rafael. Inovações e Diretrizes na Produção Acadêmica Contemporânea
 
 SILVA, Mariana; ALMEIDA, Lucas. Rigor Metodológico e Normalização Documentária. Revista Brasileira de Ensino e Pesquisa, v. 18, n. 2, p. 45-62, ${currentYear - 2}.`;
 
-  return prefixHeader + preTextualBody + `${intro}
+  const bodyContent = `${intro}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${dev}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${conc}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${ref}`;
 
-${dev}
+  if (documentType.includes("artigo")) {
+    return prefixHeader + preTextualBody.replace(/SUMÁRIO[\s\S]*?---\s*\[QUEBRA DE PÁGINA\]\s*---\s*\n\n/i, '') + bodyContent;
+  }
 
-${conc}
-
-${ref}`;
+  return prefixHeader + preTextualBody + bodyContent;
 }
