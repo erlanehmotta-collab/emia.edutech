@@ -356,7 +356,11 @@ export default {
           return assetResponse;
         }
         // SPA Fallback: serve index.html for unknown routes
-        return await env.ASSETS.fetch(new Request(new URL("/index.html", request.url), request));
+        const indexUrl = new URL("/index.html", request.url);
+        return await env.ASSETS.fetch(new Request(indexUrl.toString(), {
+          method: "GET",
+          headers: request.headers
+        }));
       } catch (assetErr) {
         console.error("Asset fetch error:", assetErr);
       }
