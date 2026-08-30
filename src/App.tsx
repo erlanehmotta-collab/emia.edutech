@@ -1569,19 +1569,19 @@ ${generatedText}`;
       try {
         revisedText = await callGeminiDirectly(promptSpelling, customGeminiKey, "gemini-3.6-flash");
       } catch (geminiErr) {
-        console.warn("Chamada direta falhou, tentando fallback com gemini-3.5-flash-lite:", geminiErr);
+        console.warn("Chamada direta falhou, tentando fallback com gemini-3-flash-preview:", geminiErr);
         try {
-          revisedText = await callGeminiDirectly(promptSpelling, customGeminiKey, "gemini-3.5-flash-lite");
+          revisedText = await callGeminiDirectly(promptSpelling, customGeminiKey, "gemini-3-flash-preview");
         } catch (liteErr) {
           console.warn("Chamada direta lite falhou, tentando rota /api/generate:", liteErr);
           try {
             const resLocal = await fetch("/api/generate", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ prompt: promptSpelling, model: "gemini-3.5-flash-lite" }),
+              body: JSON.stringify({ prompt: promptSpelling, model: "gemini-3.6-flash" }),
             });
             const data = await resLocal.json();
-            const candText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            const candText = data?.candidates?.[0]?.content?.parts?.[0]?.text || data?.text;
             if (candText && candText.trim().length > 50) revisedText = candText.trim();
           } catch (fetchErr) {
             console.warn("Todas as chamadas de rede falharam, aplicando motor de normalização local:", fetchErr);
@@ -2215,11 +2215,11 @@ EMIA:`;
 
       // Chamada direta rápida ao Gemini
       try {
-        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-2.5-flash-lite");
+        assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3.6-flash");
       } catch (directErr) {
         console.warn("Tentativa direta falhou, tentando fallback ultrarrápido:", directErr);
         try {
-          assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-2.5-flash-lite");
+          assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-3-flash-preview");
         } catch (serverErr) {
           console.error("Falha em todas as vias do chat:", serverErr);
         }
@@ -4633,6 +4633,7 @@ ${textToParse.substring(0, 4500)}`;
                               </div>
                             ) : (
                               <div
+                                key={`page-content-${pIdx}-${(text || "").length}-${(text || "").substring(0, 30)}`}
                                 contentEditable
                                 suppressContentEditableWarning
                                 spellCheck={true}
@@ -4643,9 +4644,8 @@ ${textToParse.substring(0, 4500)}`;
                                   setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
                                 }}
                                 className="w-full focus:outline-none font-['Arial'] text-gray-900 leading-[1.5] text-justify text-[12pt] bg-transparent min-h-[600px] whitespace-pre-wrap focus:ring-1 focus:ring-blue-300 p-2 rounded selection:bg-blue-100"
-                              >
-                                {text && text !== "CAPA_AUTO" && text !== "FOLHA_ROSTO_AUTO" ? text.trimStart() : ""}
-                              </div>
+                                dangerouslySetInnerHTML={{ __html: text && text !== "CAPA_AUTO" && text !== "FOLHA_ROSTO_AUTO" ? text.trimStart().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "" }}
+                              />
                             )}
                           </div>
                         )}

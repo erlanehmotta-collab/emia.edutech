@@ -393,7 +393,7 @@ NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
 5. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
   try {
-    const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-2.5-flash");
+    const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-3.6-flash");
     if (generated && generated.trim().length > 50) {
       const normalized = normalizeCitationsToABNT2023(generated);
       return prefixHeader + normalized;
