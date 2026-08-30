@@ -535,17 +535,52 @@ REQUISITOS MANDATÓRIOS:
       return;
     }
 
-    // Prepara texto completo para leitura incluindo Capa e Folha de Rosto de forma natural
-    let speechFullText = generatedText;
+    // Prepara texto completo para leitura incluindo Capa e Folha de Rosto (Contra-Capa) de forma fluente
+    const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
+    let speechSections: string[] = [];
+
+    if (requiresFormalCover) {
+      // 1. Narração da Capa Oficial ABNT
+      let coverSpoken = "Capa do trabalho acadêmico. ";
+      if (institution) coverSpoken += `Instituição: ${institution}. `;
+      if (course) coverSpoken += `Curso: ${course}. `;
+      if (studentName) coverSpoken += `Autor: ${studentName}. `;
+      if (title) coverSpoken += `Título do trabalho: ${title}. `;
+      if (subtitle) coverSpoken += `Subtítulo: ${subtitle}. `;
+      if (city || year) coverSpoken += `Local e ano: ${city || ""}, ${year || ""}. `;
+      speechSections.push(coverSpoken);
+
+      // 2. Narração da Folha de Rosto / Contra-Capa Oficial ABNT
+      let titlePageSpoken = "Contra-capa e folha de rosto. ";
+      if (studentName) titlePageSpoken += `Autor: ${studentName}. `;
+      if (title) titlePageSpoken += `Título: ${title}. `;
+      if (subtitle) titlePageSpoken += `Subtítulo: ${subtitle}. `;
+      const presentationNote = documentType.includes("artigo")
+        ? `Artigo científico apresentado à ${institution || "Instituição de Ensino"}, como requisito de avaliação.`
+        : documentType === "projeto"
+        ? `Projeto de pesquisa apresentado à ${institution || "Instituição de Ensino"}, para qualificação.`
+        : documentType === "relatorio"
+        ? `Relatório técnico-científico apresentado à ${institution || "Instituição de Ensino"}.`
+        : `Trabalho de Conclusão de Curso apresentado à ${institution || "Instituição de Ensino"}, como requisito para obtenção de grau.`;
+      titlePageSpoken += `${presentationNote} `;
+      if (advisor) titlePageSpoken += `Orientador: ${advisor}. `;
+      if (city || year) titlePageSpoken += `Local e ano: ${city || ""}, ${year || ""}. `;
+      speechSections.push(titlePageSpoken);
+    }
+
+    // 3. Narração de todas as seções e páginas do documento
+    const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
+    const rawPages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
     
-    // Substitui tokens de capa por texto falado fluente
-    speechFullText = speechFullText
-      .replace(/CAPA_AUTO/g, `Capa do trabalho acadêmico. ${institution ? `Instituição: ${institution}. ` : ""}${course ? `Curso: ${course}. ` : ""}${studentName ? `Autor: ${studentName}. ` : ""}${title ? `Título: ${title}. ` : ""}`)
-      .replace(/FOLHA_ROSTO_AUTO/g, `Folha de rosto. ${studentName ? `Autor: ${studentName}. ` : ""}${title ? `Título: ${title}. ` : ""}`);
+    for (const page of rawPages) {
+      const isCoverMarker = page.startsWith("CAPA_AUTO") || page.startsWith("CAPA\n") || page === "CAPA";
+      const isTitleMarker = page.startsWith("FOLHA_ROSTO_AUTO") || page.startsWith("FOLHA DE ROSTO\n") || page === "FOLHA DE ROSTO";
+      if (isCoverMarker || isTitleMarker) continue;
+      speechSections.push(page);
+    }
 
     // Limpa marcações estruturais e formata para ritmo de fala humano
-    const cleanSpeechText = speechFullText
-      .replace(/--- \[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\] ---/g, '. Nova página. ')
+    const cleanSpeechText = speechSections.join(". Nova página. ")
       .replace(/!\[.*?\]\(.*?\)/g, ' ')
       .replace(/#+/g, ' ')
       .replace(/[\*\_\`]/g, ' ')
