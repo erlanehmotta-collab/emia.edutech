@@ -151,6 +151,55 @@ ${text}`;
   return await callGeminiDirectly(prompt, customKey);
 }
 
+export function paginateAcademicDocument(rawText: string, documentType = "artigo"): string {
+  if (!rawText || !rawText.trim()) return rawText;
+
+  let cleanText = rawText.replace(/\r\n/g, "\n").trim();
+  const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
+  const initialBlocks = cleanText.split(pageBreakRegex).map(b => b.trim()).filter(Boolean);
+
+  const finalPages: string[] = [];
+
+  for (const block of initialBlocks) {
+    const isCover = block.startsWith("CAPA_AUTO") || block.startsWith("CAPA\n") || block === "CAPA";
+    const isTitlePage = block.startsWith("FOLHA_ROSTO_AUTO") || block.startsWith("FOLHA DE ROSTO\n") || block === "FOLHA DE ROSTO";
+
+    if (isCover || isTitlePage) {
+      finalPages.push(block);
+      continue;
+    }
+
+    if (["resumo", "redacao"].includes(documentType)) {
+      finalPages.push(block);
+      continue;
+    }
+
+    // Separa antes de grandes seções ABNT
+    const sectionSplitRegex = /\n(?=(?:#+\s*)?(?:ABSTRACT|SUMÁRIO|\d+\s+[A-ZÀ-Ú\s]{3,}|REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|CONSIDERAÇÕES FINAIS)\b)/gi;
+    const sectionChunks = block.split(sectionSplitRegex).map(s => s.trim()).filter(Boolean);
+
+    for (const chunk of sectionChunks) {
+      // Se a seção ultrapassar ~1800 caracteres, quebra suavemente entre parágrafos
+      const paragraphs = chunk.split(/\n\n+/);
+      let curPage = "";
+
+      for (const p of paragraphs) {
+        if ((curPage + "\n\n" + p).length > 1800 && curPage.trim().length > 0) {
+          finalPages.push(curPage.trim());
+          curPage = p;
+        } else {
+          curPage = curPage ? curPage + "\n\n" + p : p;
+        }
+      }
+      if (curPage.trim()) {
+        finalPages.push(curPage.trim());
+      }
+    }
+  }
+
+  return finalPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+}
+
 export async function generateAcademicText(options: GenerateOptions): Promise<string> {
   const {
     title,
@@ -374,11 +423,11 @@ ${studentName ? `Resenhista: ${studentName}
   }
 
   const systemPrompt = `Você é uma autoridade máxima em Redação e Normalização Acadêmica Brasileira (UNESP, USP e ABNT).
-Elabore um(a) ${selectedTypeName} magistral sobre "${cleanTitle}" ${subtitle ? `com subtítulo "${subtitle}"` : ""}.
+Elabore um(a) ${selectedTypeName} magistral, aprofundado e completo sobre "${cleanTitle}" ${subtitle ? `com subtítulo "${subtitle}"` : ""}.
 
 ================================================================================
 🚨 INSTRUÇÕES MANDATÓRIAS E PRIORITÁRIAS DO USUÁRIO:
-${prompt ? `O usuário determinou expressamente as seguintes instruções que DEVEM ser integralmente cumpridas no conteúdo:\n"${prompt}"` : "Desenvolva o tema com profundidade científica máxima e dados atualizados."}
+${prompt ? `O usuário determinou expressamente as seguintes instruções que DEVEM ser integralmente cumpridas no conteúdo:\n"${prompt}"` : "Desenvolva o tema com profundidade científica máxima, dados atualizados e rigor metodológico."}
 ================================================================================
 
 ${genreInstructions}
@@ -388,15 +437,19 @@ NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
    - Busque e utilize SOMENTE informações oriundas de artigos científicos consolidados, periódicos indexados (SciELO, Scopus, Web of Science, Capes, Google Scholar) e fontes oficiais respeitadas (IBGE, OMS, IPEA, Ministérios e Universidades).
    - Proibido inventar dados, autores ou citações falsas.
 2. EXCELÊNCIA GRAMATICAL: Redação culta formal impecável, sem desvios de regência, crase ou pontuação.
-3. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15).
-4. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
-5. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
+3. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15) ou Conforme Santos (2022). NUNCA use caixa alta integral tipo (SILVA, 2023).
+4. RESULTADOS E DISCUSSÃO: Apresente dados estruturados contendo:
+   - 1 Tabela no padrão IBGE (laterais abertas, cabeçalho e Fonte abaixo).
+   - 1 Quadro ou Ilustração com título e indicação de Fonte.
+5. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco, ordenadas alfabeticamente.
+6. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
   try {
     const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-3.6-flash");
     if (generated && generated.trim().length > 50) {
       const normalized = normalizeCitationsToABNT2023(generated);
-      return prefixHeader + normalized;
+      const fullDoc = prefixHeader + normalized;
+      return paginateAcademicDocument(fullDoc, documentType);
     }
     throw new Error("A IA não retornou um conteúdo válido para este trabalho.");
   } catch (err: any) {
@@ -404,3 +457,4 @@ NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
     throw new Error(err?.message || "Falha na comunicação com os servidores de IA.");
   }
 }
+

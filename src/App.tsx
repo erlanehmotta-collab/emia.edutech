@@ -16,7 +16,7 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType, convertMillimeters
 import mammoth from "mammoth";
 import { saveAs } from "file-saver";
 import { useDropzone } from "react-dropzone";
-import { generateAcademicText, normalizeCitationsToABNT2023, callGeminiDirectly } from "./lib/academicEngine";
+import { generateAcademicText, normalizeCitationsToABNT2023, callGeminiDirectly, paginateAcademicDocument } from "./lib/academicEngine";
 
 type UserProfile = {
   name: string;
@@ -535,25 +535,17 @@ REQUISITOS MANDATÓRIOS:
       return;
     }
 
-    // Separa páginas para NÃO ler a Capa nem a Contra-Capa (Folha de Rosto)
-    let bodyTextOnly = generatedText;
-    if (generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
-      const parts = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
-      const contentParts = parts.filter(p => {
-        const t = p.trim();
-        return !t.startsWith("CAPA") && 
-               !t.startsWith("FOLHA DE ROSTO") && 
-               t !== "CAPA_AUTO" && 
-               t !== "FOLHA_ROSTO_AUTO" && 
-               !t.includes("requisito parcial") && 
-               !t.includes("apresentado à");
-      });
-      bodyTextOnly = contentParts.join("\n\n");
-    }
+    // Prepara texto completo para leitura incluindo Capa e Folha de Rosto de forma natural
+    let speechFullText = generatedText;
+    
+    // Substitui tokens de capa por texto falado fluente
+    speechFullText = speechFullText
+      .replace(/CAPA_AUTO/g, `Capa do trabalho acadêmico. ${institution ? `Instituição: ${institution}. ` : ""}${course ? `Curso: ${course}. ` : ""}${studentName ? `Autor: ${studentName}. ` : ""}${title ? `Título: ${title}. ` : ""}`)
+      .replace(/FOLHA_ROSTO_AUTO/g, `Folha de rosto. ${studentName ? `Autor: ${studentName}. ` : ""}${title ? `Título: ${title}. ` : ""}`);
 
     // Limpa marcações estruturais e formata para ritmo de fala humano
-    const cleanSpeechText = bodyTextOnly
-      .replace(/--- \[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\] ---/g, ' ')
+    const cleanSpeechText = speechFullText
+      .replace(/--- \[(?:QUEBRA DE PÁGINA|NOVA PÁGINA)\] ---/g, '. Nova página. ')
       .replace(/!\[.*?\]\(.*?\)/g, ' ')
       .replace(/#+/g, ' ')
       .replace(/[\*\_\`]/g, ' ')
@@ -562,7 +554,7 @@ REQUISITOS MANDATÓRIOS:
       .trim();
 
     if (!cleanSpeechText) {
-      setErrorMessage("Nenhum conteúdo textual além da capa para leitura em áudio.");
+      setErrorMessage("Nenhum conteúdo textual para leitura em áudio.");
       return;
     }
 
@@ -3885,42 +3877,9 @@ ${textToParse.substring(0, 4500)}`;
                   let pages: string[] = [];
                   const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
                   
-                  if (generatedText && pageBreakRegex.test(generatedText)) {
-                    pages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
-                  } else if (generatedText && generatedText.trim()) {
-                    let bodyContent = generatedText;
-                    let referencesContent = "";
-
-                    const refMatch = bodyContent.match(/\n\s*(?:#+\s*)?(?:REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|REFERENCIAS)\s*\n([\s\S]*)$/i);
-                    if (refMatch) {
-                      referencesContent = `REFERÊNCIAS\n\n${refMatch[1].trim()}`;
-                      bodyContent = bodyContent.substring(0, refMatch.index).trim();
-                    }
-
-                    // Divide o texto em blocos de páginas A4 (~2200 caracteres cada)
-                    const paragraphs = bodyContent.split(/\n\n+/);
-                    const bodyPages: string[] = [];
-                    let curPage = "";
-                    for (const para of paragraphs) {
-                      if ((curPage + "\n\n" + para).length > 2200 && curPage.trim().length > 0) {
-                        bodyPages.push(curPage.trim());
-                        curPage = para;
-                      } else {
-                        curPage = curPage ? curPage + "\n\n" + para : para;
-                      }
-                    }
-                    if (curPage.trim()) bodyPages.push(curPage.trim());
-
-                    if (referencesContent) {
-                      bodyPages.push(referencesContent);
-                    }
-
-                    const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
-                    if (requiresFormalCover) {
-                      pages = ["CAPA_AUTO", "FOLHA_ROSTO_AUTO", ...(bodyPages.length > 0 ? bodyPages : [generatedText])];
-                    } else {
-                      pages = bodyPages.length > 0 ? bodyPages : [generatedText];
-                    }
+                  if (generatedText && generatedText.trim()) {
+                    const paginated = paginateAcademicDocument(generatedText, documentType);
+                    pages = paginated.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
                   } else {
                     pages = [""];
                   }
