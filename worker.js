@@ -182,12 +182,14 @@ export default {
           if (body.temperature) temperature = body.temperature;
         }
 
-        let apiKey = request.headers.get("x-gemini-api-key") || 
-                     request.headers.get("x-google-api-key") || 
-                     env.GEMINI_API_KEY || 
-                     env.GOOGLE_API_KEY;
+        const apiKeysToTry = [
+          request.headers.get("x-gemini-api-key"),
+          request.headers.get("x-google-api-key"),
+          env.GEMINI_API_KEY,
+          env.GOOGLE_API_KEY
+        ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
 
-        if (!apiKey) {
+        if (apiKeysToTry.length === 0) {
           return new Response(JSON.stringify({ 
             success: false, 
             error: "Chave Gemini não configurada no servidor. Configure a variável GEMINI_API_KEY ou insira sua chave no app." 
@@ -211,59 +213,60 @@ export default {
         let generatedText = "";
         let lastError = null;
 
-        for (const m of candidateModels) {
-          let attempts = 0;
-          const maxAttempts = 3;
+        for (const currentKey of apiKeysToTry) {
+          for (const m of candidateModels) {
+            let attempts = 0;
+            const maxAttempts = 2;
 
-          while (attempts < maxAttempts) {
-            try {
-              const geminiRes = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                      temperature: temperature,
-                      topP: 0.95,
-                      maxOutputTokens: 4096
-                    }
-                  })
+            while (attempts < maxAttempts) {
+              try {
+                const geminiRes = await fetch(
+                  `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${currentKey}`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      contents: [{ parts: [{ text: prompt }] }],
+                      generationConfig: {
+                        temperature: temperature,
+                        topP: 0.95,
+                        maxOutputTokens: 4096
+                      }
+                    })
+                  }
+                );
+
+                if (geminiRes.status === 429 || geminiRes.status === 500 || geminiRes.status === 503) {
+                  attempts++;
+                  const delay = Math.pow(2, attempts) * 1000 + Math.random() * 500;
+                  await new Promise(resolve => setTimeout(resolve, delay));
+                  continue;
                 }
-              );
 
-              if (geminiRes.status === 429 || geminiRes.status === 500 || geminiRes.status === 503) {
-                // Exponential Backoff com Jitter
+                if (geminiRes.ok) {
+                  const data = await geminiRes.json();
+                  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                  if (text && text.trim().length > 0) {
+                    generatedText = text.trim();
+                    return new Response(JSON.stringify({
+                      success: true,
+                      text: generatedText,
+                      candidates: data?.candidates || [{ content: { parts: [{ text: generatedText }] } }]
+                    }), {
+                      headers: { "Content-Type": "application/json", ...corsHeaders }
+                    });
+                  }
+                } else {
+                  const errData = await geminiRes.json().catch(() => ({}));
+                  lastError = errData?.error?.message || `HTTP ${geminiRes.status}`;
+                  break; // Tenta o próximo modelo
+                }
+              } catch (fetchErr) {
+                lastError = fetchErr.message;
                 attempts++;
                 const delay = Math.pow(2, attempts) * 1000 + Math.random() * 500;
                 await new Promise(resolve => setTimeout(resolve, delay));
-                continue;
               }
-
-              if (geminiRes.ok) {
-                const data = await geminiRes.json();
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text && text.trim().length > 0) {
-                  generatedText = text.trim();
-                  return new Response(JSON.stringify({
-                    success: true,
-                    text: generatedText,
-                    candidates: data?.candidates || [{ content: { parts: [{ text: generatedText }] } }]
-                  }), {
-                    headers: { "Content-Type": "application/json", ...corsHeaders }
-                  });
-                }
-              } else {
-                const errData = await geminiRes.json().catch(() => ({}));
-                lastError = errData?.error?.message || `HTTP ${geminiRes.status}`;
-                break; // Tenta o próximo modelo
-              }
-            } catch (fetchErr) {
-              lastError = fetchErr.message;
-              attempts++;
-              const delay = Math.pow(2, attempts) * 1000 + Math.random() * 500;
-              await new Promise(resolve => setTimeout(resolve, delay));
             }
           }
         }
