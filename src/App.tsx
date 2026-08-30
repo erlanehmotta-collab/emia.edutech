@@ -4595,15 +4595,15 @@ ${textToParse.substring(0, 4500)}`;
                               </div>
                             ) : (
                               <div
-                                key={`page-content-${pIdx}-${(text || "").length}-${(text || "").substring(0, 30)}`}
+                                key={`page-content-${pIdx}`}
                                 contentEditable
                                 suppressContentEditableWarning
                                 spellCheck={true}
                                 lang="pt-BR"
-                                onInput={(e) => {
+                                onBlur={(e) => {
                                   const newPages = [...pages];
                                   newPages[pIdx] = e.currentTarget.innerText;
-                                  setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
+                                  updateGeneratedTextWithHistory(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
                                 }}
                                 className="w-full focus:outline-none font-['Arial'] text-gray-900 leading-[1.5] text-justify text-[12pt] bg-transparent min-h-[600px] whitespace-pre-wrap focus:ring-1 focus:ring-blue-300 p-2 rounded selection:bg-blue-100"
                                 dangerouslySetInnerHTML={{ __html: text && text !== "CAPA_AUTO" && text !== "FOLHA_ROSTO_AUTO" ? text.trimStart().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "" }}

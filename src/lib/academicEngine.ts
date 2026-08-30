@@ -373,74 +373,78 @@ ${studentName ? `Resenhista: ${studentName}
   4. Conclusão: Proposta de intervenção social detalhada contendo os 5 elementos obrigatórios (Agente, Ação, Meio/Modo, Efeito e Detalhamento).`;
   } else if (documentType === "artigo" || documentType === "artigo_cientifico" || documentType === "artigo_academico") {
     // ABNT NBR 6022: ARTIGOS CIENTÍFICOS EM PUBLICAÇÃO PERIÓDICA
-    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE ARTIGO CIENTÍFICO (ABNT NBR 6022):
-- REGRA: Artigos científicos NÃO levam Sumário formal (a estrutura é contínua).
-- Título e subtítulo centralizados.
-- Autor(es) e vinculação institucional.
-- RESUMO em português (100 a 250 palavras) em parágrafo único + Palavras-chave.
-- ABSTRACT em inglês correspondente + Keywords.
-- 1 INTRODUÇÃO (Contextualização, problema, hipótese, objetivos e justificativa).
-- 2 DESENVOLVIMENTO / FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA
-- 2.1 Análise das Dimensões Teóricas
-- 3 RESULTADOS E DISCUSSÃO (com 1 Tabela padrão IBGE e 1 Quadro com Fonte).
-- 4 CONSIDERAÇÕES FINAIS
-- REFERÊNCIAS (ABNT NBR 6023:2025 alinhadas à esquerda com entrelinha simples).`;
+    genreInstructions = `================================================================================
+🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - ARTIGO CIENTÍFICO (ABNT NBR 6022):
+VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
+- RESUMO (NBR 6028): Parágrafo único de 150 a 250 palavras + "Palavras-chave: [3 a 5 termos separados por ponto final]."
+- ABSTRACT: Versão acadêmica completa em inglês + "Keywords: [termos em inglês]."
+- 1 INTRODUÇÃO (Mínimo 3 a 4 parágrafos densos: Contextualização, Problematização, Objetivos e Justificativa).
+- 2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA (Mínimo 4 a 6 parágrafos densos com revisões conceituais, citações em padrão ABNT NBR 10520:2023 em caixa mista como (Silva, 2023, p. 15) e instrumentos metodológicos).
+- 3 RESULTADOS E DISCUSSÃO (Mínimo 4 parágrafos com 1 Tabela no padrão IBGE de laterais abertas e indicação de Fonte, e 1 Quadro com Fonte).
+- 4 CONSIDERAÇÕES FINAIS (Mínimo 3 parágrafos com síntese dos resultados, limites e perspectivas futuras).
+- REFERÊNCIAS (Lista completa com todas as fontes citadas no formato ABNT NBR 6023:2025 alinhadas à esquerda com entrelinha simples).
+PROIBIDO PARAR NA INTRODUÇÃO! COMPLETE TODAS AS SEÇÕES ATÉ AS REFERÊNCIAS!
+================================================================================`;
   } else if (documentType === "projeto" || documentType === "projeto_pesquisa") {
     // ABNT NBR 15287: PROJETO DE PESQUISA
-    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE PROJETO DE PESQUISA (ABNT NBR 15287):
-- SUMÁRIO com pontilhados líderes (NBR 6027).
-- 1 TEMA E PROBLEMATIZAÇÃO
-- 2 HIPÓTESES
-- 3 OBJETIVOS (Geral e Específicos)
-- 4 JUSTIFICATIVA E RELEVÂNCIA CIENTÍFICA
-- 5 REVISÃO DE LITERATURA / FUNDAMENTAÇÃO TEÓRICA
-- 6 METODOLOGIA DE PESQUISA (Tipo, instrumentos de coleta e procedimentos)
-- 7 CRONOGRAMA DE EXECUÇÃO (Tabela em formato IBGE)
-- 8 ORÇAMENTO (Se aplicável)
-- REFERÊNCIAS (NBR 6023).`;
+    genreInstructions = `================================================================================
+🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - PROJETO DE PESQUISA (ABNT NBR 15287):
+VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
+- SUMÁRIO (NBR 6027).
+- 1 TEMA E PROBLEMATIZAÇÃO (Mínimo 3 parágrafos densos).
+- 2 HIPÓTESES E QUESTÕES NORTEADORAS (Mínimo 2 parágrafos).
+- 3 OBJETIVOS (Objetivo Geral e Objetivos Específicos detalhados).
+- 4 JUSTIFICATIVA E RELEVÂNCIA CIENTÍFICA (Mínimo 3 parágrafos).
+- 5 REVISÃO DE LITERATURA / FUNDAMENTAÇÃO TEÓRICA (Mínimo 4 a 6 parágrafos com citações NBR 10520:2023).
+- 6 METODOLOGIA DE PESQUISA (Mínimo 3 parágrafos: Delineamento, sujeitos, instrumentos e procedimentos).
+- 7 CRONOGRAMA DE EXECUÇÃO (Tabela em formato IBGE de laterais abertas com Fonte).
+- 8 ORÇAMENTO E RECURSOS (Quadro detalhado com Fonte).
+- REFERÊNCIAS (Lista completa NBR 6023:2025).
+PROIBIDO PARAR NA INTRODUÇÃO! COMPLETE TODAS AS SEÇÕES ATÉ AS REFERÊNCIAS!
+================================================================================`;
   } else if (documentType === "relatorio") {
     // ABNT NBR 10719: RELATÓRIO TÉCNICO-CIENTÍFICO
-    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE RELATÓRIO TÉCNICO-CIENTÍFICO (ABNT NBR 10719):
+    genreInstructions = `================================================================================
+🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - RELATÓRIO TÉCNICO-CIENTÍFICO (ABNT NBR 10719):
+VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
 - RESUMO em português + Palavras-chave.
 - SUMÁRIO (NBR 6027).
-- 1 INTRODUÇÃO (Objetivo do relatório, escopo e instituições envolvidas).
-- 2 DESENVOLVIMENTO DAS ATIVIDADES / METODOLOGIA APLICADA
-- 3 RESULTADOS OBTIDOS E ANÁLISE DE DADOS (com Tabela IBGE e Ilustrações).
-- 4 CONCLUSÕES E RECOMENDAÇÕES TÉCNICAS
-- REFERÊNCIAS (NBR 6023).`;
+- 1 INTRODUÇÃO (Mínimo 3 parágrafos: Escopo, objetivos do relatório e contextualização).
+- 2 METODOLOGIA E PROCEDIMENTOS TÉCNICOS (Mínimo 3 a 4 parágrafos).
+- 3 DESENVOLVIMENTO DAS ATIVIDADES E EXECUÇÃO (Mínimo 4 a 5 parágrafos).
+- 4 RESULTADOS OBTIDOS E ANÁLISE DE DADOS (Mínimo 4 parágrafos com Tabela IBGE e Ilustrações com Fonte).
+- 5 CONCLUSÕES E RECOMENDAÇÕES TÉCNICAS (Mínimo 3 parágrafos).
+- REFERÊNCIAS (Lista completa NBR 6023:2025).
+PROIBIDO PARAR NA INTRODUÇÃO! COMPLETE TODAS AS SEÇÕES ATÉ AS REFERÊNCIAS!
+================================================================================`;
   } else {
     // ABNT NBR 14724: TRABALHOS ACADÊMICOS (TCC, MONOGRAFIA, DISSERTAÇÃO)
-    genreInstructions = `ESTRUTURA OBRIGATÓRIA DE TRABALHO ACADÊMICO / TCC / MONOGRAFIA (ABNT NBR 14724):
-- RESUMO em português (150 a 250 palavras) + Palavras-chave (NBR 6028).
-- ABSTRACT em inglês + Keywords.
+    genreInstructions = `================================================================================
+🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - TRABALHO ACADÊMICO / TCC / MONOGRAFIA (ABNT NBR 14724):
+VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
+- RESUMO (NBR 6028): Parágrafo único de 150 a 250 palavras + "Palavras-chave: [3 a 5 termos separados por ponto final]."
+- ABSTRACT: Versão acadêmica completa em inglês + "Keywords: [termos em inglês]."
 - SUMÁRIO completo com pontilhados líderes regulares (NBR 6027).
-- 1 INTRODUÇÃO (Problematização, hipótese, objetivos e estrutura).
-- 2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA
-- 2.1 Análise Sistemática da Literatura
-- 3 RESULTADOS E DISCUSSÃO (Obrigatório: 1 Tabela padrão IBGE e 1 Quadro com Fonte).
-- 4 CONSIDERAÇÕES FINAIS (Síntese dos achados e sugestões para estudos futuros).
-- REFERÊNCIAS (NBR 6023:2025 em ordem alfabética).`;
+- 1 INTRODUÇÃO (Mínimo 3 a 4 parágrafos densos: Contextualização, Problema, Hipóteses, Objetivos e Relevância).
+- 2 FUNDAMENTAÇÃO TEÓRICA E REVISÃO DE LITERATURA (Mínimo 4 a 6 parágrafos densos com revisão crítica e citações NBR 10520:2023).
+- 3 METODOLOGIA DA PESQUISA (Mínimo 3 a 4 parágrafos: Abordagem, universo/amostra, coleta e análise de dados).
+- 4 RESULTADOS E DISCUSSÃO (Mínimo 4 parágrafos contendo 1 Tabela no formato tabular IBGE com laterais abertas e indicação de Fonte, e 1 Quadro com Fonte).
+- 5 CONSIDERAÇÕES FINAIS (Mínimo 3 parágrafos: Conclusões, contribuições para a área e sugestões para estudos futuros).
+- REFERÊNCIAS (Lista completa de fontes consultadas conforme NBR 6023:2025 em ordem alfabética).
+PROIBIDO PARAR NA INTRODUÇÃO! COMPLETE TODAS AS SEÇÕES ATÉ AS REFERÊNCIAS!
+================================================================================`;
   }
 
   const systemPrompt = `Você é uma autoridade máxima em Redação e Normalização Acadêmica Brasileira (UNESP, USP e ABNT).
-Elabore um(a) ${selectedTypeName} completo, denso e rigorosamente estruturado sobre "${cleanTitle}" ${subtitle ? `com subtítulo "${subtitle}"` : ""}.
+Elabore um(a) ${selectedTypeName} completo, aprofundado e rigorosamente estruturado sobre "${cleanTitle}" ${subtitle ? `com subtítulo "${subtitle}"` : ""}.
 
 ================================================================================
 🚨 INSTRUÇÕES MANDATÓRIAS E PRIORITÁRIAS DO USUÁRIO:
-${prompt ? `O usuário determinou expressamente as seguintes instruções que DEVEM ser integralmente cumpridas no conteúdo:\n"${prompt}"` : "Desenvolva o tema com profundidade científica, dados empíricos e rigor metodológico."}
-================================================================================
-
-================================================================================
-🚨 REGRA CRÍTICA DE CONCLUSÃO INTEGRAL DO DOCUMENTO:
-VOCÊ DEVE GERAR O TRABALHO INTEIRO DO INÍCIO AO FIM, PASSANDO POR CADA SEÇÃO OBRIGATÓRIA ATÉ AS REFERÊNCIAS FINAIS!
-NÃO PARE NA INTRODUÇÃO! Desenvolva cada seção de forma equilibrada e densa:
-1. RESUMO em português (1 parágrafo contínuo de 150 a 250 palavras) + "Palavras-chave: [3 a 5 termos separados por ponto final]."
-2. ABSTRACT correspondente em inglês + "Keywords: [termos em inglês]."
-3. 1 INTRODUÇÃO (2 a 3 parágrafos: contextualização, problema de pesquisa, hipótese, objetivos e relevância).
-4. 2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA (3 a 4 parágrafos: autores de referência, revisão conceitual e procedimentos metodológicos).
-5. 3 RESULTADOS E DISCUSSÃO (2 a 3 parágrafos contendo 1 Tabela no padrão IBGE de laterais abertas com Fonte e 1 Quadro analítico com Fonte).
-6. 4 CONSIDERAÇÕES FINAIS (2 parágrafos: síntese dos resultados, limites e perspectivas futuras).
-7. REFERÊNCIAS (Lista completa no padrão ABNT NBR 6023:2025 alinhadas à esquerda com entrelinha simples).
+${prompt ? `O usuário determinou expressamente as seguintes instruções que DEVEM ser integralmente cumpridas no conteúdo:\n"${prompt}"` : "Desenvolva o tema com profundidade científica máxima, dados empíricos e rigor metodológico."}
 ================================================================================
 
 ${genreInstructions}
@@ -449,7 +453,7 @@ NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
 1. 🛡️ REGRA MESTRE DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
    - Baseie-se apenas em conhecimento científico real, periódicos conceituados (SciELO, Scopus, Google Scholar) e fontes oficiais (IBGE, IPEA, OMS).
 2. EXCELÊNCIA GRAMATICAL: Português culto formal, sem desvios de regência, crase ou pontuação.
-3. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15) ou Conforme Santos (2022).
+3. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15) ou Conforme Santos (2022). NUNCA use caixa alta integral como (SILVA, 2023).
 4. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
 5. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
