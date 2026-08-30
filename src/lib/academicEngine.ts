@@ -36,7 +36,7 @@ export function getActiveGeminiKey(customKey?: string): string {
   return "";
 }
 
-export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-2.5-flash"): Promise<string> {
+export async function callGeminiDirectly(prompt: string, customKey?: string, model = "gemini-3.6-flash"): Promise<string> {
   const apiKey = getActiveGeminiKey(customKey);
 
   // 1. Tenta prioritariamente via Backend Seguro (/api/generate)
@@ -64,15 +64,13 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
     console.warn("Proxy /api/generate não respondeu, tentando chamada direta:", backendErr);
   }
 
-  // 2. Se houver chave configurada, tenta chamada direta ao Google com Exponential Backoff
-  if (apiKey && apiKey.startsWith("AIzaSy")) {
+  // 2. Chamada direta ao Google com Exponential Backoff
+  if (apiKey && apiKey.length > 10) {
     const fallbackModels = [
       model,
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash",
-      "gemini-2.5-flash-lite",
-      "gemini-1.5-pro"
+      "gemini-3.6-flash",
+      "gemini-3-flash-preview",
+      "gemini-3.7-flash"
     ].filter((v, i, a) => a.indexOf(v) === i);
 
     for (const m of fallbackModels) {
@@ -81,7 +79,7 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 12000);
+          const timeoutId = setTimeout(() => controller.abort(), 25000);
 
           const res = await fetch(url, {
             method: "POST",
@@ -91,8 +89,8 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
                 temperature: 0.7,
-                topP: 0.9,
-                maxOutputTokens: 4096
+                topP: 0.95,
+                maxOutputTokens: 8192
               }
             })
           });

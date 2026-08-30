@@ -26,6 +26,21 @@ export default {
       });
     }
 
+    // List available Gemini models for the configured secret
+    if (url.pathname === "/api/models") {
+      const apiKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY;
+      if (!apiKey) {
+        return new Response(JSON.stringify({ error: "No API key configured" }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+      }
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const data = await res.json();
+        return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      }
+    }
+
     // Endpoint: Verificar Créditos do Aluno por E-mail (Hotmart / Local)
     if (url.pathname === "/api/user-credits" && request.method === "POST") {
       try {
@@ -183,12 +198,10 @@ export default {
         }
 
         const candidateModels = [
-          model,
-          "gemini-2.5-flash",
-          "gemini-2.0-flash",
-          "gemini-1.5-flash",
-          "gemini-2.5-flash-lite",
-          "gemini-1.5-pro"
+          model || "gemini-3.6-flash",
+          "gemini-3.6-flash",
+          "gemini-3-flash-preview",
+          "gemini-3.7-flash"
         ].filter((v, i, a) => a.indexOf(v) === i);
 
         let generatedText = "";
