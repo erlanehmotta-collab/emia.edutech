@@ -1769,33 +1769,40 @@ ${generatedText}`;
     }
     
     // 1. Obtém as páginas reais do documento
+    const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
     let rawPages: string[] = [];
-    if (generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
-      rawPages = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
+    if (pageBreakRegex.test(generatedText)) {
+      rawPages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
     } else {
-      const paragraphs = generatedText.split(/\n\n+/);
-      let curPage = "";
-      for (const para of paragraphs) {
-        if ((curPage + "\n\n" + para).length > 2200 && curPage.trim().length > 0) {
-          rawPages.push(curPage.trim());
-          curPage = para;
-        } else {
-          curPage = curPage ? curPage + "\n\n" + para : para;
-        }
-      }
-      if (curPage.trim()) rawPages.push(curPage.trim());
+      rawPages = [generatedText.trim()];
     }
 
-    // 2. Localiza cada seção e determina o número da página oficial (NBR 6027)
-    // Capa = Não conta; Folha de Rosto = Conta (pág 1), mas não exibe. Textual (pág 2 em diante ou pág 1 se sem capa)
-    const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
-    const offset = requiresFormalCover ? 1 : 1; // Página visível/contada
+    // Remove qualquer sumário pré-existente para recalcular com precisão
+    rawPages = rawPages.filter(p => !p.startsWith("SUMÁRIO") && !p.startsWith("# SUMÁRIO"));
 
+    // Determina a posição de inserção do Sumário (último elemento pré-textual, antes da Introdução)
+    let insertIdx = 0;
+    for (let i = 0; i < rawPages.length; i++) {
+      const p = rawPages[i];
+      const isPreTextual = p.startsWith("CAPA") || p === "CAPA_AUTO" || 
+                          p.startsWith("FOLHA") || p === "FOLHA_ROSTO_AUTO" || 
+                          p.includes("RESUMO") || p.includes("ABSTRACT");
+      if (isPreTextual) {
+        insertIdx = i + 1;
+      }
+    }
+
+    // Cria uma lista temporária com o Sumário inserido para calcular as páginas exatas
+    const pagesWithTOC = [...rawPages];
+    pagesWithTOC.splice(insertIdx, 0, "SUMÁRIO_TEMP");
+
+    // 2. Localiza cada seção e determina o número da página oficial (NBR 6027)
+    // Elementos pré-textuais (Resumo, Abstract) NÃO entram no Sumário!
     const tocEntries: { title: string; page: number }[] = [];
     
-    // Verifica elementos pré-textuais presentes
-    rawPages.forEach((pageContent, idx) => {
-      const actualPageNum = requiresFormalCover ? idx : idx + 1;
+    pagesWithTOC.forEach((pageContent, idx) => {
+      // Folha 1 (Capa) não é numerada. Folha 2 (Folha de rosto) conta. Textual inicia na página real contada.
+      const pageNum = idx + 1;
       const lines = pageContent.split('\n');
       
       for (const line of lines) {
@@ -1803,16 +1810,17 @@ ${generatedText}`;
         if (!clean) continue;
 
         // Seções numeradas (1 INTRODUÇÃO, 2 FUNDAMENTAÇÃO, 2.1 Subseção, etc.)
-        const isNumberedSection = /^\d+(?:\.\d+)*\s+[A-ZÀ-Ú]/.test(clean);
-        // Seções não numeradas obrigatórias (RESUMO, ABSTRACT, REFERÊNCIAS, CONCLUSÃO)
-        const isStandardSection = /^(RESUMO|ABSTRACT|CONSIDERAÇÕES FINAIS|CONCLUSÃO|REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?)\b/i.test(clean);
+        const isNumbered = /^\d+(?:\.\d+)*\s+[A-ZÀ-Ú]/.test(clean);
+        // Elementos pós-textuais (REFERÊNCIAS, APÊNDICES, ANEXOS)
+        const isPostTextual = /^(REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE|ANEXO)\b/i.test(clean);
 
-        if (isNumberedSection || isStandardSection) {
-          // Evita duplicatas do próprio título SUMÁRIO
-          if (!clean.toUpperCase().startsWith("SUMÁRIO") && !tocEntries.some(e => e.title.toUpperCase() === clean.toUpperCase())) {
+        // Seções textuais e pós-textuais entram no Sumário (RESUMO E ABSTRACT NUNCA ENTRAM CONFORME ABNT NBR 6027)
+        if (isNumbered || isPostTextual) {
+          const upperTitle = clean.toUpperCase();
+          if (!upperTitle.startsWith("SUMÁRIO") && !upperTitle.startsWith("RESUMO") && !upperTitle.startsWith("ABSTRACT") && !tocEntries.some(e => e.title === upperTitle)) {
             tocEntries.push({
-              title: clean.toUpperCase(),
-              page: Math.max(1, actualPageNum)
+              title: upperTitle,
+              page: pageNum
             });
           }
         }
@@ -1820,50 +1828,33 @@ ${generatedText}`;
     });
 
     if (tocEntries.length === 0) {
-      // Cria entradas padrão se o texto ainda não tiver títulos formatados
+      // Entradas padrão ABNT se ainda não houver seções detectadas
       tocEntries.push(
-        { title: "RESUMO", page: 3 },
-        { title: "ABSTRACT", page: 4 },
-        { title: "1 INTRODUÇÃO", page: 5 },
-        { title: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", page: 6 },
-        { title: "2.1 ANÁLISE DAS DIMENSÕES ESTRUTURAIS", page: 7 },
-        { title: "3 RESULTADOS E DISCUSSÃO", page: 8 },
-        { title: "4 CONSIDERAÇÕES FINAIS", page: 9 },
-        { title: "REFERÊNCIAS", page: 10 }
+        { title: "1 INTRODUÇÃO", page: insertIdx + 2 },
+        { title: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", page: insertIdx + 3 },
+        { title: "2.1 ANÁLISE SISTEMÁTICA", page: insertIdx + 4 },
+        { title: "3 RESULTADOS E DISCUSSÃO", page: insertIdx + 5 },
+        { title: "4 CONSIDERAÇÕES FINAIS", page: insertIdx + 6 },
+        { title: "REFERÊNCIAS", page: insertIdx + 7 }
       );
     }
 
-    // 3. Monta o Sumário com pontilhados líderes (ABNT NBR 6027)
+    // 3. Formata o bloco oficial do Sumário ABNT NBR 6027
     const formattedTOCLines = tocEntries.map(entry => {
-      const dotsCount = Math.max(5, 75 - entry.title.length - String(entry.page).length);
+      const dotsCount = Math.max(5, 70 - entry.title.length - String(entry.page).length);
       const dots = ".".repeat(dotsCount);
       return `${entry.title} ${dots} ${entry.page}`;
     });
 
     const tocBlock = `SUMÁRIO\n\n${formattedTOCLines.join('\n')}`;
 
-    // Divide as páginas atuais de forma limpa
-    const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
-    let existingPages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
-
-    // Remove qualquer página anterior de sumário
-    existingPages = existingPages.filter(p => !p.startsWith("SUMÁRIO") && !p.startsWith("# SUMÁRIO"));
-
-    // Se tiver capa e folha de rosto, insere o sumário após elas (no índice 2); se não, insere no início (índice 0)
-    let insertIdx = 0;
-    if (existingPages.length >= 2 && (existingPages[0].startsWith("CAPA") || existingPages[0] === "CAPA_AUTO") && (existingPages[1].startsWith("FOLHA") || existingPages[1] === "FOLHA_ROSTO_AUTO")) {
-      insertIdx = 2;
-    } else if (existingPages.length >= 1 && (existingPages[0].startsWith("CAPA") || existingPages[0] === "CAPA_AUTO")) {
-      insertIdx = 1;
-    }
-
-    existingPages.splice(insertIdx, 0, tocBlock);
-    const newFullText = existingPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+    rawPages.splice(insertIdx, 0, tocBlock);
+    const newFullText = rawPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
 
     updateGeneratedTextWithHistory(newFullText);
     setActiveTab("editor");
     logAction("Sumário ABNT NBR 6027 Gerado", tocBlock);
-    setErrorMessage("✅ Sumário gerado com paginação e pontilhados conforme a ABNT NBR 6027!");
+    setErrorMessage("✅ Sumário ABNT NBR 6027 gerado com pontilhados líderes e paginação correta!");
     setTimeout(() => setErrorMessage(""), 3500);
   };
 
@@ -4175,19 +4166,26 @@ ${textToParse.substring(0, 4500)}`;
                             {cleanT.replace(/^#+\s*/, '').startsWith("SUMÁRIO") || cleanT.startsWith("SUMÁRIO") ? (
                               <div className="w-full font-['Arial'] text-gray-900 leading-[1.8] text-sm sm:text-base py-2">
                                 <div className="font-bold text-center text-base mb-6 tracking-wide uppercase">SUMÁRIO</div>
-                                <div className="space-y-1.5 font-mono text-xs sm:text-sm">
+                                <div className="space-y-1.5 font-['Arial'] text-xs sm:text-sm">
                                   {lines.filter(l => l && !l.toUpperCase().startsWith("SUMÁRIO") && !l.replace(/^#+\s*/, '').toUpperCase().startsWith("SUMÁRIO")).map((line, lIdx) => {
                                     const match = line.match(/^(.*?)\s*(\.{2,}|\s{3,}|\t+)\s*(\d+)$/);
                                     if (match) {
+                                      const sectionTitle = match[1].trim();
+                                      const pageNum = match[3];
+                                      const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(sectionTitle) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(sectionTitle);
+                                      const isSecondary = /^\d+\.\d+\s+/.test(sectionTitle);
+
                                       return (
-                                        <div key={lIdx} className="flex items-baseline justify-between gap-2">
-                                          <span className="font-semibold text-gray-900 truncate">{match[1].trim()}</span>
-                                          <span className="flex-1 border-b border-dotted border-gray-400 mx-1 mb-1" />
-                                          <span className="font-bold text-gray-800 tabular-nums">{match[3]}</span>
+                                        <div key={lIdx} className="flex items-baseline justify-between gap-2 w-full text-[11pt] sm:text-[12pt]">
+                                          <span className={`${isPrimary ? "font-bold text-gray-900 uppercase" : isSecondary ? "font-normal text-gray-800 uppercase" : "font-normal text-gray-700"} truncate max-w-[80%]`}>
+                                            {sectionTitle}
+                                          </span>
+                                          <span className="flex-1 border-b border-dotted border-gray-400 mx-1 mb-1 min-w-[20px]" />
+                                          <span className="font-bold text-gray-900 tabular-nums ml-1">{pageNum}</span>
                                         </div>
                                       );
                                     }
-                                    return <div key={lIdx} className="font-semibold text-gray-800">{line}</div>;
+                                    return <div key={lIdx} className="font-bold text-gray-900 py-0.5">{line}</div>;
                                   })}
                                 </div>
                               </div>
