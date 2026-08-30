@@ -7,7 +7,7 @@ import {
   User, Clock, Save, X, ListOrdered, Link, Sparkles, Coins, Check, Quote,
   ZoomIn, ZoomOut, Presentation, PanelLeftClose, PanelLeftOpen, Share2, FileCode, Move, Users,
   Undo2, Redo2, Maximize2, Minimize2, ChevronLeft, ChevronRight, Volume2, VolumeX, Mic, MicOff,
-  ArrowDownCircle, Trash2, Bot, Paperclip, FileUp
+  ArrowDownCircle, Trash2, Bot, Paperclip, FileUp, Code2
 } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import ReactMarkdown from "react-markdown";
@@ -729,7 +729,7 @@ REQUISITOS MANDATÓRIOS:
             const text = await extractTextFromSingleFile(docFile);
             if (text && text.trim()) parts.push(text.trim());
           }
-          extracted = parts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+          const extracted = parts.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
 
           if (extracted && extracted.trim()) {
             // Normalização Local 100% Offline e Instantânea (Zero dependência de IA ou rede)
@@ -2187,12 +2187,7 @@ ${generatedText ? generatedText.substring(0, 4000) : "Metodologia científica, n
     setIsChatting(true);
     logAction("Envio de instrução/mensagem no Chat com a EMIA");
 
-    try {
-      let assistantResponse = "";
-
-      // Chamada direta rápida ao Gemini
-      try {
-        const chatPrompt = `Você é a EMIA, a mentora e assistente acadêmica inteligente da EDUTECH! ✨
+    const chatPrompt = `Você é a EMIA, a mentora e assistente acadêmica inteligente da EDUTECH! ✨
 Seu tom de voz com o aluno é amigável, acolhedor, objetivo e DIRETO AO PONTO.
 
 🚨 REGRAS MANDATÓRIAS E INVIOLÁVEIS DO CHAT:
@@ -2219,6 +2214,11 @@ ${chatHistory.slice(-5).map(h => `${h.role === 'user' ? 'Aluno' : 'EMIA'}: ${h.t
 Aluno: ${msgToSend}
 EMIA:`;
 
+    try {
+      let assistantResponse = "";
+
+      // Chamada direta rápida ao Gemini
+      try {
         assistantResponse = await callGeminiDirectly(chatPrompt, customGeminiKey, "gemini-2.5-flash-lite");
       } catch (directErr) {
         console.warn("Tentativa direta falhou, tentando fallback ultrarrápido:", directErr);
@@ -2955,7 +2955,7 @@ ${textToParse.substring(0, 4500)}`;
           fontFace: "Arial"
         });
 
-        slide.addText(s.subtitle || (course ? `Curso: ${course}` : "Apresentação Acadêmica"), {
+        slide.addText(subtitle || (course ? `Curso: ${course}` : "Apresentação Acadêmica"), {
           x: "10%",
           y: "55%",
           w: "80%",
@@ -2966,7 +2966,7 @@ ${textToParse.substring(0, 4500)}`;
           fontFace: "Arial"
         });
 
-        slide.addText(`${s.author} • ${s.institution} (${s.year})`, {
+        slide.addText(`${studentName || "Autor(a)"} • ${institution || "Instituição de Ensino"} (${year || new Date().getFullYear()})`, {
           x: "10%",
           y: "75%",
           w: "80%",
