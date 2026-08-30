@@ -3802,17 +3802,6 @@ ${textToParse.substring(0, 4500)}`;
                   Word
                 </Button>
                 <Button 
-                  onClick={exportLaTeX} 
-                  disabled={!generatedText} 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-xs h-7 px-2 text-violet-700 hover:bg-violet-50 hover:text-violet-800 rounded-lg font-semibold whitespace-nowrap"
-                  title="Exportar Código LaTeX ABNT (abnTeX2 / Overleaf)"
-                >
-                  <Code2 className="w-3.5 h-3.5 mr-1 text-violet-600" />
-                  LaTeX
-                </Button>
-                <Button 
                   onClick={handleCopy} 
                   disabled={!generatedText} 
                   variant="ghost" 
