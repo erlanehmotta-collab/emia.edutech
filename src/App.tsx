@@ -1046,28 +1046,22 @@ REQUISITOS MANDATÓRIOS:
   const handleGenerate = async () => {
     const cleanTitle = title.trim() || "Trabalho Acadêmico Geral";
     setIsLoading(true);
-    setErrorMessage("⏳ Gerando e normalizando trabalho acadêmico no padrão ABNT...");
+    setErrorMessage("⏳ Gerando trabalho acadêmico no rigor ABNT com IA...");
     
     try {
-      let finalText = "";
-      
-      try {
-        finalText = await generateAcademicText({
-          title: cleanTitle,
-          subtitle,
-          documentType: documentType === "outros" ? (customDocumentType || "artigo") : documentType,
-          prompt,
-          studentName,
-          course,
-          institution,
-          city,
-          year,
-          advisor,
-          customGeminiKey,
-        });
-      } catch (genErr) {
-        console.warn("[EMIA Motor Direto] Erro na geração:", genErr);
-      }
+      const finalText = await generateAcademicText({
+        title: cleanTitle,
+        subtitle,
+        documentType: documentType === "outros" ? (customDocumentType || "artigo") : documentType,
+        prompt,
+        studentName,
+        course,
+        institution,
+        city,
+        year,
+        advisor,
+        customGeminiKey,
+      });
 
       if (finalText && finalText.trim().length > 30) {
         updateGeneratedTextWithHistory(finalText);
@@ -1083,11 +1077,13 @@ REQUISITOS MANDATÓRIOS:
           });
         }
       } else {
-        setErrorMessage("Não foi possível gerar o texto. Tente novamente.");
+        setGeneratedText("");
+        setErrorMessage("⚠️ Falha na geração do texto com a IA. O palco permaneceu em branco.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[EMIA Client Error]", error);
-      setErrorMessage(error instanceof Error ? error.message : "Erro na geração do documento.");
+      setGeneratedText("");
+      setErrorMessage(`⚠️ Falha na comunicação com a IA: ${error?.message || "Servidor indisponível"}. O palco permaneceu em branco.`);
     } finally {
       setIsLoading(false);
     }
