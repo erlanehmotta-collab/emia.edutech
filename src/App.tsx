@@ -1044,7 +1044,10 @@ REQUISITOS MANDATÓRIOS:
   }
 
   const handleGenerate = async () => {
-    const cleanTitle = title.trim() || "Trabalho Acadêmico Geral";
+    const cleanTitle = title.trim() || prompt.trim().substring(0, 60) || "Inteligência Artificial e Inovação na Educação";
+    if (!title.trim()) {
+      setTitle(cleanTitle);
+    }
     setIsLoading(true);
     setErrorMessage("⏳ Gerando trabalho acadêmico no rigor ABNT com IA...");
     
@@ -3598,10 +3601,10 @@ ${textToParse.substring(0, 4500)}`;
               <div className="pt-2">
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isLoading || (!title && files.length === 0)} 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold mb-3"
+                  disabled={isLoading} 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold mb-3 cursor-pointer"
                 >
-                  {isLoading && activeTab === 'generator' ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Settings className="w-5 h-5 mr-2" />}
+                  {isLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Settings className="w-5 h-5 mr-2" />}
                   Gerar Texto com IA
                 </Button>
 
