@@ -230,7 +230,7 @@ export default {
                       generationConfig: {
                         temperature: temperature,
                         topP: 0.95,
-                        maxOutputTokens: 4096
+                        maxOutputTokens: 8192
                       }
                     })
                   }
