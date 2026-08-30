@@ -354,10 +354,11 @@ ${studentName ? `Resenhista: ${studentName}
     // ABNT NBR 6028: RESUMOS E FICHAMENTOS
     genreInstructions = `ESTRUTURA OBRIGATÓRIA DE RESUMO / FICHAMENTO (ABNT NBR 6028):
 - REGRA SUPREMA: PROIBIDO gerar Capa, Folha de Rosto, Sumário ou divisões de capítulos! O resumo é um texto em fluxo contínuo.
+- ESPAÇAMENTO MANDATÓRIO ABNT: Texto em entrelinha simples (1,0), alinhamento justificado, sem recuo na primeira linha.
 - Título do Trabalho centralizado em negrito no topo.
 - Título da seção centralizado: "RESUMO"
 - EXATAMENTE 1 linha em branco entre a palavra "RESUMO" e o início do parágrafo.
-- Texto em PARÁGRAFO ÚNICO contínuo e justificado (150 a 500 palavras) sem recuo na primeira linha, contendo: objetivo do estudo, metodologia utilizada, principais resultados e conclusão sintética.
+- Texto em PARÁGRAFO ÚNICO contínuo e justificado (150 a 500 palavras), contendo: objetivo do estudo, metodologia utilizada, principais resultados e conclusão sintética.
 - 1 linha em branco após o parágrafo.
 - "Palavras-chave: [3 a 5 termos representativos separados por ponto e finalizados por ponto]."
 - PROIBIDO incluir citações diretas longas, tabelas ou sumário.`;
@@ -365,6 +366,7 @@ ${studentName ? `Resenhista: ${studentName}
     // REDAÇÃO ENEM NOTA 1000
     genreInstructions = `ESTRUTURA OBRIGATÓRIA DE REDAÇÃO (PADRÃO ENEM NOTA 1000):
 - REGRA SUPREMA: PROIBIDO gerar Capa, Folha de Rosto, Sumário ou títulos de seções.
+- ESPAÇAMENTO MANDATÓRIO: Texto contínuo com entrelinha 1,5, recuo de parágrafo 1,25 cm e alinhamento justificado.
 - Título opcional centralizado.
 - 4 parágrafos contínuos e articulados:
   1. Introdução: Apresentação do tema e tese explícita com 2 argumentos centrais.
@@ -376,8 +378,14 @@ ${studentName ? `Resenhista: ${studentName}
     genreInstructions = `================================================================================
 🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - ARTIGO CIENTÍFICO (ABNT NBR 6022):
 VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DIRETRIZES DE ESPAÇAMENTO MANDATÓRIAS ABNT:
+- CORPO DO TEXTO (Introdução, Fundamentação, Resultados, Considerações): Espaçamento entrelinhas de 1,5 com recuo de primeira linha de 1,25 cm e alinhamento justificado.
+- CITAÇÕES DIRETAS LONGAS (> 3 linhas): Recuo de 4,0 cm da margem esquerda, fonte tamanho 10 pt e espaçamento simples (1,0), sem aspas.
+- REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, espaçamento simples (1,0) e separadas entre si por 1 linha em branco simples.
+- TABELAS E ILUSTRAÇÕES: Título no topo e Fonte na base em fonte 10 pt com espaçamento simples (1,0).
+
 DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
-- RESUMO (NBR 6028): Parágrafo único de 150 a 250 palavras + "Palavras-chave: [3 a 5 termos separados por ponto final]."
+- RESUMO (NBR 6028): Parágrafo único de 150 a 250 palavras em espaçamento simples + "Palavras-chave: [3 a 5 termos separados por ponto final]."
 - ABSTRACT: Versão acadêmica completa em inglês + "Keywords: [termos em inglês]."
 - 1 INTRODUÇÃO (Mínimo 3 a 4 parágrafos densos: Contextualização, Problematização, Objetivos e Justificativa).
 - 2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA (Mínimo 4 a 6 parágrafos densos com revisões conceituais, citações em padrão ABNT NBR 10520:2023 em caixa mista como (Silva, 2023, p. 15) e instrumentos metodológicos).
@@ -391,6 +399,12 @@ PROIBIDO PARAR NA INTRODUÇÃO! COMPLETE TODAS AS SEÇÕES ATÉ AS REFERÊNCIAS!
     genreInstructions = `================================================================================
 🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - PROJETO DE PESQUISA (ABNT NBR 15287):
 VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DIRETRIZES DE ESPAÇAMENTO MANDATÓRIAS ABNT:
+- CORPO DO TEXTO: Espaçamento entrelinhas 1,5, parágrafos justificados e recuo de 1,25 cm na primeira linha.
+- CITAÇÕES LONGAS E NOTAS: Espaçamento simples (1,0) com recuo de 4,0 cm para citações > 3 linhas.
+- CRONOGRAMA E ORÇAMENTO: Tabelas com laterais abertas, espaçamento simples e indicação de Fonte.
+- REFERÊNCIAS: Alinhadas à esquerda em espaçamento simples (1,0).
+
 DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
 - SUMÁRIO (NBR 6027).
 - 1 TEMA E PROBLEMATIZAÇÃO (Mínimo 3 parágrafos densos).
@@ -409,6 +423,10 @@ PROIBIDO PARAR NA INTRODUÇÃO! COMPLETE TODAS AS SEÇÕES ATÉ AS REFERÊNCIAS!
     genreInstructions = `================================================================================
 🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - RELATÓRIO TÉCNICO-CIENTÍFICO (ABNT NBR 10719):
 VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DIRETRIZES DE ESPAÇAMENTO MANDATÓRIAS ABNT:
+- CORPO DO TEXTO: Espaçamento entrelinhas 1,5, recuo 1,25 cm e texto justificado.
+- ELEMENTOS ESPECIAIS (Citações longas, notas, tabelas e referências): Espaçamento simples (1,0).
+
 DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
 - RESUMO em português + Palavras-chave.
 - SUMÁRIO (NBR 6027).
@@ -425,8 +443,15 @@ PROIBIDO PARAR NA INTRODUÇÃO! COMPLETE TODAS AS SEÇÕES ATÉ AS REFERÊNCIAS!
     genreInstructions = `================================================================================
 🚨 REGRA CRÍTICA DE GERAÇÃO COMPLETA - TRABALHO ACADÊMICO / TCC / MONOGRAFIA (ABNT NBR 14724):
 VOCÊ DEVE GERAR O DOCUMENTO INTEIRO DO COMEÇO AO FIM, SEM OMITIR OU RESUMIR NENHUMA SEÇÃO!
+DIRETRIZES DE ESPAÇAMENTO MANDATÓRIAS ABNT (NBR 14724):
+- CORPO DO TRABALHO: Espaçamento entrelinhas de 1,5 em todo o texto, parágrafos justificados com recuo de 1,25 cm na primeira linha.
+- CITAÇÕES DIRETAS LONGAS (> 3 linhas): Recuo de 4,0 cm da margem esquerda, fonte 10 pt e espaçamento simples (1,0).
+- NOTA DE APRESENTAÇÃO (Folha de Rosto): Recuo de 7,5 cm à esquerda, fonte 10 pt e espaçamento simples (1,0).
+- REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, espaçamento simples (1,0) e separadas entre si por 1 linha em branco simples.
+- LEGENDAS E FONTES DE TABELAS/ILUSTRAÇÕES: Fonte 10 pt e espaçamento simples (1,0).
+
 DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
-- RESUMO (NBR 6028): Parágrafo único de 150 a 250 palavras + "Palavras-chave: [3 a 5 termos separados por ponto final]."
+- RESUMO (NBR 6028): Parágrafo único de 150 a 250 palavras em espaçamento simples + "Palavras-chave: [3 a 5 termos separados por ponto final]."
 - ABSTRACT: Versão acadêmica completa em inglês + "Keywords: [termos em inglês]."
 - SUMÁRIO completo com pontilhados líderes regulares (NBR 6027).
 - 1 INTRODUÇÃO (Mínimo 3 a 4 parágrafos densos: Contextualização, Problema, Hipóteses, Objetivos e Relevância).
@@ -452,10 +477,15 @@ ${genreInstructions}
 NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
 1. 🛡️ REGRA MESTRE DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
    - Baseie-se apenas em conhecimento científico real, periódicos conceituados (SciELO, Scopus, Google Scholar) e fontes oficiais (IBGE, IPEA, OMS).
-2. EXCELÊNCIA GRAMATICAL: Português culto formal, sem desvios de regência, crase ou pontuação.
-3. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15) ou Conforme Santos (2022). NUNCA use caixa alta integral como (SILVA, 2023).
-4. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
-5. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
+2. ESPAÇAMENTO E TIPOGRAFIA RIGOROSA (ABNT NBR 14724 & NBR 6022):
+   - Corpo do texto: Espaçamento entrelinhas 1,5, justificado, recuo 1,25 cm.
+   - Citações longas (> 3 linhas): Espaçamento simples (1,0), recuo 4,0 cm, fonte 10 pt.
+   - Referências (NBR 6023:2025): Espaçamento simples (1,0), alinhamento à esquerda, separadas por 1 linha em branco.
+   - Tabelas, Quadros e Legendas: Espaçamento simples (1,0), fonte 10 pt.
+3. EXCELÊNCIA GRAMATICAL: Português culto formal, sem desvios de regência, crase ou pontuação.
+4. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15) ou Conforme Santos (2022). NUNCA use caixa alta integral como (SILVA, 2023).
+5. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
+6. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
   try {
     const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-3.6-flash");
