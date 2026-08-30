@@ -1037,50 +1037,10 @@ REQUISITOS MANDATÓRIOS:
 
   const handleGenerate = async () => {
     const cleanTitle = title.trim() || "Trabalho Acadêmico Geral";
-    const hasActiveKey = !!customGeminiKey && customGeminiKey.trim().length >= 10;
-    
-    // Se não tiver chave de API do Gemini conectada e não tiver créditos PIX:
-    if (!hasActiveKey && credits <= 0 && !isMaster) {
-      setShowApiKeyModal(true);
-      setErrorMessage("Conecte sua chave gratuita do Google AI Studio para gerar seus trabalhos ilimitados.");
-      return;
-    }
-
     setIsLoading(true);
-    setErrorMessage("");
+    setErrorMessage("⏳ Gerando e normalizando trabalho acadêmico no padrão ABNT...");
+    
     try {
-      const formData = new FormData();
-      formData.append("title", cleanTitle);
-      formData.append("subtitle", subtitle);
-      formData.append("documentType", documentType === "outros" ? (customDocumentType || "artigo") : documentType);
-      formData.append("prompt", prompt || `Desenvolva um texto completo e estruturado sobre ${cleanTitle}.`);
-      
-      // Send work data if any exists
-      if (studentName) formData.append("studentName", studentName);
-      if (course) formData.append("course", course);
-      if (institution) formData.append("institution", institution);
-      if (city) formData.append("city", city);
-      if (year) formData.append("year", year);
-      if (advisor) formData.append("advisor", advisor);
-
-      if (files.length > 0) {
-        files.forEach(f => formData.append("files", f));
-      }
-
-      const customHeaders: Record<string, string> = {
-        "x-ai-provider": aiProvider || "gemini",
-      };
-      if (customGeminiKey && customGeminiKey.trim()) {
-        customHeaders["x-gemini-api-key"] = customGeminiKey.trim();
-      }
-      if (customOpenaiKey && customOpenaiKey.trim()) {
-        customHeaders["x-openai-api-key"] = customOpenaiKey.trim();
-      }
-      const token = localStorage.getItem("emia_google_token");
-      if (token) {
-        customHeaders["authorization"] = `Bearer ${token}`;
-      }
-
       let finalText = "";
       
       try {
@@ -1101,7 +1061,7 @@ REQUISITOS MANDATÓRIOS:
         console.warn("[EMIA Motor Direto] Erro na geração:", genErr);
       }
 
-      if (finalText) {
+      if (finalText && finalText.trim().length > 30) {
         updateGeneratedTextWithHistory(finalText);
         setActiveTab("editor");
         logAction(`Geração de documento: ${cleanTitle}`, finalText);
