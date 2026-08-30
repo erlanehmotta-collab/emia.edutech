@@ -3941,8 +3941,8 @@ ${textToParse.substring(0, 4500)}`;
                     const cleanT = text.trim();
                     const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
                     
-                    const isCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA_AUTO") || cleanT.startsWith("[PÁGINA_CAPA]") || cleanT.startsWith("CAPA\n") || cleanT === "CAPA";
-                    const isTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA_ROSTO_AUTO") || cleanT.startsWith("[PÁGINA_FOLHA_ROSTO]") || cleanT.startsWith("FOLHA DE ROSTO\n") || cleanT === "FOLHA DE ROSTO";
+                    const isCover = cleanT === "CAPA_AUTO" || cleanT.startsWith("CAPA_AUTO") || cleanT.startsWith("[PÁGINA_CAPA]") || cleanT.startsWith("CAPA\n") || cleanT === "CAPA" || (pIdx === 0 && requiresFormalCover && !cleanT.startsWith("1 ") && !cleanT.startsWith("RESUMO"));
+                    const isTitlePage = cleanT === "FOLHA_ROSTO_AUTO" || cleanT.startsWith("FOLHA_ROSTO_AUTO") || cleanT.startsWith("[PÁGINA_FOLHA_ROSTO]") || cleanT.startsWith("FOLHA DE ROSTO\n") || cleanT === "FOLHA DE ROSTO" || (pIdx === 1 && requiresFormalCover && !cleanT.startsWith("1 ") && !cleanT.startsWith("SUMÁRIO") && (cleanT.includes("apresentado") || cleanT.includes("Orientador") || cleanT.includes("requisito") || cleanT.length < 500));
                     const isBodyPage = !isCover && !isTitlePage;
                     const pageNum = pIdx + 1;
                     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);

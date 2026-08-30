@@ -205,7 +205,7 @@ export async function generateAcademicText(options: GenerateOptions): Promise<st
     const adv = advisor || "Prof. Dr. Orientador";
 
     // 1. CAPA OFICIAL (Elemento Pré-Textual 1 - ABNT NBR 14724)
-    prefixHeader = `${inst}
+    prefixHeader = `CAPA_AUTO\n${inst}
 ${crs}
 
 
@@ -238,7 +238,7 @@ ${an}
       ? `Relatório técnico-científico apresentado ao(à) ${inst}, para comprovação e avaliação das atividades desenvolvidas.`
       : `Trabalho de Conclusão de Curso apresentado ao(à) ${inst}, como requisito parcial para obtenção de grau em ${course || "Graduação"}.`;
 
-    prefixHeader += `${aut}
+    prefixHeader += `FOLHA_ROSTO_AUTO\n${aut}
 
 
 
