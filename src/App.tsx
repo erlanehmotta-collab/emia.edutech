@@ -3978,15 +3978,10 @@ ${textToParse.substring(0, 4500)}`;
                             onClick={(e) => {
                               e.stopPropagation();
                               
-                              // 1. Obtém as páginas atuais reais
-                              let currentPages: string[] = [];
-                              if (generatedText && pageBreakRegex.test(generatedText)) {
-                                currentPages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
-                              } else {
-                                currentPages = [...pages];
-                              }
+                              // Usa a lista exata das páginas renderizadas na tela
+                              const currentPages = [...pages];
 
-                              // Remove exatamente a página selecionada
+                              // Remove exatamente a página do índice selecionado
                               const remaining = currentPages.filter((_, i) => i !== pIdx);
 
                               if (remaining.length === 0) {
@@ -3997,7 +3992,7 @@ ${textToParse.substring(0, 4500)}`;
                                 updateGeneratedTextWithHistory(joined);
                               }
 
-                              // 2. Reajusta numerações
+                              // Reajusta numerações
                               setHiddenPageNumbers(prev => {
                                 const next = new Set<number>();
                                 prev.forEach(idx => {
@@ -4007,11 +4002,11 @@ ${textToParse.substring(0, 4500)}`;
                                 return next;
                               });
 
-                              setErrorMessage(`🗑️ Página ${pageNum} apagada com sucesso! O documento manteve a formatação ABNT intacta.`);
+                              setErrorMessage(`🗑️ Página ${pageNum} apagada com sucesso! O documento manteve a formatação ABNT.`);
                               setTimeout(() => setErrorMessage(""), 3500);
                             }}
-                            title="Apagar esta página inteira do documento (a folha seguinte sobre inteira)"
-                            className="px-2 py-0.5 text-[10px] font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all flex items-center gap-1"
+                            title="Apagar esta página inteira do documento (a folha seguinte sobe inteira)"
+                            className="px-2 py-0.5 text-[10px] font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
                           >
                             🗑️ Apagar Página
                           </button>
@@ -4022,8 +4017,9 @@ ${textToParse.substring(0, 4500)}`;
                             onClick={(e) => {
                               e.stopPropagation();
                               const newPages = [...pages];
-                              newPages.splice(pIdx + 1, 0, "");
-                              setGeneratedText(newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n"));
+                              newPages.splice(pIdx + 1, 0, "NOVA SEÇÃO / PARÁGRAFO\n\nDigite ou cole seu texto acadêmico aqui...");
+                              const joined = newPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");
+                              updateGeneratedTextWithHistory(joined);
                               // Ajusta índices de numeração oculta após inserção
                               setHiddenPageNumbers(prev => {
                                 const next = new Set<number>();
@@ -4033,9 +4029,11 @@ ${textToParse.substring(0, 4500)}`;
                                 });
                                 return next;
                               });
+                              setErrorMessage(`➕ Nova página adicionada após a página ${pageNum}!`);
+                              setTimeout(() => setErrorMessage(""), 3500);
                             }}
                             title="Adicionar uma nova página em branco após esta"
-                            className="px-2 py-0.5 text-[10px] font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1"
+                            className="px-2 py-0.5 text-[10px] font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
                           >
                             ➕ Adicionar Página
                           </button>
