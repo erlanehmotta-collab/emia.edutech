@@ -165,6 +165,63 @@ ${text}`;
   return await callGeminiDirectly(prompt, customKey);
 }
 
+export function buildDynamicTOCBlock(pages: string[]): string {
+  const tocEntries: { title: string; page: number }[] = [];
+  
+  pages.forEach((pageContent, idx) => {
+    const pageNum = idx + 1;
+    const cleanP = pageContent.trim();
+    const cleanUpper = cleanP.toUpperCase().replace(/^#+\s*/, '');
+    
+    // Elementos pré-textuais NÃO entram no Sumário (ABNT NBR 6027 item 4.2)
+    if (cleanUpper.startsWith("CAPA") || cleanP === "CAPA_AUTO" || 
+        cleanUpper.startsWith("FOLHA") || cleanP === "FOLHA_ROSTO_AUTO" || 
+        cleanUpper.startsWith("SUMÁRIO") || cleanUpper.startsWith("RESUMO") || cleanUpper.startsWith("ABSTRACT") ||
+        cleanUpper.startsWith("AGRADECIMENTOS") || cleanUpper.startsWith("DEDICATÓRIA")) {
+      return;
+    }
+
+    const lines = cleanP.split('\n');
+    for (const line of lines) {
+      const clean = line.trim().replace(/^#+\s*/, '');
+      if (!clean) continue;
+
+      // Seções numeradas (1 INTRODUÇÃO, 2 FUNDAMENTAÇÃO, 2.1 Subseção, etc.)
+      const isNumbered = /^\d+(?:\.\d+)*\s+[A-ZÀ-Ú]/.test(clean);
+      // Elementos pós-textuais (REFERÊNCIAS, APÊNDICES, ANEXOS)
+      const isPostTextual = /^(REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE|ANEXO)\b/i.test(clean);
+
+      if (isNumbered || isPostTextual) {
+        const upperTitle = clean.toUpperCase();
+        if (!upperTitle.startsWith("SUMÁRIO") && !upperTitle.startsWith("RESUMO") && !upperTitle.startsWith("ABSTRACT") && !tocEntries.some(e => e.title === upperTitle)) {
+          tocEntries.push({
+            title: upperTitle,
+            page: pageNum
+          });
+        }
+      }
+    }
+  });
+
+  if (tocEntries.length === 0) {
+    tocEntries.push(
+      { title: "1 INTRODUÇÃO", page: 6 },
+      { title: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", page: 7 },
+      { title: "3 RESULTADOS E DISCUSSÃO", page: 9 },
+      { title: "4 CONSIDERAÇÕES FINAIS", page: 11 },
+      { title: "REFERÊNCIAS", page: 12 }
+    );
+  }
+
+  const formattedTOCLines = tocEntries.map(entry => {
+    const dotsCount = Math.max(5, 70 - entry.title.length - String(entry.page).length);
+    const dots = ".".repeat(dotsCount);
+    return `${entry.title} ${dots} ${entry.page}`;
+  });
+
+  return `SUMÁRIO\n\n${formattedTOCLines.join('\n')}`;
+}
+
 export function paginateAcademicDocument(rawText: string, documentType = "artigo"): string {
   if (!rawText || !rawText.trim()) return rawText;
 
@@ -172,7 +229,7 @@ export function paginateAcademicDocument(rawText: string, documentType = "artigo
   const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
   const initialBlocks = cleanText.split(pageBreakRegex).map(b => b.trim()).filter(Boolean);
 
-  const finalPages: string[] = [];
+  const rawFinalPages: string[] = [];
 
   for (const block of initialBlocks) {
     const isCover = block.startsWith("CAPA_AUTO") || block.startsWith("CAPA\n") || block === "CAPA";
@@ -180,17 +237,17 @@ export function paginateAcademicDocument(rawText: string, documentType = "artigo
     const isTOC = block.startsWith("SUMÁRIO") || block.startsWith("# SUMÁRIO") || block.replace(/^#+\s*/, '').startsWith("SUMÁRIO");
 
     if (isCover || isTitlePage || isTOC) {
-      finalPages.push(block);
+      rawFinalPages.push(block);
       continue;
     }
 
     if (["resumo", "redacao"].includes(documentType)) {
-      finalPages.push(block);
+      rawFinalPages.push(block);
       continue;
     }
 
     // Separa antes de grandes seções ABNT
-    const sectionSplitRegex = /\n(?=(?:#+\s*)?(?:ABSTRACT|SUMÁRIO|\d+\s+[A-ZÀ-Ú\s]{3,}|REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|CONSIDERAÇÕES FINAIS)\b)/gi;
+    const sectionSplitRegex = /\n(?=(?:#+\s*)?(?:RESUMO|ABSTRACT|SUMÁRIO|\d+\s+[A-ZÀ-Ú\s]{3,}|REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|CONSIDERAÇÕES FINAIS|CONCLUSÃO)\b)/gi;
     const sectionChunks = block.split(sectionSplitRegex).map(s => s.trim()).filter(Boolean);
 
     for (const chunk of sectionChunks) {
@@ -200,16 +257,24 @@ export function paginateAcademicDocument(rawText: string, documentType = "artigo
 
       for (const p of paragraphs) {
         if ((curPage + "\n\n" + p).length > 1800 && curPage.trim().length > 0) {
-          finalPages.push(curPage.trim());
+          rawFinalPages.push(curPage.trim());
           curPage = p;
         } else {
           curPage = curPage ? curPage + "\n\n" + p : p;
         }
       }
       if (curPage.trim()) {
-        finalPages.push(curPage.trim());
+        rawFinalPages.push(curPage.trim());
       }
     }
+  }
+
+  // Recalcula o Sumário dinâmico com os números de página reais de cada seção
+  const finalPages = [...rawFinalPages];
+  const tocIdx = finalPages.findIndex(p => p.startsWith("SUMÁRIO") || p.startsWith("# SUMÁRIO") || p.replace(/^#+\s*/, '').startsWith("SUMÁRIO"));
+  
+  if (tocIdx >= 0) {
+    finalPages[tocIdx] = buildDynamicTOCBlock(finalPages);
   }
 
   return finalPages.join("\n\n--- [QUEBRA DE PÁGINA] ---\n\n");

@@ -150,6 +150,50 @@ export default function App() {
   };
 
 
+  // PWA Install State (Download / Instalação do App)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isAppInstalled, setIsAppInstalled] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setDeferredPrompt(null);
+      setErrorMessage("🎉 Aplicativo EMIA.EDUTECH instalado com sucesso no seu dispositivo!");
+      setTimeout(() => setErrorMessage(""), 4000);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    if (typeof window !== "undefined" && window.matchMedia('(display-mode: standalone)').matches) {
+      setIsAppInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if (choiceResult && choiceResult.outcome === "accepted") {
+        setDeferredPrompt(null);
+        setErrorMessage("📲 Instalando o aplicativo EMIA.EDUTECH no seu dispositivo...");
+      }
+    } else {
+      setErrorMessage("📲 Para instalar o App: No Chrome/Edge clique no ícone de instalar na barra de endereços (ou no celular, toque em 'Compartilhar' > 'Adicionar à Tela de Início').");
+      setTimeout(() => setErrorMessage(""), 6000);
+    }
+  };
+
   // Profile and Audit State
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -2190,46 +2234,35 @@ EMIA:`;
 
   const exportPDF = () => {
     if (!generatedText || !generatedText.trim()) {
-      setErrorMessage("Nenhum texto disponível para exportar.");
+      setErrorMessage("Nenhum texto disponível para exportar em PDF.");
       return;
     }
 
-    const doc = new jsPDF({ 
-      unit: 'mm',
-      format: 'a4',
-      orientation: 'portrait'
-    });
-    
-    // Configurações Globais ABNT NBR 14724
-    const marginLeft = 30; // 3,0 cm Margem Esquerda
-    const marginTop = 30;  // 3,0 cm Margem Superior
-    const marginRight = 20; // 2,0 cm Margem Direita
-    const marginBottom = 20; // 2,0 cm Margem Inferior
-    const printableWidth = 210 - marginLeft - marginRight; // 160 mm
-    const maxY = 297 - marginBottom; // 277 mm
-    const lineHeight = 6.5; // Espaçamento 1.5 para corpo
-    const pageRightEdge = 210 - marginRight; // 190 mm
+    try {
+      setErrorMessage("⏳ Gerando PDF A4 no padrão oficial ABNT...");
+      const doc = new jsPDF({ 
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+      });
+      
+      // Configurações Globais ABNT NBR 14724
+      const marginLeft = 30; // 3,0 cm Margem Esquerda
+      const marginTop = 30;  // 3,0 cm Margem Superior
+      const marginRight = 20; // 2,0 cm Margem Direita
+      const marginBottom = 20; // 2,0 cm Margem Inferior
+      const printableWidth = 210 - marginLeft - marginRight; // 160 mm
+      const maxY = 297 - marginBottom; // 277 mm
+      const lineHeight = 6.5; // Espaçamento 1.5 para corpo
+      const pageRightEdge = 210 - marginRight; // 190 mm
 
-    // Normalização das Páginas ABNT
-    let rawPages: string[] = [];
-    if (generatedText.includes("--- [QUEBRA DE PÁGINA] ---")) {
-      rawPages = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
-    } else {
-      const paragraphs = generatedText.split(/\n\n+/);
-      let curPage = "";
-      for (const para of paragraphs) {
-        if ((curPage + "\n\n" + para).length > 2000 && curPage.trim().length > 0) {
-          rawPages.push(curPage.trim());
-          curPage = para;
-        } else {
-          curPage = curPage ? curPage + "\n\n" + para : para;
-        }
-      }
-      if (curPage.trim()) rawPages.push(curPage.trim());
-    }
+      // Normalização das Páginas ABNT com motor oficial
+      const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
+      const paginatedText = paginateAcademicDocument(generatedText, documentType);
+      const rawPages = paginatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
 
-    const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
-    let currentPageNum = 0;
+      const requiresFormalCover = !["resumo", "redacao", "resenha"].includes(documentType);
+      let currentPageNum = 0;
 
     rawPages.forEach((pageContent, pageIdx) => {
       const trimmedPage = pageContent.trim();
@@ -2520,88 +2553,110 @@ EMIA:`;
       }
     });
 
-    doc.save(`trabalho-abnt-${(title || "documento").toLowerCase().replace(/[^a-z0-9]/g, "-")}.pdf`);
+      doc.save(`trabalho-abnt-${(title || "documento").toLowerCase().replace(/[^a-z0-9]/g, "-")}.pdf`);
+      setErrorMessage("✅ Documento PDF A4 baixado com sucesso!");
+      setTimeout(() => setErrorMessage(""), 3500);
+    } catch (err: any) {
+      console.error("Erro ao exportar PDF:", err);
+      setErrorMessage("⚠️ Falha ao gerar o arquivo PDF. Tente novamente.");
+      setTimeout(() => setErrorMessage(""), 3500);
+    }
   };
 
   const exportWord = async () => {
-    if (!generatedText) return;
+    if (!generatedText || !generatedText.trim()) {
+      setErrorMessage("Nenhum texto disponível para exportar em Word.");
+      return;
+    }
     
-    const rawPages = generatedText.split("--- [QUEBRA DE PÁGINA] ---");
-    const docSections: any[] = [];
+    try {
+      setErrorMessage("⏳ Gerando arquivo Word (.docx)...");
+      const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
+      const paginatedText = paginateAcademicDocument(generatedText, documentType);
+      const rawPages = paginatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
+      const docSections: any[] = [];
 
-    rawPages.forEach((pageContent, pageIdx) => {
-      const isCover = pageIdx === 0;
-      const isTitlePage = pageIdx === 1;
-      const isBody = pageIdx >= 2;
+      rawPages.forEach((pageContent, pageIdx) => {
+        const isCover = pageIdx === 0;
+        const isTitlePage = pageIdx === 1;
+        const isBody = pageIdx >= 2;
 
-      const paragraphs = pageContent.split('\n').map(text => {
-        const clean = text.trim();
-        if (!clean) {
+        const paragraphs = pageContent.split('\n').map(text => {
+          const clean = text.trim();
+          if (!clean) {
+            return new Paragraph({
+              children: [new TextRun({ text: "", font: "Arial", size: 24 })],
+              spacing: { line: 360 }
+            });
+          }
+
+          const isRightNature = isTitlePage && (clean.startsWith("Trabalho") || clean.startsWith("Monografia") || clean.startsWith("Artigo") || clean.startsWith("Orientador") || clean.startsWith("Dissertação"));
+          const isCentered = isCover || (isTitlePage && !isRightNature && (clean === clean.toUpperCase() || clean.length < 50));
+
           return new Paragraph({
-            children: [new TextRun({ text: "", font: "Arial", size: 24 })],
-            spacing: { line: 360 }
+            children: [new TextRun({ 
+              text: clean, 
+              font: "Arial", 
+              size: isRightNature ? 20 : 24, // 10pt para nota, 12pt para corpo
+              bold: isCover && (clean.length > 20 || clean === clean.toUpperCase())
+            })],
+            alignment: isCentered ? AlignmentType.CENTER : (isRightNature ? AlignmentType.RIGHT : AlignmentType.JUSTIFIED),
+            spacing: { line: isRightNature ? 240 : 360 }, // 1.0 para nota, 1.5 para corpo
+            indent: isCentered || isRightNature ? { firstLine: 0 } : { firstLine: convertMillimetersToTwip(12.5) } // 1.25cm recuo
           });
-        }
+        });
 
-        const isRightNature = isTitlePage && (clean.startsWith("Trabalho") || clean.startsWith("Monografia") || clean.startsWith("Artigo") || clean.startsWith("Orientador") || clean.startsWith("Dissertação"));
-        const isCentered = isCover || (isTitlePage && !isRightNature && (clean === clean.toUpperCase() || clean.length < 50));
-
-        return new Paragraph({
-          children: [new TextRun({ 
-            text: clean, 
-            font: "Arial", 
-            size: isRightNature ? 20 : 24, // 10pt para nota, 12pt para corpo
-            bold: isCover && (clean.length > 20 || clean === clean.toUpperCase())
-          })],
-          alignment: isCentered ? AlignmentType.CENTER : (isRightNature ? AlignmentType.RIGHT : AlignmentType.JUSTIFIED),
-          spacing: { line: isRightNature ? 240 : 360 }, // 1.0 para nota, 1.5 para corpo
-          indent: isCentered || isRightNature ? { firstLine: 0 } : { firstLine: convertMillimetersToTwip(12.5) } // 1.25cm recuo
+        docSections.push({
+          properties: {
+            page: {
+              size: {
+                width: convertMillimetersToTwip(210), // Folha A4 210mm
+                height: convertMillimetersToTwip(297) // Folha A4 297mm
+              },
+              margin: {
+                top: convertMillimetersToTwip(30), // Margem Superior 3cm
+                left: convertMillimetersToTwip(30), // Margem Esquerda 3cm
+                right: convertMillimetersToTwip(20), // Margem Direita 2cm
+                bottom: convertMillimetersToTwip(20), // Margem Inferior 2cm
+              }
+            }
+          },
+          headers: isBody ? {
+            default: new Header({
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  children: [
+                    new TextRun({
+                      children: [PageNumber.CURRENT],
+                      font: "Arial",
+                      size: 20 // 10pt no cabeçalho superior direito
+                    })
+                  ]
+                })
+              ]
+            })
+          } : undefined,
+          children: paragraphs,
         });
       });
 
-      docSections.push({
-        properties: {
-          page: {
-            size: {
-              width: convertMillimetersToTwip(210), // Folha A4 210mm
-              height: convertMillimetersToTwip(297) // Folha A4 297mm
-            },
-            margin: {
-              top: convertMillimetersToTwip(30), // Margem Superior 3cm
-              left: convertMillimetersToTwip(30), // Margem Esquerda 3cm
-              right: convertMillimetersToTwip(20), // Margem Direita 2cm
-              bottom: convertMillimetersToTwip(20), // Margem Inferior 2cm
-            }
-          }
-        },
-        headers: isBody ? {
-          default: new Header({
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.RIGHT,
-                children: [
-                  new TextRun({
-                    children: [PageNumber.CURRENT],
-                    font: "Arial",
-                    size: 20 // 10pt no cabeçalho superior direito
-                  })
-                ]
-              })
-            ]
-          })
-        } : undefined,
-        children: paragraphs,
+      const doc = new Document({
+        sections: docSections.length > 0 ? docSections : [{
+          children: [new Paragraph({ children: [new TextRun({ text: generatedText, font: "Arial", size: 24 })] })]
+        }]
       });
-    });
 
-    const doc = new Document({
-      sections: docSections.length > 0 ? docSections : [{
-        children: [new Paragraph({ children: [new TextRun({ text: generatedText, font: "Arial", size: 24 })] })]
-      }]
-    });
-
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "trabalho-abnt-a4.docx");
+      const blob = await Packer.toBlob(doc);
+      const fileName = `trabalho-abnt-${(title || "documento").toLowerCase().replace(/[^a-z0-9]/g, "-")}.docx`;
+      saveAs(blob, fileName);
+      setErrorMessage("✅ Documento Word (.docx) baixado com sucesso!");
+      setTimeout(() => setErrorMessage(""), 3500);
+    } catch (wordErr: any) {
+      console.error("Erro ao exportar Word:", wordErr);
+      setErrorMessage("⚠️ Falha ao gerar o arquivo Word. Tente novamente.");
+      setTimeout(() => setErrorMessage(""), 3500);
+    }
   };
 
   const exportLaTeX = () => {
@@ -3345,6 +3400,16 @@ ${textToParse.substring(0, 4500)}`;
           >
             <User className="w-3.5 h-3.5 text-indigo-600 stroke-[1.8] group-hover:scale-105 transition-transform" />
             <span className="tracking-tight">Perfil e Histórico</span>
+          </button>
+
+          {/* Botão Baixar / Instalar App (PWA) */}
+          <button 
+            onClick={handleInstallApp}
+            className="h-8 flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-lg text-xs font-semibold shadow-2xs hover:shadow-xs transition-all active:scale-95 group cursor-pointer"
+            title="Baixar e Instalar o Aplicativo no Computador ou Celular (PWA)"
+          >
+            <Download className="w-3.5 h-3.5 text-white stroke-[2] group-hover:translate-y-0.5 transition-transform" />
+            <span className="tracking-tight">{isAppInstalled ? "App Instalado" : "Baixar App"}</span>
           </button>
 
           {/* Botão Sair */}
@@ -4233,40 +4298,69 @@ ${textToParse.substring(0, 4500)}`;
                               <div className="w-full font-['Arial'] text-gray-900 leading-[1.8] text-sm sm:text-base py-2">
                                 <div className="font-bold text-center text-base mb-6 tracking-wide uppercase">SUMÁRIO</div>
                                 <div className="space-y-2 font-['Arial'] text-xs sm:text-sm">
-                                  {lines.filter(l => l && !l.toUpperCase().startsWith("SUMÁRIO") && !l.replace(/^#+\s*/, '').toUpperCase().startsWith("SUMÁRIO")).map((line, lIdx) => {
-                                    const match = line.match(/^(.*?)(?:\s+(?:\.|\s)+\s*|\s{2,}|\t+)(\d+)$/);
-                                    let sectionTitle = line.trim();
-                                    let pageNum = "";
-
-                                    if (match) {
-                                      sectionTitle = match[1].trim();
-                                      pageNum = match[2].trim();
-                                    } else {
-                                      const endNumMatch = line.match(/^(.*?)\s+(\d+)$/);
-                                      if (endNumMatch) {
-                                        sectionTitle = endNumMatch[1].trim();
-                                        pageNum = endNumMatch[2].trim();
-                                      } else {
-                                        // Busca dinamicamente em que folha este título está localizado
-                                        const cleanUpper = sectionTitle.toUpperCase().replace(/^#+\s*/, '');
-                                        const foundIdx = pages.findIndex((p, idx) => idx !== pIdx && p.toUpperCase().includes(cleanUpper));
-                                        if (foundIdx >= 0) pageNum = String(foundIdx + 1);
+                                  {(() => {
+                                    // 1. Escaneia todas as páginas reais do documento
+                                    const tocEntries: { title: string; page: number }[] = [];
+                                    
+                                    pages.forEach((pageContent, idx) => {
+                                      const pageNum = idx + 1;
+                                      const cleanP = pageContent.trim().toUpperCase().replace(/^#+\s*/, '');
+                                      
+                                      // Elementos pré-textuais NÃO entram no Sumário (ABNT NBR 6027)
+                                      if (cleanP.startsWith("CAPA") || cleanP === "CAPA_AUTO" || 
+                                          cleanP.startsWith("FOLHA") || cleanP === "FOLHA_ROSTO_AUTO" || 
+                                          cleanP.startsWith("SUMÁRIO") || cleanP.startsWith("RESUMO") || cleanP.startsWith("ABSTRACT") ||
+                                          cleanP.startsWith("AGRADECIMENTOS") || cleanP.startsWith("DEDICATÓRIA")) {
+                                        return;
                                       }
+
+                                      const pLines = pageContent.split('\n');
+                                      for (const l of pLines) {
+                                        const cleanL = l.trim().replace(/^#+\s*/, '');
+                                        if (!cleanL) continue;
+
+                                        const isNumbered = /^\d+(?:\.\d+)*\s+[A-ZÀ-Ú]/.test(cleanL);
+                                        const isPost = /^(REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE|ANEXO)\b/i.test(cleanL);
+
+                                        if (isNumbered || isPost) {
+                                          const upperTitle = cleanL.toUpperCase();
+                                          if (!upperTitle.startsWith("SUMÁRIO") && !upperTitle.startsWith("RESUMO") && !upperTitle.startsWith("ABSTRACT") && !tocEntries.some(e => e.title === upperTitle)) {
+                                            tocEntries.push({
+                                              title: upperTitle,
+                                              page: pageNum
+                                            });
+                                          }
+                                        }
+                                      }
+                                    });
+
+                                    // Fallback com as linhas do texto se o escaneamento não encontrar
+                                    if (tocEntries.length === 0) {
+                                      lines.filter(l => l && !l.toUpperCase().startsWith("SUMÁRIO") && !l.replace(/^#+\s*/, '').toUpperCase().startsWith("SUMÁRIO")).forEach((line, lIdx) => {
+                                        const match = line.match(/^(.*?)(?:\s+(?:\.|\s)+\s*|\s{2,}|\t+)(\d+)$/);
+                                        if (match) {
+                                          tocEntries.push({ title: match[1].trim(), page: parseInt(match[2].trim(), 10) });
+                                        } else {
+                                          tocEntries.push({ title: line.trim(), page: pIdx + 2 + lIdx });
+                                        }
+                                      });
                                     }
 
-                                    const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(sectionTitle) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(sectionTitle);
-                                    const isSecondary = /^\d+\.\d+\s+/.test(sectionTitle);
+                                    return tocEntries.map((entry, eIdx) => {
+                                      const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(entry.title) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(entry.title);
+                                      const isSecondary = /^\d+\.\d+\s+/.test(entry.title);
 
-                                    return (
-                                      <div key={lIdx} className="flex items-baseline justify-between gap-2 w-full text-[11pt] sm:text-[12pt]">
-                                        <span className={`${isPrimary ? "font-bold text-gray-900 uppercase" : isSecondary ? "font-normal text-gray-800 uppercase" : "font-normal text-gray-700"} truncate max-w-[80%]`}>
-                                          {sectionTitle}
-                                        </span>
-                                        <span className="flex-1 border-b border-dotted border-gray-400 mx-1 mb-1 min-w-[20px]" />
-                                        <span className="font-bold text-gray-900 tabular-nums ml-1">{pageNum || String(pIdx + 2 + lIdx)}</span>
-                                      </div>
-                                    );
-                                  })}
+                                      return (
+                                        <div key={eIdx} className="flex items-baseline justify-between gap-2 w-full text-[11pt] sm:text-[12pt]">
+                                          <span className={`${isPrimary ? "font-bold text-gray-900 uppercase" : isSecondary ? "font-normal text-gray-800 uppercase" : "font-normal text-gray-700"} truncate max-w-[80%]`}>
+                                            {entry.title}
+                                          </span>
+                                          <span className="flex-1 border-b border-dotted border-gray-400 mx-1 mb-1 min-w-[20px]" />
+                                          <span className="font-bold text-gray-900 tabular-nums ml-1">{entry.page}</span>
+                                        </div>
+                                      );
+                                    });
+                                  })()}
                                 </div>
                               </div>
                             ) : text.includes("![Figura inserida](") ? (
