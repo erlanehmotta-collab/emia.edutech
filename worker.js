@@ -351,16 +351,11 @@ export default {
     // Serve Static Assets (Vite React app in dist/)
     if (env.ASSETS) {
       try {
-        const assetResponse = await env.ASSETS.fetch(request);
-        if (assetResponse.status !== 404) {
-          return assetResponse;
+        const res = await env.ASSETS.fetch(request);
+        if (res.status === 404 && request.method === "GET") {
+          return await env.ASSETS.fetch(new Request(new URL("/index.html", request.url)));
         }
-        // SPA Fallback: serve index.html for unknown routes
-        const indexUrl = new URL("/index.html", request.url);
-        return await env.ASSETS.fetch(new Request(indexUrl.toString(), {
-          method: "GET",
-          headers: request.headers
-        }));
+        return res;
       } catch (assetErr) {
         console.error("Asset fetch error:", assetErr);
       }

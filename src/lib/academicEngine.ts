@@ -124,8 +124,22 @@ export async function callGeminiDirectly(prompt: string, customKey?: string, mod
   throw new Error("Não foi possível obter resposta dos servidores de IA.");
 }
 
+export function sanitizeHallucinatedAuthors(text: string): string {
+  if (!text) return text;
+  
+  // Remove blocos de autoria e afiliação alucinados pela IA no início do texto
+  let clean = text
+    .replace(/^(?:\s*#+\s*.*?\n)?(?:\s*(?:\*\*|__)?(?:Autor|Autores|Autoria|Coautor|Coautores|Coautora|Orientador|Orientadora|Pesquisador|Pesquisadora):(?:\*\*|__)?[^\n]*\n?)+/gmi, '')
+    .replace(/(?:^|\n)(?:\*\*|__)?(?:Autor|Autores|Autoria|Coautor|Coautores|Coautora|Orientador|Orientadora|Pesquisador|Pesquisadora):(?:\*\*|__)?[^\n]*/gi, '')
+    .replace(/(?:^|\n)(?:\*|_)?(?:Livre-Docente|Doutor|Doutora|Prof\.|Dr\.|Dra\.|Pesquisador|Docente|Mestre em)[^\n]*(?:\*|_)?/gi, '')
+    .replace(/(?:^|\n)(?:\*|_)?(?:Universidade|Faculdade|Instituto|Centro Universitário)[^\n]*(?:\*|_)?/gi, '');
+  
+  return clean.replace(/^\s+/, '');
+}
+
 export function normalizeCitationsToABNT2023(text: string): string {
-  return text.replace(/\(([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,})(,\s*\d{4}(?:,\s*p\.\s*\d+)?)\)/g, (_, author, rest) => {
+  const sanitized = sanitizeHallucinatedAuthors(text);
+  return sanitized.replace(/\(([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,})(,\s*\d{4}(?:,\s*p\.\s*\d+)?)\)/g, (_, author, rest) => {
     const titleCaseAuthor = author.charAt(0).toUpperCase() + author.slice(1).toLowerCase();
     return `(${titleCaseAuthor}${rest})`;
   });
@@ -475,17 +489,21 @@ ${prompt ? `O usuário determinou expressamente as seguintes instruções que DE
 ${genreInstructions}
 
 NORMAS LINGUÍSTICAS E TÉCNICAS INEGOCIÁVEIS:
-1. 🛡️ REGRA MESTRE DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
+1. 🛡️ REGRA CRÍTICA DE INEDITISMO & PROIBIÇÃO ABSOLUTA DE AUTORES FICTÍCIOS:
+   - O trabalho é uma PRODUÇÃO CIENTÍFICA 100% INÉDITA E ORIGINAL.
+   - PROIBIDO ABSOLUTAMENTE inventar, criar ou inserir nomes de autores, coautores, titulações acadêmicas (ex: Dr., Dra., Livre-Docente) ou afiliações institucionais (UNESP, USP, etc.) no topo ou corpo do texto gerado.
+   - A autoria do trabalho pertence exclusivamente ao estudante/pesquisador solicitante e é configurada exclusivamente na Capa e Folha de Rosto. O texto gerado DEVE iniciar diretamente no título oficial e no RESUMO!
+2. 🛡️ REGRA MESTRE DE VERACIDADE CIENTÍFICA (ZERO ALUCINAÇÃO):
    - Baseie-se apenas em conhecimento científico real, periódicos conceituados (SciELO, Scopus, Google Scholar) e fontes oficiais (IBGE, IPEA, OMS).
-2. ESPAÇAMENTO E TIPOGRAFIA RIGOROSA (ABNT NBR 14724 & NBR 6022):
+3. ESPAÇAMENTO E TIPOGRAFIA RIGOROSA (ABNT NBR 14724 & NBR 6022):
    - Corpo do texto: Espaçamento entrelinhas 1,5, justificado, recuo 1,25 cm.
    - Citações longas (> 3 linhas): Espaçamento simples (1,0), recuo 4,0 cm, fonte 10 pt.
    - Referências (NBR 6023:2025): Espaçamento simples (1,0), alinhamento à esquerda, separadas por 1 linha em branco.
    - Tabelas, Quadros e Legendas: Espaçamento simples (1,0), fonte 10 pt.
-3. EXCELÊNCIA GRAMATICAL: Português culto formal, sem desvios de regência, crase ou pontuação.
-4. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15) ou Conforme Santos (2022). NUNCA use caixa alta integral como (SILVA, 2023).
-5. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
-6. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
+4. EXCELÊNCIA GRAMATICAL: Português culto formal, sem desvios de regência, crase ou pontuação.
+5. CITAÇÕES (NBR 10520:2023): Sistema autor-data em caixa mista: (Silva, 2023, p. 15) ou Conforme Santos (2022). NUNCA use caixa alta integral como (SILVA, 2023).
+6. REFERÊNCIAS (NBR 6023:2025): Alinhadas à esquerda, entrelinha simples, separadas por 1 linha em branco.
+7. ZERO CLICHÊS DE IA: Proibido usar "Em suma", "Vale ressaltar", "No cenário atual", "Podemos concluir".`;
 
   try {
     const generated = await callGeminiDirectly(systemPrompt, customGeminiKey, "gemini-3.6-flash");
