@@ -177,8 +177,9 @@ export function paginateAcademicDocument(rawText: string, documentType = "artigo
   for (const block of initialBlocks) {
     const isCover = block.startsWith("CAPA_AUTO") || block.startsWith("CAPA\n") || block === "CAPA";
     const isTitlePage = block.startsWith("FOLHA_ROSTO_AUTO") || block.startsWith("FOLHA DE ROSTO\n") || block === "FOLHA DE ROSTO";
+    const isTOC = block.startsWith("SUMÁRIO") || block.startsWith("# SUMÁRIO") || block.replace(/^#+\s*/, '').startsWith("SUMÁRIO");
 
-    if (isCover || isTitlePage) {
+    if (isCover || isTitlePage || isTOC) {
       finalPages.push(block);
       continue;
     }

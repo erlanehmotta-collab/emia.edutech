@@ -1686,13 +1686,14 @@ ${generatedText}`;
       return;
     }
     
-    // 1. Obtém as páginas reais do documento
+    // 1. Pagina o documento com precisão usando o motor ABNT
+    const fullyPaginated = paginateAcademicDocument(generatedText, documentType);
     const pageBreakRegex = /\s*---\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*---\s*|\s*\[(?:QUEBRA DE P[AÁ]GINA|NOVA P[AÁ]GINA)\]\s*/i;
     let rawPages: string[] = [];
-    if (pageBreakRegex.test(generatedText)) {
-      rawPages = generatedText.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
+    if (pageBreakRegex.test(fullyPaginated)) {
+      rawPages = fullyPaginated.split(pageBreakRegex).map(p => p.trim()).filter(Boolean);
     } else {
-      rawPages = [generatedText.trim()];
+      rawPages = [fullyPaginated.trim()];
     }
 
     // Remove qualquer sumário pré-existente para recalcular com precisão
@@ -1759,7 +1760,7 @@ ${generatedText}`;
       );
     }
 
-    // 3. Formata o bloco oficial do Sumário ABNT NBR 6027
+    // 3. Formata o bloco oficial do Sumário ABNT NBR 6027 com pontilhados líderes regulares
     const formattedTOCLines = tocEntries.map(entry => {
       const dotsCount = Math.max(5, 70 - entry.title.length - String(entry.page).length);
       const dots = ".".repeat(dotsCount);
@@ -4231,26 +4232,40 @@ ${textToParse.substring(0, 4500)}`;
                             {cleanT.replace(/^#+\s*/, '').startsWith("SUMÁRIO") || cleanT.startsWith("SUMÁRIO") ? (
                               <div className="w-full font-['Arial'] text-gray-900 leading-[1.8] text-sm sm:text-base py-2">
                                 <div className="font-bold text-center text-base mb-6 tracking-wide uppercase">SUMÁRIO</div>
-                                <div className="space-y-1.5 font-['Arial'] text-xs sm:text-sm">
+                                <div className="space-y-2 font-['Arial'] text-xs sm:text-sm">
                                   {lines.filter(l => l && !l.toUpperCase().startsWith("SUMÁRIO") && !l.replace(/^#+\s*/, '').toUpperCase().startsWith("SUMÁRIO")).map((line, lIdx) => {
-                                    const match = line.match(/^(.*?)\s*(\.{2,}|\s{3,}|\t+)\s*(\d+)$/);
-                                    if (match) {
-                                      const sectionTitle = match[1].trim();
-                                      const pageNum = match[3];
-                                      const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(sectionTitle) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(sectionTitle);
-                                      const isSecondary = /^\d+\.\d+\s+/.test(sectionTitle);
+                                    const match = line.match(/^(.*?)(?:\s+(?:\.|\s)+\s*|\s{2,}|\t+)(\d+)$/);
+                                    let sectionTitle = line.trim();
+                                    let pageNum = "";
 
-                                      return (
-                                        <div key={lIdx} className="flex items-baseline justify-between gap-2 w-full text-[11pt] sm:text-[12pt]">
-                                          <span className={`${isPrimary ? "font-bold text-gray-900 uppercase" : isSecondary ? "font-normal text-gray-800 uppercase" : "font-normal text-gray-700"} truncate max-w-[80%]`}>
-                                            {sectionTitle}
-                                          </span>
-                                          <span className="flex-1 border-b border-dotted border-gray-400 mx-1 mb-1 min-w-[20px]" />
-                                          <span className="font-bold text-gray-900 tabular-nums ml-1">{pageNum}</span>
-                                        </div>
-                                      );
+                                    if (match) {
+                                      sectionTitle = match[1].trim();
+                                      pageNum = match[2].trim();
+                                    } else {
+                                      const endNumMatch = line.match(/^(.*?)\s+(\d+)$/);
+                                      if (endNumMatch) {
+                                        sectionTitle = endNumMatch[1].trim();
+                                        pageNum = endNumMatch[2].trim();
+                                      } else {
+                                        // Busca dinamicamente em que folha este título está localizado
+                                        const cleanUpper = sectionTitle.toUpperCase().replace(/^#+\s*/, '');
+                                        const foundIdx = pages.findIndex((p, idx) => idx !== pIdx && p.toUpperCase().includes(cleanUpper));
+                                        if (foundIdx >= 0) pageNum = String(foundIdx + 1);
+                                      }
                                     }
-                                    return <div key={lIdx} className="font-bold text-gray-900 py-0.5">{line}</div>;
+
+                                    const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(sectionTitle) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(sectionTitle);
+                                    const isSecondary = /^\d+\.\d+\s+/.test(sectionTitle);
+
+                                    return (
+                                      <div key={lIdx} className="flex items-baseline justify-between gap-2 w-full text-[11pt] sm:text-[12pt]">
+                                        <span className={`${isPrimary ? "font-bold text-gray-900 uppercase" : isSecondary ? "font-normal text-gray-800 uppercase" : "font-normal text-gray-700"} truncate max-w-[80%]`}>
+                                          {sectionTitle}
+                                        </span>
+                                        <span className="flex-1 border-b border-dotted border-gray-400 mx-1 mb-1 min-w-[20px]" />
+                                        <span className="font-bold text-gray-900 tabular-nums ml-1">{pageNum || String(pIdx + 2 + lIdx)}</span>
+                                      </div>
+                                    );
                                   })}
                                 </div>
                               </div>
