@@ -1588,16 +1588,16 @@ ${generatedText}`;
       const an = year || String(new Date().getFullYear());
       const adv = advisor ? `Orientador(a): ${advisor}` : "";
 
-      const docTypeLabel = documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType === "artigo" || documentType === "artigo_cientifico" ? "Artigo Científico" : documentType === "projeto" ? "Projeto de Pesquisa" : documentType === "relatorio" ? "Relatório Técnico" : "Trabalho de Conclusão de Curso (TCC)";
+      const docTypeLabel = documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType.includes("artigo") ? "Artigo científico/acadêmico" : documentType === "projeto" ? "Projeto de pesquisa" : documentType === "relatorio" ? "Relatório técnico-científico" : "Trabalho de Conclusão de Curso (TCC)";
 
-      const presentationNote = `${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para o curso de ${course}` : ""}.${shiftClassInfo ? `\n${shiftClassInfo}` : ""}${adv ? `\n${adv}` : ""}`;
+      const presentationNote = `${docTypeLabel} apresentado à ${inst}${course ? ` como requisito parcial de avaliação para o curso de ${course}` : ""}.${shiftClassInfo ? `\n${shiftClassInfo}` : ""}`;
 
       // 1. CAPA OFICIAL ABNT NBR 14724
       const subHeader = [crs, subMat, shiftClassInfo].filter(Boolean).join("\n");
-      const coverPage = `CAPA_AUTO\n${inst}${subHeader ? `\n${subHeader}` : ""}\n\n${aut}\n\n${tit}${sub}\n\n${cid}\n${an}`;
+      const coverPage = `CAPA_AUTO\n${inst}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${aut}\n\n\n\n${tit}${sub}\n\n\n\n\n\n\n\n${cid}\n${an}`;
 
-      // 2. FOLHA DE ROSTO OFICIAL ABNT NBR 14724
-      const titlePage = `FOLHA_ROSTO_AUTO\n${aut}\n\n${tit}${sub}\n\n${presentationNote}\n\n${cid}\n${an}`;
+      // 2. FOLHA DE ROSTO / CONTRACAPA OFICIAL ABNT NBR 14724
+      const titlePage = `FOLHA_ROSTO_AUTO\n${aut}\n\n\n\n${tit}${sub}\n\n\n\n${presentationNote}${adv ? `\n${adv}` : ""}\n\n\n\n\n\n${cid}\n${an}`;
 
       const coverBlock = `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n`;
 
@@ -1696,15 +1696,17 @@ ${generatedText}`;
     }
 
     // Remove qualquer sumário pré-existente para recalcular com precisão
-    rawPages = rawPages.filter(p => !p.startsWith("SUMÁRIO") && !p.startsWith("# SUMÁRIO"));
+    rawPages = rawPages.filter(p => !p.startsWith("SUMÁRIO") && !p.startsWith("# SUMÁRIO") && !p.replace(/^#+\s*/, '').startsWith("SUMÁRIO"));
 
-    // Determina a posição de inserção do Sumário (último elemento pré-textual, antes da Introdução)
+    // Determina a posição de inserção do Sumário (último elemento pré-textual, exatamente antes de 1 INTRODUÇÃO)
     let insertIdx = 0;
     for (let i = 0; i < rawPages.length; i++) {
-      const p = rawPages[i];
-      const isPreTextual = p.startsWith("CAPA") || p === "CAPA_AUTO" || 
-                          p.startsWith("FOLHA") || p === "FOLHA_ROSTO_AUTO" || 
-                          p.includes("RESUMO") || p.includes("ABSTRACT");
+      const pUpper = rawPages[i].toUpperCase();
+      const isPreTextual = pUpper.startsWith("CAPA") || pUpper === "CAPA_AUTO" || 
+                          pUpper.startsWith("FOLHA") || pUpper === "FOLHA_ROSTO_AUTO" || 
+                          pUpper.includes("RESUMO") || pUpper.includes("ABSTRACT") ||
+                          pUpper.includes("AGRADECIMENTOS") || pUpper.includes("DEDICATÓRIA") ||
+                          pUpper.startsWith("LISTA DE");
       if (isPreTextual) {
         insertIdx = i + 1;
       }
@@ -1714,12 +1716,12 @@ ${generatedText}`;
     const pagesWithTOC = [...rawPages];
     pagesWithTOC.splice(insertIdx, 0, "SUMÁRIO_TEMP");
 
-    // 2. Localiza cada seção e determina o número da página oficial (NBR 6027)
-    // Elementos pré-textuais (Resumo, Abstract) NÃO entram no Sumário!
+    // 2. Localiza cada seção e determina o número da página oficial (ABNT NBR 6027)
+    // Elementos pré-textuais (Capa, Folha de Rosto, Resumo, Abstract) NÃO entram no Sumário!
     const tocEntries: { title: string; page: number }[] = [];
     
     pagesWithTOC.forEach((pageContent, idx) => {
-      // Folha 1 (Capa) não é numerada. Folha 2 (Folha de rosto) conta. Textual inicia na página real contada.
+      // Folha 1 (Capa) conta 1. Folha 2 (Folha de Rosto) conta 2. Textual inicia na página real contada.
       const pageNum = idx + 1;
       const lines = pageContent.split('\n');
       
@@ -1772,7 +1774,7 @@ ${generatedText}`;
     updateGeneratedTextWithHistory(newFullText);
     setActiveTab("editor");
     logAction("Sumário ABNT NBR 6027 Gerado", tocBlock);
-    setErrorMessage("✅ Sumário ABNT NBR 6027 gerado com pontilhados líderes e paginação correta!");
+    setErrorMessage("✅ Sumário ABNT NBR 6027 inserido na ordem correta e com paginação calculada!");
     setTimeout(() => setErrorMessage(""), 3500);
   };
 
@@ -2301,17 +2303,17 @@ EMIA:`;
         // --- 2. FOLHA DE ROSTO / CONTRACAPA OFICIAL ABNT NBR 14724 ---
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
-        doc.text((studentName || "NOME DO(A) AUTOR(A)").toUpperCase(), 105, marginTop + 10, { align: "center" });
+        doc.text((studentName || "NOME DO(A) AUTOR(A)").toUpperCase(), 105, marginTop + 5, { align: "center" });
 
         // Título
-        cursorY = 100;
+        cursorY = 95;
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
+        doc.setFontSize(12);
         const titleText = (title || "TÍTULO DO TRABALHO").toUpperCase();
         const splitTitle = doc.splitTextToSize(titleText, 150);
         splitTitle.forEach((tLine: string) => {
           doc.text(tLine, 105, cursorY, { align: "center" });
-          cursorY += 7;
+          cursorY += 6;
         });
 
         if (subtitle) {
@@ -2320,25 +2322,24 @@ EMIA:`;
           doc.text(`: ${subtitle}`, 105, cursorY, { align: "center" });
         }
 
-        // Nota de Apresentação com Recuo de 7,5cm / alinhada à direita
-        cursorY = 150;
+        // Nota de Apresentação com Recuo de 7,5cm / alinhada do meio para a direita
+        cursorY = 145;
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
 
-        const presentationNote = documentType.includes("artigo")
-          ? `Artigo científico/acadêmico apresentado ao(à) ${institution || "Instituição de Ensino"}, como requisito de avaliação acadêmica.`
-          : `Trabalho de Conclusão de Curso apresentado ao(à) ${institution || "Instituição de Ensino"}, como requisito parcial para obtenção de grau.`;
+        const docTypeLabel = documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType.includes("artigo") ? "Artigo científico/acadêmico" : documentType === "projeto" ? "Projeto de pesquisa" : documentType === "relatorio" ? "Relatório técnico-científico" : "Trabalho de Conclusão de Curso";
+        const presentationNote = `${docTypeLabel} apresentado à ${institution || "Instituição de Ensino Superior"}${course ? ` como requisito parcial de avaliação para o curso de ${course}` : ""}.`;
 
-        const noteLines = doc.splitTextToSize(presentationNote, 80);
+        const noteLines = doc.splitTextToSize(presentationNote, 85);
         noteLines.forEach((nLine: string) => {
-          doc.text(nLine, 110, cursorY);
-          cursorY += 5;
+          doc.text(nLine, 105, cursorY);
+          cursorY += 4.5;
         });
 
         if (advisor) {
           cursorY += 2;
           doc.setFont("helvetica", "bold");
-          doc.text(`Orientador(a): ${advisor}`, 110, cursorY);
+          doc.text(`Orientador(a): ${advisor}`, 105, cursorY);
           doc.setFont("helvetica", "normal");
         }
 
@@ -2365,6 +2366,8 @@ EMIA:`;
 
           // Títulos de Seção (1 INTRODUÇÃO, RESUMO, REFERÊNCIAS, etc.)
           const isHeading = /^(?:\d+(?:\.\d+)*\s+[A-ZÀ-Ú\s]+|RESUMO|ABSTRACT|SUMÁRIO|REFERÊNCIAS|CONSIDERAÇÕES FINAIS)$/.test(rawPara);
+          // Item do Sumário com pontilhados líderes
+          const tocMatch = rawPara.match(/^(.*?)\s*(\.{2,}|\s{3,}|\t+)\s*(\d+)$/);
           // Citação Longa (> 3 linhas com recuo de 4cm)
           const isLongQuote = rawPara.startsWith("[CITAÇÃO_LONGA]") || rawPara.startsWith("   ") || (rawPara.length > 200 && rawPara.startsWith("    "));
           // Tabela ou Quadro
@@ -2382,9 +2385,38 @@ EMIA:`;
             }
             doc.setFont("times", "bold");
             doc.setFontSize(12);
-            doc.text(rawPara, marginLeft, cursorY);
+            doc.text(rawPara, isHeading && rawPara === "SUMÁRIO" ? 105 : marginLeft, cursorY, { align: isHeading && rawPara === "SUMÁRIO" ? "center" : "left" });
             doc.setFont("times", "normal");
             cursorY += lineHeight + 2;
+            return;
+          }
+
+          if (tocMatch) {
+            const secTitle = tocMatch[1].trim();
+            const pNum = tocMatch[3].trim();
+            const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(secTitle) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(secTitle);
+            
+            if (isPrimary) doc.setFont("times", "bold");
+            else doc.setFont("times", "normal");
+            
+            doc.text(secTitle, marginLeft, cursorY);
+            doc.setFont("times", "normal");
+            
+            // Pontilhado e número alinhado à direita
+            doc.text(pNum, pageRightEdge, cursorY, { align: "right" });
+            const pNumWidth = doc.getTextWidth(pNum);
+            const titleWidth = doc.getTextWidth(secTitle);
+            const dotStart = marginLeft + titleWidth + 2;
+            const dotEnd = pageRightEdge - pNumWidth - 2;
+            if (dotEnd > dotStart) {
+              const singleDotWidth = doc.getTextWidth(". ");
+              const numDots = Math.floor((dotEnd - dotStart) / singleDotWidth);
+              if (numDots > 0) {
+                const dotsStr = ". ".repeat(numDots);
+                doc.text(dotsStr, dotStart, cursorY);
+              }
+            }
+            cursorY += lineHeight;
             return;
           }
 
@@ -2996,14 +3028,14 @@ ${textToParse.substring(0, 4500)}`;
     const docSubtitle = subtitle ? ` - ${subtitle}` : "";
     const docCity = (city || "CIDADE - UF").toUpperCase();
     const docYear = year || new Date().getFullYear().toString();
-    const docType = documentType === "outros" ? (customDocumentType || "TRABALHO ACADÊMICO").toUpperCase() : documentType.toUpperCase();
+    const docTypeLabel = documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType.includes("artigo") ? "Artigo científico/acadêmico" : documentType === "projeto" ? "Projeto de pesquisa" : documentType === "relatorio" ? "Relatório técnico-científico" : "Trabalho de Conclusão de Curso";
     const advText = advisor ? `Orientador(a): ${advisor}` : "";
 
     const subHeader = [courseName, subjectName, shiftClassInfo].filter(Boolean).join("\n");
-    const coverPage = `${instName}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+    const coverPage = `CAPA_AUTO\n${instName}${subHeader ? `\n${subHeader}` : ""}\n\n\n\n${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
 
-    const presentationNote = `                                          ${docType} apresentado à ${instName}${courseName ? ` como requisito parcial para a disciplina de ${subject || courseName}` : ""}.\n${shiftClassInfo ? `\n                                          ${shiftClassInfo}` : ""}\n${advText ? `\n                                          ${advText}` : ""}`;
-    const titlePage = `${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n${presentationNote}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
+    const presentationNote = `${docTypeLabel} apresentado à ${instName}${courseName ? ` como requisito parcial de avaliação para o curso de ${courseName}` : ""}.\n${shiftClassInfo ? `${shiftClassInfo}\n` : ""}${advText ? `${advText}` : ""}`;
+    const titlePage = `FOLHA_ROSTO_AUTO\n${authorName}\n\n\n\n\n\n\n\n${docTitle}${docSubtitle}\n\n\n\n${presentationNote}\n\n\n\n\n\n\n\n${docCity}\n${docYear}`;
 
     return `${coverPage}\n\n--- [QUEBRA DE PÁGINA] ---\n\n${titlePage}\n\n--- [QUEBRA DE PÁGINA] ---`;
   };
@@ -4118,85 +4150,82 @@ ${textToParse.substring(0, 4500)}`;
                             </div>
                           </div>
                         ) : isTitlePage ? (
-                          /* RENDERIZAÇÃO DA FOLHA DE ROSTO ABNT (TOTALMENTE EDITÁVEL) */
+                          /* RENDERIZAÇÃO DA FOLHA DE ROSTO / CONTRACAPA ABNT NBR 14724 (TOTALMENTE EDITÁVEL) */
                           <div className="flex-1 flex flex-col justify-between font-['Arial'] text-gray-900 py-4 select-text">
-                            <div className="text-center">
-                              {((studentName && studentName.trim()) || (lines[0] && lines[0] !== "FOLHA_ROSTO_AUTO" && lines[0].trim())) && (
-                                <div
-                                  contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => setStudentName(e.currentTarget.innerText.trim())}
-                                  className="font-semibold text-sm sm:text-base uppercase tracking-wide focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                >
-                                  {studentName || lines[0]}
-                                </div>
-                              )}
+                            {/* 1. AUTOR (TOPO DA FOLHA DE ROSTO - CENTRALIZADO) */}
+                            <div className="text-center pt-2">
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setStudentName(e.currentTarget.innerText.trim())}
+                                className="font-semibold text-sm sm:text-base uppercase tracking-wide focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {studentName || (lines.find(l => l !== "FOLHA_ROSTO_AUTO" && l !== "FOLHA DE ROSTO" && l.length > 3) || "NOME DO(A) AUTOR(A)")}
+                              </div>
                             </div>
 
+                            {/* 2. TÍTULO E SUBTÍTULO (CENTRO SUPERIOR - CAIXA ALTA E NEGRITO) */}
                             <div className="my-auto text-center py-6">
-                              {((title && title.trim()) || (lines[1] && lines[1] !== "FOLHA_ROSTO_AUTO" && lines[1].trim())) && (
-                                <div
-                                  contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => setTitle(e.currentTarget.innerText.trim())}
-                                  className="font-bold text-base sm:text-lg uppercase tracking-tight text-gray-900 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                >
-                                  {title || lines[1]}
-                                </div>
-                              )}
-                              {((subtitle && subtitle.trim()) || (lines[2] && lines[2] !== "FOLHA_ROSTO_AUTO" && lines[2].trim())) && (
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setTitle(e.currentTarget.innerText.trim())}
+                                className="font-extrabold text-base sm:text-lg uppercase tracking-tight text-gray-900 leading-snug focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {title || "TÍTULO DO TRABALHO ACADÊMICO"}
+                              </div>
+                              {subtitle && (
                                 <div
                                   contentEditable
                                   suppressContentEditableWarning
                                   onBlur={(e) => setSubtitle(e.currentTarget.innerText.trim())}
                                   className="font-normal text-xs sm:text-sm text-gray-700 mt-1 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
                                 >
-                                  {subtitle || lines[2]}
+                                  {subtitle}
                                 </div>
                               )}
                             </div>
 
+                            {/* 3. NOTA DE APRESENTAÇÃO E ORIENTADOR (RECUO DE 7,5cm DA ESQUERDA / DO MEIO PARA A DIREITA) */}
                             <div className="my-auto w-full flex justify-end">
                               <div 
                                 contentEditable
                                 suppressContentEditableWarning
-                                className="w-3/5 text-justify text-[10pt] sm:text-[10.5pt] leading-[1.3] text-gray-800 bg-gray-50/50 p-3 rounded border border-gray-200 focus:outline-none focus:bg-blue-50/50"
+                                className="w-[58%] text-justify text-[10pt] leading-[1.2] text-gray-800 bg-gray-50/60 p-3.5 rounded-lg border border-gray-200 focus:outline-none focus:bg-blue-50/50"
                               >
                                 <p>
-                                  {(documentType === "outros" ? customDocumentType : documentType) || "Trabalho Acadêmico"} apresentado à {institution || "Instituição de Ensino"}{course ? ` como requisito parcial de avaliação para o curso de ${course}` : ""}.
+                                  {(() => {
+                                    const docTypeLabel = (documentType === "outros" ? (customDocumentType || "Trabalho Acadêmico") : documentType.includes("artigo") ? "Artigo científico/acadêmico" : documentType === "projeto" ? "Projeto de pesquisa" : documentType === "relatorio" ? "Relatório técnico-científico" : "Trabalho de Conclusão de Curso");
+                                    return `${docTypeLabel} apresentado à ${institution || "Instituição de Ensino Superior"}${course ? ` como requisito parcial para obtenção de grau / avaliação no curso de ${course}` : ""}.`;
+                                  })()}
                                 </p>
                                 {advisor && (
-                                  <p className="mt-2 font-semibold text-gray-900 text-[9.5pt]">
+                                  <p className="mt-2.5 font-bold text-gray-900 text-[9.5pt]">
                                     Orientador(a): {advisor}
                                   </p>
                                 )}
                               </div>
                             </div>
 
-                            {(((city && city.trim()) || (lines[3] && lines[3] !== "FOLHA_ROSTO_AUTO" && lines[3].trim())) || ((year && year.trim()) || (lines[4] && lines[4] !== "FOLHA_ROSTO_AUTO" && lines[4].trim()))) && (
-                              <div className="text-center mt-auto pt-6">
-                                {((city && city.trim()) || (lines[3] && lines[3] !== "FOLHA_ROSTO_AUTO" && lines[3].trim())) && (
-                                  <div
-                                    contentEditable
-                                    suppressContentEditableWarning
-                                    onBlur={(e) => setCity(e.currentTarget.innerText.trim())}
-                                    className="font-bold text-xs sm:text-sm uppercase text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                  >
-                                    {city || lines[3]}
-                                  </div>
-                                )}
-                                {((year && year.trim()) || (lines[4] && lines[4] !== "FOLHA_ROSTO_AUTO" && lines[4].trim())) && (
-                                  <div
-                                    contentEditable
-                                    suppressContentEditableWarning
-                                    onBlur={(e) => setYear(e.currentTarget.innerText.trim())}
-                                    className="font-bold text-xs sm:text-sm text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
-                                  >
-                                    {year || lines[4]}
-                                  </div>
-                                )}
+                            {/* 4. CIDADE E ANO (RODAPÉ DA FOLHA DE ROSTO - CENTRALIZADO) */}
+                            <div className="text-center mt-auto pt-6">
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setCity(e.currentTarget.innerText.trim())}
+                                className="font-bold text-xs sm:text-sm uppercase text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {city || "CIDADE - UF"}
                               </div>
-                            )}
+                              <div
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setYear(e.currentTarget.innerText.trim())}
+                                className="font-bold text-xs sm:text-sm text-gray-800 focus:outline-none focus:bg-blue-50/50 p-1 rounded"
+                              >
+                                {year || String(new Date().getFullYear())}
+                              </div>
+                            </div>
                           </div>
                         ) : (
                           /* RENDERIZAÇÃO DO CORPO DO TRABALHO ABNT (PÁGINAS 3 EM DIANTE - 100% EDITÁVEL) */

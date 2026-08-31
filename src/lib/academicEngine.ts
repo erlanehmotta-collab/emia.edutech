@@ -401,6 +401,7 @@ DIRETRIZES DE ESPAÇAMENTO MANDATÓRIAS ABNT:
 DESENVOLVA CADA UMA DAS SEGUINTES SEÇÕES COM TEXTO ACADÊMICO REAL, EXTENSO E APROFUNDADO:
 - RESUMO (NBR 6028): Parágrafo único de 150 a 250 palavras em espaçamento simples + "Palavras-chave: [3 a 5 termos separados por ponto final]."
 - ABSTRACT: Versão acadêmica completa em inglês + "Keywords: [termos em inglês]."
+- SUMÁRIO (NBR 6027): Inicia obrigatoriamente na seção 1 INTRODUÇÃO, com pontilhados líderes uniformes.
 - 1 INTRODUÇÃO (Mínimo 3 a 4 parágrafos densos: Contextualização, Problematização, Objetivos e Justificativa).
 - 2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA (Mínimo 4 a 6 parágrafos densos com revisões conceituais, citações em padrão ABNT NBR 10520:2023 em caixa mista como (Silva, 2023, p. 15) e instrumentos metodológicos).
 - 3 RESULTADOS E DISCUSSÃO (Mínimo 4 parágrafos com 1 Tabela no padrão IBGE de laterais abertas e indicação de Fonte, e 1 Quadro com Fonte).
