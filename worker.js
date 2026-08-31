@@ -26,6 +26,38 @@ export default {
       });
     }
 
+    if (url.pathname === "/api/debug-assets") {
+      let info = {
+        hasAssets: Boolean(env.ASSETS),
+        assetsType: typeof env.ASSETS,
+        keys: env.ASSETS ? Object.getOwnPropertyNames(Object.getPrototypeOf(env.ASSETS)) : [],
+        tests: {}
+      };
+      if (env.ASSETS) {
+        try {
+          const r1 = await env.ASSETS.fetch(request);
+          info.tests.request = { status: r1.status, len: (await r1.text()).length };
+        } catch (e) {
+          info.tests.request = { error: e.message };
+        }
+        try {
+          const r2 = await env.ASSETS.fetch(new Request(new URL("/index.html", request.url)));
+          info.tests.indexHtml = { status: r2.status, len: (await r2.text()).length };
+        } catch (e) {
+          info.tests.indexHtml = { error: e.message };
+        }
+        try {
+          const r3 = await env.ASSETS.fetch(new Request("http://placeholder/index.html"));
+          info.tests.placeholder = { status: r3.status, len: (await r3.text()).length };
+        } catch (e) {
+          info.tests.placeholder = { error: e.message };
+        }
+      }
+      return new Response(JSON.stringify(info, null, 2), {
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
     // List available Gemini models for the configured secret
     if (url.pathname === "/api/models") {
       const apiKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY;
@@ -352,11 +384,12 @@ export default {
     // Serve Static Assets (Vite React app in dist/)
     if (env.ASSETS) {
       try {
-        const res = await env.ASSETS.fetch(request);
-        if (res.status === 404 && request.method === "GET") {
-          return await env.ASSETS.fetch(new Request(new URL("/index.html", request.url)));
+        let assetRes = await env.ASSETS.fetch(request);
+        if (assetRes.status === 404 && request.method === "GET") {
+          const indexUrl = new URL("/index.html", request.url);
+          assetRes = await env.ASSETS.fetch(new Request(indexUrl, request));
         }
-        return res;
+        return assetRes;
       } catch (assetErr) {
         console.error("Asset fetch error:", assetErr);
       }
