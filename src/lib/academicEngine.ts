@@ -165,6 +165,38 @@ ${text}`;
   return await callGeminiDirectly(prompt, customKey);
 }
 
+export function extractSectionTitle(line: string): string | null {
+  const clean = line.trim().replace(/^#+\s*/, '');
+  if (!clean || clean.length > 90) return null;
+
+  const upper = clean.toUpperCase();
+  if (upper.startsWith("CAPA") || upper.startsWith("FOLHA") || 
+      upper.startsWith("RESUMO") || upper.startsWith("ABSTRACT") || 
+      upper.startsWith("SUMÁRIO") || upper.startsWith("AGRADECIMENTOS") || 
+      upper.startsWith("DEDICATÓRIA") || upper.startsWith("EPÍGRAFE")) {
+    return null;
+  }
+
+  // Seções pós-textuais ABNT
+  if (/^(?:REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE(?:\s+[A-Z])?|ANEXO(?:\s+[A-Z])?|CONSIDERAÇÕES FINAIS|CONCLUSÃO)\b/i.test(clean)) {
+    const match = clean.match(/^(REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE(?:\s+[A-Z])?|ANEXO(?:\s+[A-Z])?|CONSIDERAÇÕES FINAIS|CONCLUSÃO)\b/i);
+    return match ? match[1].toUpperCase() : upper;
+  }
+
+  // Seções numeradas ABNT (1 INTRODUÇÃO, 2 FUNDAMENTAÇÃO, 2.1 SUBSEÇÃO, etc.)
+  const numberedMatch = clean.match(/^(\d+(?:\.\d+)*)\s+([A-ZÀ-Ú][A-ZÀ-Ú\s\-,:]{2,75})/);
+  if (numberedMatch) {
+    const num = numberedMatch[1];
+    const rawTitle = numberedMatch[2].trim();
+    if (/^(O|A|OS|AS|DE|EM|NO|NA|NOS|NAS|UM|UMA|SEGUNDO|CONFORME|COM|POR|PARA|AO)\s+/i.test(rawTitle) && !rawTitle.includes(" ")) {
+      return null;
+    }
+    return `${num} ${rawTitle.toUpperCase()}`;
+  }
+
+  return null;
+}
+
 export function buildDynamicTOCBlock(pages: string[]): string {
   const tocEntries: { title: string; page: number }[] = [];
   
@@ -183,22 +215,12 @@ export function buildDynamicTOCBlock(pages: string[]): string {
 
     const lines = cleanP.split('\n');
     for (const line of lines) {
-      const clean = line.trim().replace(/^#+\s*/, '');
-      if (!clean) continue;
-
-      // Seções numeradas (1 INTRODUÇÃO, 2 FUNDAMENTAÇÃO, 2.1 Subseção, etc.)
-      const isNumbered = /^\d+(?:\.\d+)*\s+[A-ZÀ-Ú]/.test(clean);
-      // Elementos pós-textuais (REFERÊNCIAS, APÊNDICES, ANEXOS)
-      const isPostTextual = /^(REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE|ANEXO)\b/i.test(clean);
-
-      if (isNumbered || isPostTextual) {
-        const upperTitle = clean.toUpperCase();
-        if (!upperTitle.startsWith("SUMÁRIO") && !upperTitle.startsWith("RESUMO") && !upperTitle.startsWith("ABSTRACT") && !tocEntries.some(e => e.title === upperTitle)) {
-          tocEntries.push({
-            title: upperTitle,
-            page: pageNum
-          });
-        }
+      const secTitle = extractSectionTitle(line);
+      if (secTitle && !tocEntries.some(e => e.title === secTitle)) {
+        tocEntries.push({
+          title: secTitle,
+          page: pageNum
+        });
       }
     }
   });

@@ -16,7 +16,7 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType, convertMillimeters
 import mammoth from "mammoth";
 import { saveAs } from "file-saver";
 import { useDropzone } from "react-dropzone";
-import { generateAcademicText, normalizeCitationsToABNT2023, callGeminiDirectly, paginateAcademicDocument } from "./lib/academicEngine";
+import { generateAcademicText, normalizeCitationsToABNT2023, callGeminiDirectly, paginateAcademicDocument, extractSectionTitle } from "./lib/academicEngine";
 
 type UserProfile = {
   name: string;
@@ -1766,38 +1766,31 @@ ${generatedText}`;
     const tocEntries: { title: string; page: number }[] = [];
     
     pagesWithTOC.forEach((pageContent, idx) => {
-      // Folha 1 (Capa) conta 1. Folha 2 (Folha de Rosto) conta 2. Textual inicia na página real contada.
       const pageNum = idx + 1;
+      const cleanP = pageContent.trim().toUpperCase().replace(/^#+\s*/, '');
+      if (cleanP.startsWith("CAPA") || cleanP === "CAPA_AUTO" || 
+          cleanP.startsWith("FOLHA") || cleanP === "FOLHA_ROSTO_AUTO" || 
+          cleanP.startsWith("SUMÁRIO") || cleanP.startsWith("RESUMO") || cleanP.startsWith("ABSTRACT") ||
+          cleanP.startsWith("AGRADECIMENTOS") || cleanP.startsWith("DEDICATÓRIA")) {
+        return;
+      }
+
       const lines = pageContent.split('\n');
-      
       for (const line of lines) {
-        const clean = line.trim().replace(/^#+\s*/, '');
-        if (!clean) continue;
-
-        // Seções numeradas (1 INTRODUÇÃO, 2 FUNDAMENTAÇÃO, 2.1 Subseção, etc.)
-        const isNumbered = /^\d+(?:\.\d+)*\s+[A-ZÀ-Ú]/.test(clean);
-        // Elementos pós-textuais (REFERÊNCIAS, APÊNDICES, ANEXOS)
-        const isPostTextual = /^(REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE|ANEXO)\b/i.test(clean);
-
-        // Seções textuais e pós-textuais entram no Sumário (RESUMO E ABSTRACT NUNCA ENTRAM CONFORME ABNT NBR 6027)
-        if (isNumbered || isPostTextual) {
-          const upperTitle = clean.toUpperCase();
-          if (!upperTitle.startsWith("SUMÁRIO") && !upperTitle.startsWith("RESUMO") && !upperTitle.startsWith("ABSTRACT") && !tocEntries.some(e => e.title === upperTitle)) {
-            tocEntries.push({
-              title: upperTitle,
-              page: pageNum
-            });
-          }
+        const secTitle = extractSectionTitle(line);
+        if (secTitle && !tocEntries.some(e => e.title === secTitle)) {
+          tocEntries.push({
+            title: secTitle,
+            page: pageNum
+          });
         }
       }
     });
 
     if (tocEntries.length === 0) {
-      // Entradas padrão ABNT se ainda não houver seções detectadas
       tocEntries.push(
         { title: "1 INTRODUÇÃO", page: insertIdx + 2 },
         { title: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", page: insertIdx + 3 },
-        { title: "2.1 ANÁLISE SISTEMÁTICA", page: insertIdx + 4 },
         { title: "3 RESULTADOS E DISCUSSÃO", page: insertIdx + 5 },
         { title: "4 CONSIDERAÇÕES FINAIS", page: insertIdx + 6 },
         { title: "REFERÊNCIAS", page: insertIdx + 7 }
@@ -4300,13 +4293,12 @@ ${textToParse.substring(0, 4500)}`;
                                 <div className="space-y-2 font-['Arial'] text-xs sm:text-sm">
                                   {(() => {
                                     // 1. Escaneia todas as páginas reais do documento
-                                    const tocEntries: { title: string; page: number }[] = [];
+                                    const tocEntries: { title: string; page: number; isPrimary: boolean }[] = [];
                                     
                                     pages.forEach((pageContent, idx) => {
                                       const pageNum = idx + 1;
                                       const cleanP = pageContent.trim().toUpperCase().replace(/^#+\s*/, '');
                                       
-                                      // Elementos pré-textuais NÃO entram no Sumário (ABNT NBR 6027)
                                       if (cleanP.startsWith("CAPA") || cleanP === "CAPA_AUTO" || 
                                           cleanP.startsWith("FOLHA") || cleanP === "FOLHA_ROSTO_AUTO" || 
                                           cleanP.startsWith("SUMÁRIO") || cleanP.startsWith("RESUMO") || cleanP.startsWith("ABSTRACT") ||
@@ -4316,43 +4308,32 @@ ${textToParse.substring(0, 4500)}`;
 
                                       const pLines = pageContent.split('\n');
                                       for (const l of pLines) {
-                                        const cleanL = l.trim().replace(/^#+\s*/, '');
-                                        if (!cleanL) continue;
-
-                                        const isNumbered = /^\d+(?:\.\d+)*\s+[A-ZÀ-Ú]/.test(cleanL);
-                                        const isPost = /^(REFERÊNCIAS(?:\s+BIBLIOGRÁFICAS)?|APÊNDICE|ANEXO)\b/i.test(cleanL);
-
-                                        if (isNumbered || isPost) {
-                                          const upperTitle = cleanL.toUpperCase();
-                                          if (!upperTitle.startsWith("SUMÁRIO") && !upperTitle.startsWith("RESUMO") && !upperTitle.startsWith("ABSTRACT") && !tocEntries.some(e => e.title === upperTitle)) {
-                                            tocEntries.push({
-                                              title: upperTitle,
-                                              page: pageNum
-                                            });
-                                          }
+                                        const secTitle = extractSectionTitle(l);
+                                        if (secTitle && !tocEntries.some(e => e.title === secTitle)) {
+                                          const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(secTitle) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(secTitle);
+                                          tocEntries.push({
+                                            title: secTitle,
+                                            page: pageNum,
+                                            isPrimary
+                                          });
                                         }
                                       }
                                     });
 
-                                    // Fallback com as linhas do texto se o escaneamento não encontrar
                                     if (tocEntries.length === 0) {
-                                      lines.filter(l => l && !l.toUpperCase().startsWith("SUMÁRIO") && !l.replace(/^#+\s*/, '').toUpperCase().startsWith("SUMÁRIO")).forEach((line, lIdx) => {
-                                        const match = line.match(/^(.*?)(?:\s+(?:\.|\s)+\s*|\s{2,}|\t+)(\d+)$/);
-                                        if (match) {
-                                          tocEntries.push({ title: match[1].trim(), page: parseInt(match[2].trim(), 10) });
-                                        } else {
-                                          tocEntries.push({ title: line.trim(), page: pIdx + 2 + lIdx });
-                                        }
-                                      });
+                                      tocEntries.push(
+                                        { title: "1 INTRODUÇÃO", page: 6, isPrimary: true },
+                                        { title: "2 FUNDAMENTAÇÃO TEÓRICA E METODOLOGIA", page: 7, isPrimary: true },
+                                        { title: "3 RESULTADOS E DISCUSSÃO", page: 9, isPrimary: true },
+                                        { title: "4 CONSIDERAÇÕES FINAIS", page: 11, isPrimary: true },
+                                        { title: "REFERÊNCIAS", page: 12, isPrimary: true }
+                                      );
                                     }
 
                                     return tocEntries.map((entry, eIdx) => {
-                                      const isPrimary = /^\d+\s+[A-ZÀ-Ú]/.test(entry.title) || /^(REFERÊNCIAS|CONSIDERAÇÕES FINAIS|CONCLUSÃO|APÊNDICE|ANEXO)/i.test(entry.title);
-                                      const isSecondary = /^\d+\.\d+\s+/.test(entry.title);
-
                                       return (
                                         <div key={eIdx} className="flex items-baseline justify-between gap-2 w-full text-[11pt] sm:text-[12pt]">
-                                          <span className={`${isPrimary ? "font-bold text-gray-900 uppercase" : isSecondary ? "font-normal text-gray-800 uppercase" : "font-normal text-gray-700"} truncate max-w-[80%]`}>
+                                          <span className={`${entry.isPrimary ? "font-bold text-gray-900 uppercase" : "font-normal text-gray-800 uppercase"} truncate max-w-[80%]`}>
                                             {entry.title}
                                           </span>
                                           <span className="flex-1 border-b border-dotted border-gray-400 mx-1 mb-1 min-w-[20px]" />
