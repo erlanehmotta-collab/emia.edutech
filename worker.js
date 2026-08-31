@@ -53,8 +53,9 @@ export default {
           });
         }
 
-        // Admin Geral & Acessos Vitalícios
-        if (email === "erlane.digital@gmail.com" || email === "cadumajor@gmail.com") {
+        // Admin Geral & Acessos Mestres Vitalícios
+        const masterEmails = ["erlanehmotta@gmail.com", "cadumajor@gmail.com", "erlane.digital@gmail.com"];
+        if (masterEmails.includes(email)) {
           return new Response(JSON.stringify({ credits: 9999, isMaster: true }), {
             headers: { "Content-Type": "application/json", ...corsHeaders }
           });
